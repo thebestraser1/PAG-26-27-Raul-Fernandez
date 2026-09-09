@@ -27,14 +27,15 @@ void error_callback(int errno, const char *desc) {
  * Si se pone esto en el while, pone en cada frame lo de "Callback de refresco llamado"
  */
 void window_refresh_callback(GLFWwindow *window) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     //Limpieza del buffer back
 
     // AQUÍ SE DIBUJARÍA LO QUE SE NECESITE
     //-------------------------------------
 
 
     //-------------------------------------
-    // - GLFW usa un doble buffer para que no haya parpadeo. Esta orden
+
+    // GLFW usa un doble buffer para que no haya parpadeo. Esta orden
     // intercambia el buffer back (que se ha estado dibujando) por el
     // que se mostraba hasta ahora front. Debe ser la última orden de
     // este callback
