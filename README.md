@@ -52,7 +52,7 @@ clase que es **común a todas las instancias**. Por tanto, no está ligado a nin
 Al probar esto, la compilación fue correcta y todo funcionó como debería. Además, la inicialización sucede al invocar al propio método o al generar una instancia de la clase. A partir de ahí
 da igual cuántas instancias se creen que el método solo existirá una vez en memoria. Así, todos los _callbacks_ que no dependen de un objeto deben ser implementados de esta manera.
 
-```plantuml
+```mermaid
 classDiagram
     namespace PAG {
         class Renderer {
