@@ -54,7 +54,6 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
  * Esta función callback será llamada cada vez que se pulse una tecla dirigida al área de dibujo OpenGL.
  */
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-
     //Cierre de ventana
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -77,12 +76,44 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
  * Esta función callback será llamada cada vez que se mueva la rueda del ratón sobre el área de dibujo OpenGL.
  */
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-    std::cout << "Movida la rueda del ratón " << xoffset
+    std::cout << "Movida la rueda del raton " << xoffset
             << " Unidades en horizontal y " << yoffset
             << " unidades en vertical" << std::endl;
 }
 
 
+/**
+ * Callback de cambio de color con rueda del ratón. Va cambiando entre tonalidades de grises
+ */
+void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
+    GLfloat VARIACION = (GLfloat) yoffset / 10;     //Calculo la variación. En este caso (-0.1 o 0.1)
+
+    GLfloat color_actual[4]; //Creamos un vector de 4 para el color actual de la ventana
+    glGetFloatv(GL_COLOR_CLEAR_VALUE, color_actual);
+    //Con glGetFloatv ponemos los 4 valores de la variable global en la nuestra
+
+    if (yoffset > 0) {
+        std::cout << "Moviste la rueda del raton hacia arriba" << std::endl;
+    } else if (yoffset < 0) {
+        std::cout << "Moviste la rueda del raton hacia abajo" << std::endl;
+    }
+    //En caso de == 0 no se hace nada
+
+    GLfloat rojo = color_actual[0] + VARIACION;
+    GLfloat verde = color_actual[1] + VARIACION;
+    GLfloat azul = color_actual[2] + VARIACION;
+
+    if (rojo > 1) rojo = 0;       if (rojo < 0) rojo = 1;
+    if (verde > 1) verde = 0;     if (verde < 0) verde = 1;
+    if (azul > 1) azul = 0;       if (azul < 0) azul = 1;
+
+    //NOTA: Los 6 ifs es porque quiero un bucle de escala de grises. Si simplemente quisiera controlar los
+    //colores, bastaría con la función "clamp" vista en teoría.
+
+    glClearColor(rojo, verde, azul, 1.0);
+
+    window_refresh_callback(window);    //Hay que refrescar la ventana para ver el cambio
+}
 
 
 // -----------------------------------------------------
@@ -93,7 +124,7 @@ int main() {
     std::cout << "Comenzando aplicacion PAG - Prueba 01" << std::endl;
 
     // Este callback hay que registrarlo ANTES de llamar a glfwInit
-    glfwSetErrorCallback ( (GLFWerrorfun) error_callback );
+    glfwSetErrorCallback((GLFWerrorfun) error_callback);
 
     // Inicialización de GLFW. Si no está no hay nada que hacer
     if (glfwInit() != GLFW_TRUE) {
@@ -145,11 +176,11 @@ int main() {
 
 
     //Registramos los callbacks que responderán a los eventos principales
-    glfwSetWindowRefreshCallback ( window, window_refresh_callback );
-    glfwSetFramebufferSizeCallback ( window, framebuffer_size_callback );
-    glfwSetKeyCallback ( window, key_callback );
-    glfwSetMouseButtonCallback ( window, mouse_button_callback );
-    glfwSetScrollCallback ( window, scroll_callback );
+    glfwSetWindowRefreshCallback(window, window_refresh_callback);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetScrollCallback(window, scroll_color_callback);
 
 
     // Estas 2 siguientes sentencias no tienen por qué llamarse cada vez en el ciclo de eventos
@@ -162,7 +193,6 @@ int main() {
 
     // Ciclo de eventos de la aplicación. La condición de parada es que la ventana principal deba cerrarse.
     while (!glfwWindowShouldClose(window)) {
-
         // Obtiene y organiza los eventos pendientes, tales como pulsaciones de
         // teclas o de ratón, etc. Siempre al final de cada iteración del ciclo
         // de eventos y después de glfwSwapBuffers(window);
