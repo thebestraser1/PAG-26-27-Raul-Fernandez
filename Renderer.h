@@ -1,6 +1,8 @@
 #ifndef PRACTICA1_RENDERER_H
 #define PRACTICA1_RENDERER_H
 
+#include "glad/glad.h"
+
 /**
 * Espacio de nombres para las prácticas de Programación de Aplicaciones
 * Gráficas

@@ -1,9 +1,9 @@
 #include <iostream>
 
-// IMPORTANTE: El include de GLAD debe estar siempre ANTES de el de GLFW. Así todas las funciones (de nuestra versión
-// de OpenGL) podrán ser usadas
-#include <GLFW/glfw3.h>             // Gestión de ventana y eventos con OpenGL
+// IMPORTANTE: El include de GLAD (que ahora está en renderer) debe estar siempre ANTES de el de GLFW.
+// Así todas las funciones (de nuestra versión de OpenGL) podrán ser usadas
 #include "Renderer.h"
+#include <GLFW/glfw3.h>             // Gestión de ventana y eventos con OpenGL
 
 
 // -----------------------------------------------------

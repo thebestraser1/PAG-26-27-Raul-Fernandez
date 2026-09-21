@@ -29,6 +29,29 @@ namespace PAG {
     }
 
     /**
+     * Función para establecer una referencia a las funciones OpenGL del driver gráfico
+     *
+     * @var ubicacionFunciones es un puntero a una función genérica. Después se castea a GLADloadproc
+     */
+    bool Renderer::inicializarGLAD(void* ubicacionFunciones)
+    {
+        return gladLoadGLLoader((GLADloadproc) ubicacionFunciones); //Casteo dentro
+    }
+
+
+    /**
+     * Mostrar propiedades del contexto gráfico
+     */
+    void Renderer::mostrarPropiedadesContextoGrafico()
+    {
+        std::cout << "Grafica en uso: " << glGetString(GL_RENDERER) << std::endl
+        << "Fabricante: " << glGetString(GL_VENDOR) << std::endl
+        << "Version de OpenGL: " << glGetString(GL_VERSION) << std::endl
+        << "OpenGL Shading Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    }
+
+
+    /**
      * Función para activar la prueba de profundidad (Z-buffering). Esto
      * determina qué superficies son visibles y cuáles están ocultas
      */
@@ -71,29 +94,5 @@ namespace PAG {
     {
         glClearColor(r, g, b, a);
     }
-
-
-    /**
-     * Mostrar propiedades del contexto gráfico
-     */
-    void Renderer::mostrarPropiedadesContextoGrafico()
-    {
-        std::cout << "Grafica en uso: " << glGetString(GL_RENDERER) << std::endl
-        << "Fabricante: " << glGetString(GL_VENDOR) << std::endl
-        << "Version de OpenGL: " << glGetString(GL_VERSION) << std::endl
-        << "OpenGL Shading Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-    }
-
-    /**
-     * Función para establecer una referencia a las funciones OpenGL del driver gráfico
-     *
-     * @var ubicacionFunciones es un puntero a una función genérica. Después se castea a GLADloadproc
-     */
-    bool Renderer::inicializarGLAD(void* ubicacionFunciones)
-    {
-        return gladLoadGLLoader((GLADloadproc) ubicacionFunciones); //Casteo dentro
-    }
-
-
 
 } // PAG
