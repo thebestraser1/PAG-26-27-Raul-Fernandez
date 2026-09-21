@@ -113,7 +113,7 @@ int main() {
 
     //Almacenar el Cout en un buffer
     std::stringstream buffer;
-    std::cout.rdbuf(buffer.rdbuf());
+    std::streambuf *original = std::cout.rdbuf(buffer.rdbuf());
 
     std::cout << "Comenzando aplicacion PAG - Prueba 01" << std::endl;
 
@@ -232,6 +232,7 @@ int main() {
     //Finalización ImGui
     PAG::GUI::getInstancia().finalizacionIMGUI();
 
+    std::cout.rdbuf(original); //Devolvemos el read/write buffer original (para el cout)
     glfwDestroyWindow(window); // Cerramos y destruimos la ventana de la aplicación.
     window = nullptr;
     glfwTerminate(); // Liberamos los recursos que ocupaba GLFW.
