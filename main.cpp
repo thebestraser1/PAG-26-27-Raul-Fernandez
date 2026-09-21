@@ -5,6 +5,11 @@
 #include "Renderer.h"
 #include <GLFW/glfw3.h>             // Gestión de ventana y eventos con OpenGL
 
+//Inclusión de ImGui (con ventanas de GLFW y dibujo de OpenGL)
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 
 // -----------------------------------------------------
 // -------------------- CALLBACKS ----------------------
@@ -20,18 +25,35 @@ void error_callback(int errno, const char *desc) {
 
 
 /**
- * Esta función callback será llamada cada vez que el área de dibujo OpenGL deba ser redibujada.
- *
- * A diferencia de meter esto en el while, es que se llama solo cuando es necesario (eficiente).
- *
- * Si se pone esto en el while, pone en cada frame lo de "Callback de refresco llamado"
+ * Esta función antes era un callback a glfwSetWindowRefreshCallback. Sin embargo, esto actualiza
+ * la ventana cuando GLFW lo considera necesario. Por el caracter interactivo de ImGui, lo suyo es
+ * incorporar esta función al ciclo de eventos (si no, falla) (creo que luego con el patrón observador
+ * podemos hacer que solo cuando haya un cambio se llame a esto...)
  */
-void window_refresh_callback(GLFWwindow *window) {
+void refresco_ventana(GLFWwindow *window) {
     PAG::Renderer::getInstancia().refrescar();      //Encapsulación de OpenGL
 
     // AQUÍ SE DIBUJARÍA LO QUE SE NECESITE
     //-------------------------------------
 
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    // Se dibujan los controles de Dear ImGui
+
+    //Dibujado de ventanas
+    ImGui::SetNextWindowPos ( ImVec2 (10, 10), ImGuiCond_Once );
+    if ( ImGui::Begin ( "Mensajes" ) )
+    { // La ventana está desplegada
+        ImGui::SetWindowFontScale ( 1.0f ); // Escalamos el texto si fuera necesario
+        // Pintamos los controles
+    }
+    // Si la ventana no está desplegada, Begin devuelve false
+    ImGui::End ();
+
+    // Aquí va el dibujado de la escena con instrucciones OpenGL
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData ( ImGui::GetDrawData() );
 
     //-------------------------------------
 
@@ -40,7 +62,6 @@ void window_refresh_callback(GLFWwindow *window) {
     // que se mostraba hasta ahora front. Debe ser la última orden de
     // este callback
     glfwSwapBuffers(window);
-    std::cout << "Callback de refresco llamado" << std::endl;
 }
 
 /**
@@ -67,9 +88,18 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
  */
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
     if (action == GLFW_PRESS) {
-        std::cout << "Pulsado el botón: " << button << std::endl;
+        std::cout << "Pulsado el boton: " << button << std::endl;
+
+        //Tras procesarlo con GLFW, se pasa el callback a ImGui
+        ImGuiIO& io = ImGui::GetIO ();
+        io.AddMouseButtonEvent ( button, true );
+
     } else if (action == GLFW_RELEASE) {
-        std::cout << "Soltado el botón: " << button << std::endl;
+        std::cout << "Soltado el boton: " << button << std::endl;
+
+        //Tras procesarlo con GLFW, se pasa el callback a ImGui
+        ImGuiIO& io = ImGui::GetIO ();
+        io.AddMouseButtonEvent ( button, false );
     }
 }
 
@@ -112,7 +142,7 @@ void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
 
     PAG::Renderer::getInstancia().cambiarColorFondo(rojo, verde, azul, 1.0);
 
-    window_refresh_callback(window);    //Hay que refrescar la ventana para ver el cambio
+    refresco_ventana(window);    //Hay que refrescar la ventana para ver el cambio
 }
 
 
@@ -159,7 +189,7 @@ int main() {
     // ser el contexto actual de OpenGL para las siguientes llamadas a la biblioteca
     glfwMakeContextCurrent(window);
 
-    // Ahora inicializamos GLAD.
+    // Inicialización de GLAD.
     if (!PAG::Renderer::getInstancia().inicializarGLAD((void*) glfwGetProcAddress)) {
         std::cout << "Fallo en la inicializacion de GLAD" << std::endl;
         glfwDestroyWindow(window); // Liberamos los recursos que ocupaba GLFW.
@@ -172,14 +202,22 @@ int main() {
     PAG::Renderer::getInstancia().mostrarPropiedadesContextoGrafico();
 
     //Registramos los callbacks que responderán a los eventos principales
-    glfwSetWindowRefreshCallback(window, window_refresh_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_color_callback);
 
 
-    // Estas 2 siguientes sentencias no tienen por qué llamarse cada vez en el ciclo de eventos
+    //Inicialización de ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext ();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    //Para el caso de GLFW y OpenGL, hay que completar la inicialización con las siguientes llamadas:
+    ImGui_ImplGlfw_InitForOpenGL ( window, true );
+    ImGui_ImplOpenGL3_Init ();
+
 
     // Establecemos un gris medio como color con el que se borrará el frame buffer.
     PAG::Renderer::getInstancia().cambiarColorFondo(0.6, 0.6, 0.6, 1.0);
@@ -189,6 +227,8 @@ int main() {
 
     // Ciclo de eventos de la aplicación. La condición de parada es que la ventana principal deba cerrarse.
     while (!glfwWindowShouldClose(window)) {
+        refresco_ventana(window);
+
         // Obtiene y organiza los eventos pendientes, tales como pulsaciones de
         // teclas o de ratón, etc. Siempre al final de cada iteración del ciclo
         // de eventos y después de glfwSwapBuffers(window);
@@ -197,6 +237,9 @@ int main() {
 
     // Una vez terminado el ciclo de eventos, liberar recursos, etc.
     std::cout << "Terminando aplicacion PAG de prueba" << std::endl;
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext ();
     glfwDestroyWindow(window); // Cerramos y destruimos la ventana de la aplicación.
     window = nullptr;
     glfwTerminate(); // Liberamos los recursos que ocupaba GLFW.
