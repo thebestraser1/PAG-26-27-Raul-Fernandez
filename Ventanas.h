@@ -19,7 +19,7 @@ namespace PAG {
     protected:
         float x = 10;
         float y = 10;
-        float escala = 1.0;
+        float *escala = nullptr;
     public:
         virtual ~Ventanas() = default;
         virtual void dibujar() = 0;     //Indico que es un virtual puro (se ha de sobre-escribir esta función)
@@ -33,7 +33,7 @@ namespace PAG {
     private:
         std::stringstream &textoSalida;     //Importante por referencia para que se vaya actualizando
     public:
-        VentanaMensajes(std::stringstream &textoInicial, float x, float y, float escala=1.0);
+        VentanaMensajes(std::stringstream &textoInicial, float x, float y, float *escala);
         void dibujar() override;
     };
 
@@ -45,7 +45,19 @@ namespace PAG {
     private:
         ImVec4 *colorSeleccionado;
     public:
-        VentanaSelectorColor(ImVec4 *colorInicial, float x, float y, float escala = 1.0);
+        VentanaSelectorColor(ImVec4 *colorInicial, float x, float y, float *escala);
+        void dibujar() override;
+    };
+
+
+    /**
+     * Ventana que muestra un selector de color para el fondo de la aplicación
+     */
+    class VentanaSelectorEscala : public Ventanas{
+    private:
+        float *escalaSlider;
+    public:
+        VentanaSelectorEscala(float *escalaSliderInicial, float x, float y, float *escala);
         void dibujar() override;
     };
 } // PAG

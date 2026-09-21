@@ -27,7 +27,7 @@ namespace PAG {
 
         void finalizacionIMGUI();
 
-        void dibujarVentana(const std::vector<PAG::Ventanas*>& ventanas);
+        void dibujarVentanas(const std::vector<PAG::Ventanas*>& ventanas);
 
     };
 } // PAG

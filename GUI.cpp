@@ -52,7 +52,7 @@ namespace PAG {
      * Función para consultar el objeto único de la clase
      * @return La dirección de memoria del objeto
      */
-    void PAG::GUI::dibujarVentana (const std::vector<PAG::Ventanas*>& ventanas)
+    void PAG::GUI::dibujarVentanas (const std::vector<PAG::Ventanas*>& ventanas)
     {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();

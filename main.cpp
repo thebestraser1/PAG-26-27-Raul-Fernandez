@@ -193,10 +193,14 @@ int main() {
     ImVec4 *colorFondo = new ImVec4(0.6, 0.6, 0.6, 1.0);
     PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo->x, colorFondo->y, colorFondo->z, colorFondo->w);
 
+    //Establecemos escala del texto
+    float *escala = new float(1.0);
+
     //Establecenmos una ventana de mensajes y una ventana de selección de color
     std::vector<PAG::Ventanas*> ventanas = {
-        new PAG::VentanaMensajes(buffer, 10, 10),
-        new PAG::VentanaSelectorColor(colorFondo, 80,20)
+        new PAG::VentanaMensajes(buffer, 10, 10, escala),
+        new PAG::VentanaSelectorColor(colorFondo, 280,40, escala),
+        new PAG::VentanaSelectorEscala(escala, 100, 400, escala)
     };
 
 
@@ -213,7 +217,7 @@ int main() {
         // AQUÍ SE DIBUJARÍA LO QUE SE NECESITE
         //-------------------------------------
 
-        PAG::GUI::getInstancia().dibujarVentana(ventanas);
+        PAG::GUI::getInstancia().dibujarVentanas(ventanas);
 
         //Si cambió el color de fondo, deberá reflejarse
         PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo->x, colorFondo->y, colorFondo->z, colorFondo->w);
@@ -247,6 +251,9 @@ int main() {
     for (PAG::Ventanas* ventana : ventanas) {
         delete ventana;
     }
+
+    //Borramos punteros creados
+    delete colorFondo;
 
     std::cout.rdbuf(original); //Devolvemos el read/write buffer original (para el cout)
     glfwDestroyWindow(window); // Cerramos y destruimos la ventana de la aplicación.
