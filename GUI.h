@@ -9,6 +9,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include "Ventanas.h"
+
 namespace PAG {
     class GUI {
     private:
@@ -24,7 +26,7 @@ namespace PAG {
 
         void finalizacionIMGUI();
 
-        void dibujarVentana();
+        void dibujarVentana(Ventanas &v);
 
     };
 } // PAG

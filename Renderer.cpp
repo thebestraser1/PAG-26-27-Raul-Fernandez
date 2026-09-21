@@ -1,7 +1,5 @@
-#include "glad/glad.h"
-#include "Renderer.h"
 
-#include <iostream>
+#include "Renderer.h"
 
 namespace PAG {
     //Inicialización de los atributos

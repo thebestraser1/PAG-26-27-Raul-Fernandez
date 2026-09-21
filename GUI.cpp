@@ -52,7 +52,7 @@ namespace PAG {
      * Función para consultar el objeto único de la clase
      * @return La dirección de memoria del objeto
      */
-    void PAG::GUI::dibujarVentana ()
+    void PAG::GUI::dibujarVentana (Ventanas &v)
     {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -60,14 +60,7 @@ namespace PAG {
         // Se dibujan los controles de Dear ImGui
 
         //Dibujado de ventanas
-        ImGui::SetNextWindowPos ( ImVec2 (10, 10), ImGuiCond_Once );
-        if ( ImGui::Begin ( "Mensajes" ) )
-        { // La ventana está desplegada
-            ImGui::SetWindowFontScale ( 1.0f ); // Escalamos el texto si fuera necesario
-            // Pintamos los controles
-        }
-        // Si la ventana no está desplegada, Begin devuelve false
-        ImGui::End ();
+        v.dibujar();
 
         // Aquí va el dibujado de la escena con instrucciones OpenGL
         ImGui::Render();

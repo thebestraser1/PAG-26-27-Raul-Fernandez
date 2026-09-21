@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 
 // IMPORTANTE: El include de GLAD (que ahora está en renderer) debe estar siempre ANTES de el de GLFW.
 // Así todas las funciones (de nuestra versión de OpenGL) podrán ser usadas
@@ -7,6 +8,9 @@
 
 //Inclusión de ImGui (con ventanas de GLFW y dibujo de OpenGL)
 #include "GUI.h"
+
+//Inclusión de ventanas
+#include "Ventanas.h"
 
 
 // -----------------------------------------------------
@@ -21,29 +25,6 @@ void error_callback(int errno, const char *desc) {
     std::cout << "Error de GLFW numero " << errno << ": " << aux << std::endl;
 }
 
-
-/**
- * Esta función antes era un callback a glfwSetWindowRefreshCallback. Sin embargo, esto actualiza
- * la ventana cuando GLFW lo considera necesario. Por el caracter interactivo de ImGui, lo suyo es
- * incorporar esta función al ciclo de eventos (si no, falla) (creo que luego con el patrón observador
- * podemos hacer que solo cuando haya un cambio se llame a esto...)
- */
-void refresco_ventana(GLFWwindow *window) {
-    PAG::Renderer::getInstancia().refrescar();      //Encapsulación de OpenGL
-
-    // AQUÍ SE DIBUJARÍA LO QUE SE NECESITE
-    //-------------------------------------
-
-    PAG::GUI::getInstancia().dibujarVentana();
-
-    //-------------------------------------
-
-    // GLFW usa un doble buffer para que no haya parpadeo. Esta orden
-    // intercambia el buffer back (que se ha estado dibujando) por el
-    // que se mostraba hasta ahora front. Debe ser la última orden de
-    // este callback
-    glfwSwapBuffers(window);
-}
 
 /**
  * Esta función callback será llamada cada vez que se cambie el tamaño del área de dibujo OpenGL.
@@ -122,16 +103,18 @@ void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
     //colores, bastaría con la función "clamp" vista en teoría.
 
     PAG::Renderer::getInstancia().cambiarColorFondo(rojo, verde, azul, 1.0);
-
-    refresco_ventana(window);    //Hay que refrescar la ventana para ver el cambio
 }
-
 
 // -----------------------------------------------------
 // --------------------   MAIN    ----------------------
 // -----------------------------------------------------
 
 int main() {
+
+    //Almacenar el Cout en un buffer
+    std::stringstream buffer;
+    std::cout.rdbuf(buffer.rdbuf());
+
     std::cout << "Comenzando aplicacion PAG - Prueba 01" << std::endl;
 
     // Este callback hay que registrarlo ANTES de llamar a glfwInit
@@ -198,15 +181,39 @@ int main() {
     //Nota: considero que las 2 sentencias de arriba van en main.cpp porque acoplarían GUI si las meto en la clase
 
 
-    // Establecemos un gris medio como color con el que se borrará el frame buffer.
-    PAG::Renderer::getInstancia().cambiarColorFondo(0.6, 0.6, 0.6, 1.0);
-
     // Le decimos a OpenGL que tenga en cuenta la profundidad a la hora de dibujar.
     PAG::Renderer::getInstancia().activarPruebaProfundidad();
 
+
+    // Inicialización de escena
+    // Establecemos un gris medio como color con el que se borrará el frame buffer.
+    PAG::Renderer::getInstancia().cambiarColorFondo(0.6, 0.6, 0.6, 1.0);
+
+    //Establecenmos una ventana de mensajes con los mensajes que se van enviando por el cout
+    PAG::VentanaMensajes ventana_mensajes(buffer);
+
     // Ciclo de eventos de la aplicación. La condición de parada es que la ventana principal deba cerrarse.
+    /**
+     * Esta función antes era un callback a glfwSetWindowRefreshCallback. Sin embargo, esto actualiza
+     * la ventana cuando GLFW lo considera necesario. Por el caracter interactivo de ImGui, lo suyo es
+     * incorporar esta función al ciclo de eventos (si no, falla) (creo que luego con el patrón observador
+     * podemos hacer que solo cuando haya un cambio se llame a esto...)
+     */
     while (!glfwWindowShouldClose(window)) {
-        refresco_ventana(window);
+        PAG::Renderer::getInstancia().refrescar();      //Encapsulación de OpenGL
+
+        // AQUÍ SE DIBUJARÍA LO QUE SE NECESITE
+        //-------------------------------------
+
+        PAG::GUI::getInstancia().dibujarVentana(ventana_mensajes);
+
+        //-------------------------------------
+
+        // GLFW usa un doble buffer para que no haya parpadeo. Esta orden
+        // intercambia el buffer back (que se ha estado dibujando) por el
+        // que se mostraba hasta ahora front. Debe ser la última orden de
+        // este callback
+        glfwSwapBuffers(window);
 
         // Obtiene y organiza los eventos pendientes, tales como pulsaciones de
         // teclas o de ratón, etc. Siempre al final de cada iteración del ciclo

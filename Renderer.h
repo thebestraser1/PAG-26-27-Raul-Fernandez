@@ -1,6 +1,7 @@
 #ifndef PRACTICA1_RENDERER_H
 #define PRACTICA1_RENDERER_H
 
+#include <iostream>
 #include "glad/glad.h"
 
 /**
@@ -29,6 +30,8 @@ namespace PAG {
 
         static Renderer &getInstancia();
 
+        bool inicializarGLAD(void* ubicacionFunciones);
+
         void activarPruebaProfundidad();
 
         void refrescar();
@@ -40,8 +43,6 @@ namespace PAG {
         void getColorFondo(GLfloat *colorFondo);
 
         void mostrarPropiedadesContextoGrafico();
-
-        bool inicializarGLAD(void* ubicacionFunciones);
     };
 } // PAG
 

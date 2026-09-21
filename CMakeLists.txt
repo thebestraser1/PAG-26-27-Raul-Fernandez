@@ -13,7 +13,9 @@ add_executable(${PROJECT_NAME} ${MY_FILES} ${GLAD_FILES} ${IMGUI_FILES}
         Renderer.cpp
         Renderer.h
         GUI.cpp
-        GUI.h)
+        GUI.h
+        Ventanas.h
+)
 
 #Definimos este directorio para buscar includes
 target_include_directories(${PROJECT_NAME} PUBLIC GLAD/include imgui/include)
