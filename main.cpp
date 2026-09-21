@@ -6,9 +6,7 @@
 #include <GLFW/glfw3.h>             // Gestión de ventana y eventos con OpenGL
 
 //Inclusión de ImGui (con ventanas de GLFW y dibujo de OpenGL)
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
+#include "GUI.h"
 
 
 // -----------------------------------------------------
@@ -36,24 +34,7 @@ void refresco_ventana(GLFWwindow *window) {
     // AQUÍ SE DIBUJARÍA LO QUE SE NECESITE
     //-------------------------------------
 
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    // Se dibujan los controles de Dear ImGui
-
-    //Dibujado de ventanas
-    ImGui::SetNextWindowPos ( ImVec2 (10, 10), ImGuiCond_Once );
-    if ( ImGui::Begin ( "Mensajes" ) )
-    { // La ventana está desplegada
-        ImGui::SetWindowFontScale ( 1.0f ); // Escalamos el texto si fuera necesario
-        // Pintamos los controles
-    }
-    // Si la ventana no está desplegada, Begin devuelve false
-    ImGui::End ();
-
-    // Aquí va el dibujado de la escena con instrucciones OpenGL
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData ( ImGui::GetDrawData() );
+    PAG::GUI::getInstancia().dibujarVentana();
 
     //-------------------------------------
 
@@ -209,14 +190,12 @@ int main() {
 
 
     //Inicialización de ImGui
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext ();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    PAG::GUI::getInstancia().inicializacionIMGUI();
 
     //Para el caso de GLFW y OpenGL, hay que completar la inicialización con las siguientes llamadas:
     ImGui_ImplGlfw_InitForOpenGL ( window, true );
     ImGui_ImplOpenGL3_Init ();
+    //Nota: considero que las 2 sentencias de arriba van en main.cpp porque acoplarían GUI si las meto en la clase
 
 
     // Establecemos un gris medio como color con el que se borrará el frame buffer.
@@ -237,9 +216,15 @@ int main() {
 
     // Una vez terminado el ciclo de eventos, liberar recursos, etc.
     std::cout << "Terminando aplicacion PAG de prueba" << std::endl;
+
+    //Finalizamos ImGui (adaptado a GLFW y OpenGL)
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext ();
+    //Nota: considero que las 2 sentencias de arriba van en main.cpp porque acoplarían GUI si las meto en la clase
+
+    //Finalización ImGui
+    PAG::GUI::getInstancia().finalizacionIMGUI();
+
     glfwDestroyWindow(window); // Cerramos y destruimos la ventana de la aplicación.
     window = nullptr;
     glfwTerminate(); // Liberamos los recursos que ocupaba GLFW.
