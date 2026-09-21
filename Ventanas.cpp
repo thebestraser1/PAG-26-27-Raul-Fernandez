@@ -62,7 +62,7 @@ namespace PAG {
 
         //Posición a dibujar
         ImGui::SetNextWindowPos ( ImVec2 (x, y), ImGuiCond_Once );
-        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Once);
+        ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_Once);
 
         if ( ImGui::Begin ( "Selector Color" ) ){ // La ventana está desplegada
 
@@ -70,7 +70,7 @@ namespace PAG {
 
             ImGui::Text("Selecciona un color:");
             float w = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.y) * 0.40f;
-            ImGui::ColorPicker3("##MyColor##6", (float*)&colorSeleccionado, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+            ImGui::ColorPicker3("##MyColor##6", (float*)colorSeleccionado, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
         }
 
         // Si la ventana no está desplegada, Begin devuelve false

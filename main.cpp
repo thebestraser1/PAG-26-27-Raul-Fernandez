@@ -79,7 +79,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 
 /**
  * Callback de cambio de color con rueda del ratón. Va cambiando entre tonalidades de grises
- */
+
 void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
     GLfloat VARIACION = (GLfloat) yoffset / 10;     //Calculo la variación. En este caso (-0.1 o 0.1)
 
@@ -106,6 +106,7 @@ void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
 
     PAG::Renderer::getInstancia().cambiarColorFondo(rojo, verde, azul, 1.0);
 }
+*/
 
 // -----------------------------------------------------
 // --------------------   MAIN    ----------------------
@@ -171,7 +172,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetScrollCallback(window, scroll_color_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
 
     //Inicialización de ImGui
@@ -213,6 +214,9 @@ int main() {
         //-------------------------------------
 
         PAG::GUI::getInstancia().dibujarVentana(ventanas);
+
+        //Si cambió el color de fondo, deberá reflejarse
+        PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo->x, colorFondo->y, colorFondo->z, colorFondo->w);
 
         //-------------------------------------
 
