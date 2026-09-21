@@ -22,6 +22,8 @@ namespace PAG {
     class Renderer {
     private:
         static Renderer *instancia;
+        GLfloat colorFondo[4] = {0.6f, 0.6f, 0.6f, 1.0f}; // valor inicial por defecto
+        GLfloat escalaTexto = 1.0f;
 
         Renderer(); //Constructor privado (Singletone)
 
@@ -32,6 +34,8 @@ namespace PAG {
 
         bool inicializarGLAD(void* ubicacionFunciones);
 
+        void mostrarPropiedadesContextoGrafico();
+
         void activarPruebaProfundidad();
 
         void refrescar();
@@ -40,9 +44,11 @@ namespace PAG {
 
         void cambiarColorFondo(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 
-        void getColorFondo(GLfloat *colorFondo);
+        GLfloat* getColorFondo();
 
-        void mostrarPropiedadesContextoGrafico();
+        float *getEscalaTexto();
+
+
     };
 } // PAG
 

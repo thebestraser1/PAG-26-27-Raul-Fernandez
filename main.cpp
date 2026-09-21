@@ -190,11 +190,11 @@ int main() {
 
     // Inicialización de escena
     // Establecemos un gris medio como color con el que se borrará el frame buffer.
-    ImVec4 *colorFondo = new ImVec4(0.6, 0.6, 0.6, 1.0);
-    PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo->x, colorFondo->y, colorFondo->z, colorFondo->w);
+    GLfloat *colorFondo = PAG::Renderer::getInstancia().getColorFondo();
+    PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo[0], colorFondo[1], colorFondo[2], colorFondo[3]);
 
     //Establecemos escala del texto
-    float *escala = new float(1.0);
+    GLfloat *escala = PAG::Renderer::getInstancia().getEscalaTexto();
 
     //Establecenmos una ventana de mensajes y una ventana de selección de color
     std::vector<PAG::Ventanas*> ventanas = {
@@ -220,7 +220,7 @@ int main() {
         PAG::GUI::getInstancia().dibujarVentanas(ventanas);
 
         //Si cambió el color de fondo, deberá reflejarse
-        PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo->x, colorFondo->y, colorFondo->z, colorFondo->w);
+        PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo[0], colorFondo[1], colorFondo[2], colorFondo[3]);
 
         //-------------------------------------
 
@@ -251,9 +251,6 @@ int main() {
     for (PAG::Ventanas* ventana : ventanas) {
         delete ventana;
     }
-
-    //Borramos punteros creados
-    delete colorFondo;
 
     std::cout.rdbuf(original); //Devolvemos el read/write buffer original (para el cout)
     glfwDestroyWindow(window); // Cerramos y destruimos la ventana de la aplicación.

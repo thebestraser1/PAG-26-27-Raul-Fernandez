@@ -9,6 +9,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <sstream>
+#include <GL/gl.h>
 
 namespace PAG {
 
@@ -43,9 +44,9 @@ namespace PAG {
      */
     class VentanaSelectorColor : public Ventanas{
     private:
-        ImVec4 *colorSeleccionado;
+        GLfloat *colorSeleccionado;
     public:
-        VentanaSelectorColor(ImVec4 *colorInicial, float x, float y, float *escalaTexto);
+        VentanaSelectorColor(GLfloat *colorInicial, float x, float y, float *escalaTexto);
         void dibujar() override;
     };
 

@@ -60,12 +60,19 @@ namespace PAG {
 
 
     /**
-     * Función OpenGL para que OpenGL tenga en cuenta la profundidad a la hora de dibujar
+     * Función OpenGL que devuelve el color del fondo
      */
-    void Renderer::getColorFondo (GLfloat* colorFondo)
+    GLfloat* Renderer::getColorFondo ()
     {
-        //Con glGetFloatv ponemos los 4 valores de la variable global en la nuestra (se pasa como puntero)
-        glGetFloatv(GL_COLOR_CLEAR_VALUE, colorFondo);
+        return colorFondo;
+    }
+
+    /**
+     * Función OpenGL que devuelve el tamaño de escala del texto
+     */
+    GLfloat* Renderer::getEscalaTexto ()
+    {
+        return &escalaTexto;
     }
 
 
@@ -91,6 +98,10 @@ namespace PAG {
     void Renderer::cambiarColorFondo (GLfloat r, GLfloat g, GLfloat b, GLfloat a)
     {
         glClearColor(r, g, b, a);
+        colorFondo[0] = r;
+        colorFondo[1] = g;
+        colorFondo[2] = b;
+        colorFondo[3] = a;
     }
 
 } // PAG

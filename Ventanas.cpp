@@ -49,7 +49,7 @@ namespace PAG {
     /**
      * Constructor de ventana de selección de color
      */
-    VentanaSelectorColor::VentanaSelectorColor(ImVec4 *colorInicial, float x, float y, float *escalaTexto): colorSeleccionado(colorInicial){
+    VentanaSelectorColor::VentanaSelectorColor(GLfloat *colorInicial, float x, float y, float *escalaTexto): colorSeleccionado(colorInicial){
         this->x = x;
         this->y = y;
         this->escalaTexto = escalaTexto;
