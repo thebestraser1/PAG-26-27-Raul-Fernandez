@@ -11,10 +11,10 @@ namespace PAG {
     /**
      * Constructor de ventana de salida de mensajes
      */
-    VentanaMensajes::VentanaMensajes(std::stringstream &textoInicial, float x, float y, float *escala): textoSalida(textoInicial) {
+    VentanaMensajes::VentanaMensajes(std::stringstream &textoInicial, float x, float y, float *escalaTexto): textoSalida(textoInicial) {
         this->x = x;
         this->y = y;
-        this->escala = escala;
+        this->escalaTexto = escalaTexto;
     }
 
     /**
@@ -28,7 +28,7 @@ namespace PAG {
         {
             if ( ImGui::Begin ( "Mensajes" ) ){ // La ventana está desplegada
 
-                ImGui::SetWindowFontScale ( *escala ); // Escalamos el texto si fuera necesario
+                ImGui::SetWindowFontScale ( *escalaTexto ); // Escalamos el texto si fuera necesario
 
                 //Pintamos el buffer de texto de salida
                 ImGui::TextUnformatted(textoSalida.str().c_str());
@@ -49,10 +49,10 @@ namespace PAG {
     /**
      * Constructor de ventana de selección de color
      */
-    VentanaSelectorColor::VentanaSelectorColor(ImVec4 *colorInicial, float x, float y, float *escala): colorSeleccionado(colorInicial){
+    VentanaSelectorColor::VentanaSelectorColor(ImVec4 *colorInicial, float x, float y, float *escalaTexto): colorSeleccionado(colorInicial){
         this->x = x;
         this->y = y;
-        this->escala = escala;
+        this->escalaTexto = escalaTexto;
     }
 
     /**
@@ -66,13 +66,20 @@ namespace PAG {
 
         if ( ImGui::Begin ( "Selector de Color" ) ){ // La ventana está desplegada
 
-            ImGui::SetWindowFontScale ( *escala ); // Escalamos el texto si fuera necesario
+            ImGui::SetWindowFontScale ( *escalaTexto ); // Escalamos el texto si fuera necesario
 
             ImGui::Text("Selecciona un color:");
             float w = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.y) * 0.40f;
-            ImGui::ColorPicker3("Color de fondo", (float*)colorSeleccionado, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
-            ImGui::ColorEdit4("HSV shown as HSV##1", (float*)colorSeleccionado, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_InputHSV | ImGuiColorEditFlags_Float);
-            ImGui::ColorEdit4("HSV shown as RGB##1", (float*)colorSeleccionado, ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_Float);
+            ImGui::ColorPicker3("##Color de paleta", (float*)colorSeleccionado, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+            ImGui::SameLine();      //Esto hace que aparezcan en la misma línea
+            ImGui::BeginGroup();    //Se crea un mismo grupo (para que esto aparezca en la misma línea)
+            ImGui::Text("Color Actual");
+            ImGui::ColorButton("##ActualColor", *(ImVec4*)colorSeleccionado, ImGuiColorEditFlags_NoAlpha, ImVec2(100, 50));
+            ImGui::EndGroup();
+            ImGui::ColorEdit4("HSV como RGB##1", (float*)colorSeleccionado, ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_Float);
+            ImGui::ColorEdit4("HSV como HSV##1", (float*)colorSeleccionado, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_InputHSV | ImGuiColorEditFlags_Float);
+            ImGui::ColorEdit4("Hexadecimal", (float*)colorSeleccionado, ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_NoSmallPreview);
+
         }
 
         // Si la ventana no está desplegada, Begin devuelve false
@@ -88,10 +95,10 @@ namespace PAG {
     /**
      * Constructor de ventana de selección de escala
      */
-    VentanaSelectorEscala::VentanaSelectorEscala(float *escalaSliderInicial, float x, float y, float *escala): escalaSlider(escalaSliderInicial){
+    VentanaSelectorEscala::VentanaSelectorEscala(float *escalaSliderInicial, float x, float y, float *escalaTexto): escalaSlider(escalaSliderInicial){
         this->x = x;
         this->y = y;
-        this->escala = escala;
+        this->escalaTexto = escalaTexto;
     }
 
     /**
@@ -104,7 +111,7 @@ namespace PAG {
 
         if ( ImGui::Begin ( "Selector de Escala" ) ){ // La ventana está desplegada
 
-            ImGui::SetWindowFontScale ( *escala ); // Escalamos el texto si fuera necesario
+            ImGui::SetWindowFontScale ( *escalaTexto ); // Escalamos el texto si fuera necesario
 
             ImGui::DragFloat("Escala de fuente (0-4)", escalaSlider, 0.005f, 0.0f, 4.0f, "%.3f");
 
