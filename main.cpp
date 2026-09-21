@@ -189,12 +189,13 @@ int main() {
 
     // Inicialización de escena
     // Establecemos un gris medio como color con el que se borrará el frame buffer.
-    PAG::Renderer::getInstancia().cambiarColorFondo(0.6, 0.6, 0.6, 1.0);
+    ImVec4 *colorFondo = new ImVec4(0.6, 0.6, 0.6, 1.0);
+    PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo->x, colorFondo->y, colorFondo->z, colorFondo->w);
 
     //Establecenmos una ventana de mensajes y una ventana de selección de color
     std::vector<PAG::Ventanas*> ventanas = {
         new PAG::VentanaMensajes(buffer, 10, 10),
-        new PAG::VentanaSelectorColor(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), 80,20)
+        new PAG::VentanaSelectorColor(colorFondo, 80,20)
     };
 
 
@@ -237,6 +238,11 @@ int main() {
 
     //Finalización ImGui
     PAG::GUI::getInstancia().finalizacionIMGUI();
+
+    //Borramos todas las ventanas creadas
+    for (PAG::Ventanas* ventana : ventanas) {
+        delete ventana;
+    }
 
     std::cout.rdbuf(original); //Devolvemos el read/write buffer original (para el cout)
     glfwDestroyWindow(window); // Cerramos y destruimos la ventana de la aplicación.

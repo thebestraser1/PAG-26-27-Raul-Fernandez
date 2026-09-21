@@ -43,9 +43,9 @@ namespace PAG {
      */
     class VentanaSelectorColor : public Ventanas{
     private:
-        ImVec4 colorSeleccionado;
+        ImVec4 *colorSeleccionado;
     public:
-        VentanaSelectorColor(ImVec4 colorInicial, float x, float y, float escala = 1.0);
+        VentanaSelectorColor(ImVec4 *colorInicial, float x, float y, float escala = 1.0);
         void dibujar() override;
     };
 } // PAG

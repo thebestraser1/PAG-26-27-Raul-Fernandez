@@ -49,7 +49,7 @@ namespace PAG {
     /**
      * Constructor de ventana de selección de color
      */
-    VentanaSelectorColor::VentanaSelectorColor(ImVec4 colorInicial, float x, float y, float escala): colorSeleccionado(colorInicial){
+    VentanaSelectorColor::VentanaSelectorColor(ImVec4 *colorInicial, float x, float y, float escala): colorSeleccionado(colorInicial){
         this->x = x;
         this->y = y;
         this->escala = escala;
@@ -65,13 +65,6 @@ namespace PAG {
         ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_Once);
 
         if ( ImGui::Begin ( "Selector Color" ) ){ // La ventana está desplegada
-
-            ImGui::Text("MouseDown: %d",ImGui::IsMouseDown(ImGuiMouseButton_Left));
-
-
-            ImGui::Text("Mouse pos: %.1f %.1f",
-                        ImGui::GetIO().MousePos.x,
-                        ImGui::GetIO().MousePos.y);
 
             ImGui::SetWindowFontScale ( 1.0f ); // Escalamos el texto si fuera necesario
 
