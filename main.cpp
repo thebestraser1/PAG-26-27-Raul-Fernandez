@@ -2,8 +2,8 @@
 
 // IMPORTANTE: El include de GLAD debe estar siempre ANTES de el de GLFW. Así todas las funciones (de nuestra versión
 // de OpenGL) podrán ser usadas
-#include <glad/glad.h>              // Funciones OpenGL
 #include <GLFW/glfw3.h>             // Gestión de ventana y eventos con OpenGL
+#include "Renderer.h"
 
 
 // -----------------------------------------------------
@@ -27,7 +27,7 @@ void error_callback(int errno, const char *desc) {
  * Si se pone esto en el while, pone en cada frame lo de "Callback de refresco llamado"
  */
 void window_refresh_callback(GLFWwindow *window) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     //Limpieza del buffer back
+    PAG::Renderer::getInstancia().refrescar();      //Encapsulación de OpenGL
 
     // AQUÍ SE DIBUJARÍA LO QUE SE NECESITE
     //-------------------------------------
@@ -47,7 +47,7 @@ void window_refresh_callback(GLFWwindow *window) {
  * Esta función callback será llamada cada vez que se cambie el tamaño del área de dibujo OpenGL.
  */
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-    glViewport(0, 0, width, height);
+    PAG::Renderer::getInstancia().redimensionar(width, height);
     std::cout << "Callback de redimension llamado" << std::endl;
 }
 
@@ -90,8 +90,7 @@ void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
     GLfloat VARIACION = (GLfloat) yoffset / 10;     //Calculo la variación. En este caso (-0.1 o 0.1)
 
     GLfloat color_actual[4]; //Creamos un vector de 4 para el color actual de la ventana
-    glGetFloatv(GL_COLOR_CLEAR_VALUE, color_actual);
-    //Con glGetFloatv ponemos los 4 valores de la variable global en la nuestra
+    PAG::Renderer::getInstancia().getColorFondo(color_actual);
 
     if (yoffset > 0) {
         std::cout << "Moviste la rueda del raton hacia arriba" << std::endl;
@@ -111,7 +110,7 @@ void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
     //NOTA: Los 6 ifs es porque quiero un bucle de escala de grises. Si simplemente quisiera controlar los
     //colores, bastaría con la función "clamp" vista en teoría.
 
-    glClearColor(rojo, verde, azul, 1.0);
+    PAG::Renderer::getInstancia().cambiarColorFondo(rojo, verde, azul, 1.0);
 
     window_refresh_callback(window);    //Hay que refrescar la ventana para ver el cambio
 }
@@ -161,7 +160,7 @@ int main() {
     glfwMakeContextCurrent(window);
 
     // Ahora inicializamos GLAD.
-    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
+    if (!PAG::Renderer::getInstancia().inicializarGLAD((void*) glfwGetProcAddress)) {
         std::cout << "Fallo en la inicializacion de GLAD" << std::endl;
         glfwDestroyWindow(window); // Liberamos los recursos que ocupaba GLFW.
         window = nullptr;
@@ -170,11 +169,7 @@ int main() {
     }
 
     // Propiedades del contexto 3D construido
-    std::cout << "Grafica en uso: " << glGetString(GL_RENDERER) << std::endl
-            << "Fabricante: " << glGetString(GL_VENDOR) << std::endl
-            << "Version de OpenGL: " << glGetString(GL_VERSION) << std::endl
-            << "OpenGL Shading Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-
+    PAG::Renderer::getInstancia().mostrarPropiedadesContextoGrafico();
 
     //Registramos los callbacks que responderán a los eventos principales
     glfwSetWindowRefreshCallback(window, window_refresh_callback);
@@ -187,10 +182,10 @@ int main() {
     // Estas 2 siguientes sentencias no tienen por qué llamarse cada vez en el ciclo de eventos
 
     // Establecemos un gris medio como color con el que se borrará el frame buffer.
-    glClearColor(0.6, 0.6, 0.6, 1.0);
+    PAG::Renderer::getInstancia().cambiarColorFondo(0.6, 0.6, 0.6, 1.0);
 
     // Le decimos a OpenGL que tenga en cuenta la profundidad a la hora de dibujar.
-    glEnable(GL_DEPTH_TEST);
+    PAG::Renderer::getInstancia().activarPruebaProfundidad();
 
     // Ciclo de eventos de la aplicación. La condición de parada es que la ventana principal deba cerrarse.
     while (!glfwWindowShouldClose(window)) {

@@ -8,7 +8,9 @@ file( GLOB MY_FILES *.cpp ) # Ficheros de la raíz del proyecto
 file( GLOB GLAD_FILES GLAD/src/*.c ) # Código fuente de GLAD
 
 
-add_executable(${PROJECT_NAME} ${MY_FILES} ${GLAD_FILES})
+add_executable(${PROJECT_NAME} ${MY_FILES} ${GLAD_FILES}
+        Renderer.cpp
+        Renderer.h)
 
 #Definimos este directorio para buscar includes
 target_include_directories(${PROJECT_NAME} PUBLIC GLAD/include)
