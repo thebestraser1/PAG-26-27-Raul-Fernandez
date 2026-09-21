@@ -52,15 +52,18 @@ namespace PAG {
      * Función para consultar el objeto único de la clase
      * @return La dirección de memoria del objeto
      */
-    void PAG::GUI::dibujarVentana (Ventanas &v)
+    void PAG::GUI::dibujarVentana (const std::vector<PAG::Ventanas*>& ventanas)
     {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         // Se dibujan los controles de Dear ImGui
 
-        //Dibujado de ventanas
-        v.dibujar();
+        //Dibujado de cada ventana
+        for (PAG::Ventanas* ventana : ventanas) {
+            ventana->dibujar();
+        }
+
 
         // Aquí va el dibujado de la escena con instrucciones OpenGL
         ImGui::Render();

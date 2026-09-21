@@ -10,6 +10,8 @@
 #include "GUI.h"
 
 //Inclusión de ventanas
+#include <vector>
+
 #include "Ventanas.h"
 
 
@@ -189,8 +191,12 @@ int main() {
     // Establecemos un gris medio como color con el que se borrará el frame buffer.
     PAG::Renderer::getInstancia().cambiarColorFondo(0.6, 0.6, 0.6, 1.0);
 
-    //Establecenmos una ventana de mensajes con los mensajes que se van enviando por el cout
-    PAG::VentanaMensajes ventana_mensajes(buffer);
+    //Establecenmos una ventana de mensajes y una ventana de selección de color
+    std::vector<PAG::Ventanas*> ventanas = {
+        new PAG::VentanaMensajes(buffer, 10, 10),
+        new PAG::VentanaSelectorColor(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), 80,20)
+    };
+
 
     // Ciclo de eventos de la aplicación. La condición de parada es que la ventana principal deba cerrarse.
     /**
@@ -205,7 +211,7 @@ int main() {
         // AQUÍ SE DIBUJARÍA LO QUE SE NECESITE
         //-------------------------------------
 
-        PAG::GUI::getInstancia().dibujarVentana(ventana_mensajes);
+        PAG::GUI::getInstancia().dibujarVentana(ventanas);
 
         //-------------------------------------
 

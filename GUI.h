@@ -8,6 +8,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <vector>
 
 #include "Ventanas.h"
 
@@ -26,7 +27,7 @@ namespace PAG {
 
         void finalizacionIMGUI();
 
-        void dibujarVentana(Ventanas &v);
+        void dibujarVentana(const std::vector<PAG::Ventanas*>& ventanas);
 
     };
 } // PAG
