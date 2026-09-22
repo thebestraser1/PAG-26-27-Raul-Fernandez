@@ -3,8 +3,23 @@
 
 namespace PAG {
 
+    /** --------------------------------------------------------
+    *  INFO GLOBAL DE LAS VENTANAS (fruto de la clase abstracta)
+    *  ---------------------------------------------------------
+    */
+
     //Inicialización de la escala de todas las ventanas
-    float PAG::Ventanas::escalaTexto = 1.0;
+    float PAG::Ventanas::_escalaTexto = 1.0;
+
+    /**
+     * Añadir observadores para eventos de ventanas (función con definición global)
+     */
+    void Ventanas::addListener ( Listener *listener )
+    {
+        _listeners.push_back ( listener );
+    }
+
+
 
     /** ---------------------
      *  VENTANA DE MENSAJES
@@ -14,7 +29,7 @@ namespace PAG {
     /**
      * Constructor de ventana de salida de mensajes
      */
-    PAG::VentanaMensajes::VentanaMensajes(std::stringstream &textoInicial, float x, float y): textoSalida(textoInicial) {
+    PAG::VentanaMensajes::VentanaMensajes(std::stringstream &textoInicial, float x, float y): _textoSalida(textoInicial) {
         this->x = x;
         this->y = y;
     }
@@ -30,10 +45,10 @@ namespace PAG {
         {
             if ( ImGui::Begin ( "Mensajes" ) ){ // La ventana está desplegada
 
-                ImGui::SetWindowFontScale ( escalaTexto ); // Escalamos el texto si fuera necesario
+                ImGui::SetWindowFontScale ( _escalaTexto ); // Escalamos el texto si fuera necesario
 
                 //Pintamos el buffer de texto de salida
-                ImGui::TextUnformatted(textoSalida.str().c_str());
+                ImGui::TextUnformatted(_textoSalida.str().c_str());
             }
 
             // Si la ventana no está desplegada, Begin devuelve false
@@ -51,7 +66,7 @@ namespace PAG {
     /**
      * Constructor de ventana de selección de color
      */
-    VentanaSelectorColor::VentanaSelectorColor(GLfloat *colorInicial, float x, float y): colorSeleccionado(colorInicial){
+    VentanaSelectorColor::VentanaSelectorColor(GLfloat *colorInicial, float x, float y): _colorSeleccionado(colorInicial){
         this->x = x;
         this->y = y;
     }
@@ -67,25 +82,54 @@ namespace PAG {
 
         if ( ImGui::Begin ( "Selector de Color" ) ){ // La ventana está desplegada
 
-            ImGui::SetWindowFontScale ( escalaTexto ); // Escalamos el texto si fuera necesario
+            ImGui::SetWindowFontScale ( _escalaTexto ); // Escalamos el texto si fuera necesario
+
+            //Variable para comprobar si ha habido un cambio de color (para avisar a observadores)
+            bool cambio_color = false;
 
             ImGui::Text("Selecciona un color:");
             float w = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.y) * 0.40f;
-            ImGui::ColorPicker3("##Color de paleta", (float*)colorSeleccionado, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+            if (ImGui::ColorPicker3("##Color de paleta", (float*)_colorSeleccionado, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha)) {
+                cambio_color = true;
+            }
             ImGui::SameLine();      //Esto hace que aparezcan en la misma línea
             ImGui::BeginGroup();    //Se crea un mismo grupo (para que esto aparezca en la misma línea)
             ImGui::Text("Color Actual");
-            ImGui::ColorButton("##ActualColor", *(ImVec4*)colorSeleccionado, ImGuiColorEditFlags_NoAlpha, ImVec2(100, 50));
+            ImGui::ColorButton("##ActualColor", *(ImVec4*)_colorSeleccionado, ImGuiColorEditFlags_NoAlpha, ImVec2(100, 50));
             ImGui::EndGroup();
-            ImGui::ColorEdit4("HSV como RGB##1", (float*)colorSeleccionado, ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_Float);
-            ImGui::ColorEdit4("HSV como HSV##1", (float*)colorSeleccionado, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_InputHSV | ImGuiColorEditFlags_Float);
-            ImGui::ColorEdit4("Hexadecimal", (float*)colorSeleccionado, ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_NoSmallPreview);
+            if (ImGui::ColorEdit4("HSV como RGB##1", (float*)_colorSeleccionado, ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_Float)) {
+                cambio_color=true;
+            }
+            if (ImGui::ColorEdit4("HSV como HSV##1", (float*)_colorSeleccionado, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_InputHSV | ImGuiColorEditFlags_Float)) {
+                cambio_color=true;
+            }
+            if (ImGui::ColorEdit4("Hexadecimal", (float*)_colorSeleccionado, ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_NoSmallPreview)) {
+                cambio_color=true;
+            }
+
+            if (cambio_color) {
+                warn_listeners();   //Avisamos a observadores si el color cambió
+            }
 
         }
 
         // Si la ventana no está desplegada, Begin devuelve false
         ImGui::End ();
     }
+
+
+    /**
+     * Avisar a los observadores de un cambio en la ventana de selección de color
+     */
+    void VentanaSelectorColor::warn_listeners()
+    {
+        for (Listener* listener : _listeners) {
+            listener->wakeUp(TipoVentana::V_Selecc_Color, _colorSeleccionado);
+        }
+    }
+
+
+
 
 
     /** -----------------------------
@@ -111,9 +155,9 @@ namespace PAG {
 
         if ( ImGui::Begin ( "Selector de Escala" ) ){ // La ventana está desplegada
 
-            ImGui::SetWindowFontScale ( escalaTexto ); // Escalamos el texto si fuera necesario
+            ImGui::SetWindowFontScale ( _escalaTexto ); // Escalamos el texto si fuera necesario
 
-            ImGui::DragFloat("Escala de fuente (0-4)", &escalaTexto, 0.005f, 0.0f, 4.0f, "%.3f");
+            ImGui::DragFloat("Escala de fuente (0-4)", &_escalaTexto, 0.005f, 0.0f, 4.0f, "%.3f");
 
         }
 

@@ -16,6 +16,7 @@ add_executable(${PROJECT_NAME} ${MY_FILES} ${GLAD_FILES} ${IMGUI_FILES}
         GUI.h
         Ventanas.h
         Ventanas.cpp
+        Listener.h
 )
 
 #Definimos este directorio para buscar includes

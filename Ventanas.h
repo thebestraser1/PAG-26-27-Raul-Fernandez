@@ -1,7 +1,3 @@
-//
-// Created by rferr on 21/09/2026.
-//
-
 #ifndef PRACTICA1_VENTANA_H
 #define PRACTICA1_VENTANA_H
 
@@ -9,6 +5,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <sstream>
+#include <vector>
+#include "Listener.h"
 #include <GL/gl.h>
 
 namespace PAG {
@@ -20,9 +18,11 @@ namespace PAG {
     protected:
         float x = 10;
         float y = 10;
-        static float escalaTexto;   //Compartida por todas las ventanas (para mantener consistencia)
+        static float _escalaTexto;           //Compartida por todas las ventanas (para mantener consistencia)
+        std::vector<Listener*> _listeners;  //Observadores que se suscriben a los cambios producidos en las ventanas
     public:
         virtual ~Ventanas() = default;
+        void addListener ( Listener *listener );
         virtual void dibujar() = 0;     //Indico que es un virtual puro (se ha de sobre-escribir esta función)
     };
 
@@ -32,7 +32,7 @@ namespace PAG {
      */
     class VentanaMensajes : public Ventanas{
     private:
-        std::stringstream &textoSalida;     //Importante por referencia para que se vaya actualizando
+        std::stringstream &_textoSalida;     //Importante por referencia para que se vaya actualizando
     public:
         VentanaMensajes(std::stringstream &textoInicial, float x, float y);
         void dibujar() override;
@@ -40,19 +40,20 @@ namespace PAG {
 
 
     /**
-     * Ventana que muestra un selector de color para el fondo de la aplicación
+     * Ventana que muestra un selector de color para cambiar el fondo de la aplicación
      */
     class VentanaSelectorColor : public Ventanas{
     private:
-        GLfloat *colorSeleccionado;
+        GLfloat *_colorSeleccionado;
     public:
         VentanaSelectorColor(GLfloat *colorInicial, float x, float y);
         void dibujar() override;
+        void warn_listeners();
     };
 
 
     /**
-     * Ventana que muestra un selector de color para el fondo de la aplicación
+     * Ventana que muestra un selector de escala para el tamaño de fuente de las ventanas
      */
     class VentanaSelectorEscala : public Ventanas{
     private:

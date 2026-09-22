@@ -2,6 +2,9 @@
 #define PRACTICA1_RENDERER_H
 
 #include <iostream>
+#include <cstdarg>
+
+#include "Listener.h"
 #include "glad/glad.h"
 
 /**
@@ -19,15 +22,15 @@ namespace PAG {
      * aplicando el patrón de diseño Singleton. Está pensada para que las
      * funciones callback hagan llamadas a sus métodos
      */
-    class Renderer {
+    class Renderer : public Listener{
     private:
         static Renderer *instancia;
-        GLfloat colorFondo[4] = {0.6f, 0.6f, 0.6f, 1.0f}; // valor inicial por defecto
+        GLfloat _colorFondo[4] = {0,0,0,0};     //valor inicial por defecto
 
         Renderer(); //Constructor privado (Singletone)
 
     public:
-        virtual ~Renderer();
+        ~Renderer() override;
 
         static Renderer &getInstancia();
 
@@ -41,11 +44,11 @@ namespace PAG {
 
         void redimensionar(int width, int height);
 
-        void cambiarColorFondo(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
+        void cambiarColorFondo(GLfloat* nuevoColor);
 
         GLfloat* getColorFondo();
 
-        float *getEscalaTexto();
+        void wakeUp(TipoVentana t, ...) override;
 
 
     };

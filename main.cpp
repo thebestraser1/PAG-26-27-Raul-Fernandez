@@ -189,16 +189,23 @@ int main() {
 
 
     // Inicialización de escena
-    // Establecemos un gris medio como color con el que se borrará el frame buffer.
-    GLfloat *colorFondo = PAG::Renderer::getInstancia().getColorFondo();
-    PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo[0], colorFondo[1], colorFondo[2], colorFondo[3]);
+    // Establecemos un gris medio como color de fondo.
+    GLfloat colorFondo[4] = {0.6f, 0.6f, 0.6f, 1.0f};
+    PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo);
 
-    //Establecenmos una ventana de mensajes y una ventana de selección de color
+    //Establecenmos una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
+    PAG::VentanaMensajes *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 10);
+    PAG::VentanaSelectorColor *ventana_color = new PAG::VentanaSelectorColor(colorFondo, 280,40);
+    PAG::VentanaSelectorEscala *ventana_escala = new PAG::VentanaSelectorEscala(100, 400);
+
     std::vector<PAG::Ventanas*> ventanas = {
-        new PAG::VentanaMensajes(buffer, 10, 10),
-        new PAG::VentanaSelectorColor(colorFondo, 280,40),
-        new PAG::VentanaSelectorEscala(100, 400)
+        ventana_mensajes,
+        ventana_color,
+        ventana_escala
     };
+
+    //Añadimos los observadores de esas ventanas (en este caso solo Renderer)
+    ventana_color->addListener(&PAG::Renderer::getInstancia());
 
 
     // Ciclo de eventos de la aplicación. La condición de parada es que la ventana principal deba cerrarse.
@@ -215,9 +222,6 @@ int main() {
         //-------------------------------------
 
         PAG::GUI::getInstancia().dibujarVentanas(ventanas);
-
-        //Si cambió el color de fondo, deberá reflejarse
-        PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo[0], colorFondo[1], colorFondo[2], colorFondo[3]);
 
         //-------------------------------------
 
