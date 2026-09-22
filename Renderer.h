@@ -23,7 +23,6 @@ namespace PAG {
     private:
         static Renderer *instancia;
         GLfloat colorFondo[4] = {0.6f, 0.6f, 0.6f, 1.0f}; // valor inicial por defecto
-        GLfloat escalaTexto = 1.0f;
 
         Renderer(); //Constructor privado (Singletone)
 

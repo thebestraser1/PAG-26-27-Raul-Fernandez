@@ -3,6 +3,9 @@
 
 namespace PAG {
 
+    //Inicialización de la escala de todas las ventanas
+    float PAG::Ventanas::escalaTexto = 1.0;
+
     /** ---------------------
      *  VENTANA DE MENSAJES
      *  ---------------------
@@ -11,10 +14,9 @@ namespace PAG {
     /**
      * Constructor de ventana de salida de mensajes
      */
-    VentanaMensajes::VentanaMensajes(std::stringstream &textoInicial, float x, float y, float *escalaTexto): textoSalida(textoInicial) {
+    PAG::VentanaMensajes::VentanaMensajes(std::stringstream &textoInicial, float x, float y): textoSalida(textoInicial) {
         this->x = x;
         this->y = y;
-        this->escalaTexto = escalaTexto;
     }
 
     /**
@@ -28,7 +30,7 @@ namespace PAG {
         {
             if ( ImGui::Begin ( "Mensajes" ) ){ // La ventana está desplegada
 
-                ImGui::SetWindowFontScale ( *escalaTexto ); // Escalamos el texto si fuera necesario
+                ImGui::SetWindowFontScale ( escalaTexto ); // Escalamos el texto si fuera necesario
 
                 //Pintamos el buffer de texto de salida
                 ImGui::TextUnformatted(textoSalida.str().c_str());
@@ -49,10 +51,9 @@ namespace PAG {
     /**
      * Constructor de ventana de selección de color
      */
-    VentanaSelectorColor::VentanaSelectorColor(GLfloat *colorInicial, float x, float y, float *escalaTexto): colorSeleccionado(colorInicial){
+    VentanaSelectorColor::VentanaSelectorColor(GLfloat *colorInicial, float x, float y): colorSeleccionado(colorInicial){
         this->x = x;
         this->y = y;
-        this->escalaTexto = escalaTexto;
     }
 
     /**
@@ -66,7 +67,7 @@ namespace PAG {
 
         if ( ImGui::Begin ( "Selector de Color" ) ){ // La ventana está desplegada
 
-            ImGui::SetWindowFontScale ( *escalaTexto ); // Escalamos el texto si fuera necesario
+            ImGui::SetWindowFontScale ( escalaTexto ); // Escalamos el texto si fuera necesario
 
             ImGui::Text("Selecciona un color:");
             float w = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.y) * 0.40f;
@@ -95,10 +96,9 @@ namespace PAG {
     /**
      * Constructor de ventana de selección de escala
      */
-    VentanaSelectorEscala::VentanaSelectorEscala(float *escalaSliderInicial, float x, float y, float *escalaTexto): escalaSlider(escalaSliderInicial){
+    VentanaSelectorEscala::VentanaSelectorEscala(float x, float y){
         this->x = x;
         this->y = y;
-        this->escalaTexto = escalaTexto;
     }
 
     /**
@@ -111,9 +111,9 @@ namespace PAG {
 
         if ( ImGui::Begin ( "Selector de Escala" ) ){ // La ventana está desplegada
 
-            ImGui::SetWindowFontScale ( *escalaTexto ); // Escalamos el texto si fuera necesario
+            ImGui::SetWindowFontScale ( escalaTexto ); // Escalamos el texto si fuera necesario
 
-            ImGui::DragFloat("Escala de fuente (0-4)", escalaSlider, 0.005f, 0.0f, 4.0f, "%.3f");
+            ImGui::DragFloat("Escala de fuente (0-4)", &escalaTexto, 0.005f, 0.0f, 4.0f, "%.3f");
 
         }
 

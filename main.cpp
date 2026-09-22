@@ -193,14 +193,11 @@ int main() {
     GLfloat *colorFondo = PAG::Renderer::getInstancia().getColorFondo();
     PAG::Renderer::getInstancia().cambiarColorFondo(colorFondo[0], colorFondo[1], colorFondo[2], colorFondo[3]);
 
-    //Establecemos escala del texto
-    GLfloat *escala = PAG::Renderer::getInstancia().getEscalaTexto();
-
     //Establecenmos una ventana de mensajes y una ventana de selección de color
     std::vector<PAG::Ventanas*> ventanas = {
-        new PAG::VentanaMensajes(buffer, 10, 10, escala),
-        new PAG::VentanaSelectorColor(colorFondo, 280,40, escala),
-        new PAG::VentanaSelectorEscala(escala, 100, 400, escala)
+        new PAG::VentanaMensajes(buffer, 10, 10),
+        new PAG::VentanaSelectorColor(colorFondo, 280,40),
+        new PAG::VentanaSelectorEscala(100, 400)
     };
 
 

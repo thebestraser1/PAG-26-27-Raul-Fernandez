@@ -67,14 +67,6 @@ namespace PAG {
         return colorFondo;
     }
 
-    /**
-     * Función OpenGL que devuelve el tamaño de escala del texto
-     */
-    GLfloat* Renderer::getEscalaTexto ()
-    {
-        return &escalaTexto;
-    }
-
 
     /**
      * Función OpenGL para refrescar la ventana (encapsula la parte de OpenGL)
