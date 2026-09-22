@@ -1,5 +1,12 @@
 # PAG 26-27 Raúl Fernández Rivilla
 
+## Índice
+
+- [Práctica 1: Introducción. Inclusión de un callback para la rueda del ratón y ejercicio de reflexión.](#práctica-1)
+
+- [Práctica 2: Refactorización y desacoplamiento de código. Incorporación de ImGui y patrones **_Singletone_ y Observador**.](#práctica-2)
+
+
 ## Práctica 1
 
 ### Callback de cambio de color mediante "scroll" del ratón
