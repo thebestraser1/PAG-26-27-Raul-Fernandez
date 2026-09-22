@@ -106,4 +106,4 @@ unívoca al existir tan solo una instancia de esta clase).
 En la práctica 2 se ha optado por la segunda solución. Por tanto, entiendo que en algún punto (alguna práctica futura) 
 la función de refresco será dependiente de la instancia de ``Renderer``. De hecho, revisando la práctica 2, 
 se puede considerar que ``refrescar_ventana()`` ha de hacer uso del atributo ``color_fondo`` propio de la instancia de ``Renderer``
-para cambiar el color del fondo en cada refresco (llamado por los observables).
+para cambiar el color del fondo en cada refresco (llamado por los observables: en este caso las ventanas).

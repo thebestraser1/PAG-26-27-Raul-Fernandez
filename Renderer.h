@@ -25,7 +25,7 @@ namespace PAG {
     class Renderer : public Listener{
     private:
         static Renderer *instancia;
-        GLfloat _colorFondo[4] = {0,0,0,0};     //valor inicial por defecto
+        GLfloat *_colorFondo;
 
         Renderer(); //Constructor privado (Singletone)
 
@@ -43,8 +43,6 @@ namespace PAG {
         void refrescar();
 
         void redimensionar(int width, int height);
-
-        void cambiarColorFondo(GLfloat* nuevoColor);
 
         GLfloat* getColorFondo();
 

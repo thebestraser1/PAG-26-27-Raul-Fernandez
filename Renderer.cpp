@@ -4,12 +4,15 @@ namespace PAG {
     //Inicialización de los atributos
     PAG::Renderer *PAG::Renderer::instancia = nullptr;
 
-    //Constructor por defecto
     Renderer::Renderer() {
+        //Inicizalización de variables
+        _colorFondo = new GLfloat[4]{0.6f, 0.6f, 0.6f, 1.0f};
     }
 
-    //Destructor por defecto
     Renderer::~Renderer() {
+        //Liberamos punteros
+        delete[] _colorFondo;
+        _colorFondo = nullptr;
     }
 
 
@@ -69,6 +72,7 @@ namespace PAG {
      * Función OpenGL para refrescar la ventana (encapsula la parte de OpenGL)
      */
     void Renderer::refrescar() {
+        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Limpieza del buffer back
     }
 
@@ -79,28 +83,20 @@ namespace PAG {
         glViewport(0, 0, width, height);
     }
 
-    /**
-     * Función OpenGL para cambiar el color del fondo
-     */
-    void Renderer::cambiarColorFondo(GLfloat* nuevoColor) {
-        if (!nuevoColor) return;    //Por si viniera nulo...
-
-        glClearColor(nuevoColor[0], nuevoColor[1], nuevoColor[2], nuevoColor[3]);
-
-        _colorFondo[0] = nuevoColor[0];
-        _colorFondo[1] = nuevoColor[1];
-        _colorFondo[2] = nuevoColor[2];
-        _colorFondo[3] = nuevoColor[3];
-    }
-
 
     void Renderer::wakeUp(TipoVentana t, ...) {
         switch (t) {
             case TipoVentana::V_Selecc_Color: {
                 std::va_list args;
                 va_start(args, t);
-                if (GLfloat* nuevo_color = va_arg(args, GLfloat*)) {
-                    cambiarColorFondo(nuevo_color);
+                GLfloat* nuevoColor = va_arg(args, GLfloat*);
+                //En el guión aparece vec3 de GLM. De momento lo dejo así para que no haya leak de memoria
+                if (nuevoColor) {
+                    _colorFondo[0] = nuevoColor[0];
+                    _colorFondo[1] = nuevoColor[1];
+                    _colorFondo[2] = nuevoColor[2];
+                    _colorFondo[3] = nuevoColor[3];
+                    refrescar();
                 }
                 va_end(args);
                 break;
