@@ -61,3 +61,49 @@ classDiagram
         }
     }
 ```
+
+
+### Corrección tras la práctica 1
+
+Al pensar que la función ``refrescar_ventana`` tenía el siguiente cuerpo:
+
+```c++
+    void Renderer::refrescar() {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     
+        glfwSwapBuffers(window);
+        std::cout << "Callback de refresco llamado" << std::endl;
+    }
+```
+
+pensé que al no depender de ningún objeto podría implementarse directamente como una función estática. Sin embargo,
+si se piensa en separar responsabilidades, la primera sentencia es de OpenGL (GLAD) y la segunda, de GLFW.
+
+Por tanto, el método refrescar perteneciente a la clase ``Renderer`` ha de tener (y así es en la práctica 2) la siguiente
+forma:
+
+```c++
+    void Renderer::refrescar() {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     
+    }
+```
+
+Esto ya no puede adjuntarse al _Callback_ (ya que nos faltan sentencias en esta función). Por tanto, debemos incorporar esta
+responsabilidad (de OpenGL) a un _Callback_ "padre". Esto es:
+
+```c++
+    void callback_padre() {
+        //Aquí iría la función de refresco OpenGL (de Renderer)    
+        glfwSwapBuffers(window);
+        std::cout << "Callback de refresco llamado" << std::endl;
+    }
+```
+
+Así, para incluir la función de refresco de Renderer hay 2 posibilidades:
+- Hacerla _static_ (en caso de que la función de refresco **no esté vinculada al estado del objeto ``Renderer``**).
+- Implementar el patrón _Singletone_ que permitiría un único objeto ``Renderer`` con esta función en su interior (que sería
+unívoca al existir tan solo una instancia de esta clase).
+
+En la práctica 2 se ha optado por la segunda solución. Por tanto, entiendo que en algún punto (alguna práctica futura) 
+la función de refresco será dependiente de la instancia de ``Renderer``. De hecho, revisando la práctica 2, 
+se puede considerar que ``refrescar_ventana()`` ha de hacer uso del atributo ``color_fondo`` propio de la instancia de ``Renderer``
+para cambiar el color del fondo en cada refresco (llamado por los observables).

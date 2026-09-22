@@ -212,8 +212,7 @@ int main() {
     /**
      * Esta función antes era un callback a glfwSetWindowRefreshCallback. Sin embargo, esto actualiza
      * la ventana cuando GLFW lo considera necesario. Por el caracter interactivo de ImGui, lo suyo es
-     * incorporar esta función al ciclo de eventos (si no, falla) (creo que luego con el patrón observador
-     * podemos hacer que solo cuando haya un cambio se llame a esto...)
+     * incorporar esta función al ciclo de eventos (si no, falla)
      */
     while (!glfwWindowShouldClose(window)) {
         PAG::Renderer::getInstancia().refrescar();      //Encapsulación de OpenGL
