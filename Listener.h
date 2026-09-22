@@ -22,8 +22,8 @@ namespace PAG {
     public:
         Listener () = default;
         virtual ~Listener () = default;
-        // Ventanas es una clase abstracta para identificar
-        // el tipo de ventana de la interfaz
+        // TipoVentana es un enum para identificar el tipo de ventana
+        // de la interfaz que quiere despertarme
         virtual void wakeUp ( TipoVentana t, ... ) = 0;
 
     };

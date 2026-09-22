@@ -73,7 +73,7 @@ namespace PAG {
      */
     void Renderer::refrescar() {
         glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Limpieza del buffer back
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     //Pinta el Buffer trasero
     }
 
     /**

@@ -315,9 +315,11 @@ ciclo de eventos, mostrarlas. En esta práctica añadí también una ventana de 
 
     //Ciclo de eventos
     while (!glfwWindowShouldClose(window)) {
+        
+        PAG::Renderer::getInstancia().refrescar();
 
-        // DIBUJADO DE VENTANAS (ellas refrescarán el Renderer con el patrón observador) --> Siguiente sección de README.md
-        //----------------------------------------------------------------------------
+        // DIBUJADO DE VENTANAS 
+        //---------------------
 
         PAG::GUI::getInstancia().dibujarVentanas(ventanas);
         
@@ -386,15 +388,205 @@ classDiagram
 _NOTA: No he introducido todas las variables y métodos de las clases para hacer un diagrama más comprensible._
 
 
+### Implementación del patrón observador
+
+Si se observa el **ciclo de eventos** anterior, se observa la siguiente sentencia:
+
+```c++
+PAG::Renderer::getInstancia().refrescar();
+```
+
+Este método se encarga de hacer efectivos los cambios que deban producirse en pantalla. Para ello, pinta el buffer trasero
+con todas las propiedades reflejadas por las variables de la clase **Renderer**. Como hasta ahora solo tenemos el color,
+lo hace de la siguiente manera:
+
+```c++
+    void Renderer::refrescar() 
+    {
+        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     //Pinta el Buffer trasero
+    }
+```
+
+En un futuro, se tendrán aquí muchos más parámetros para controlar la escena. Por tanto, tenemos un problema: esta llamada
+está haciéndose en cada iteración del bucle de eventos sin que quizá sea necesario. Puede que el color no cambie y sin embargo
+se "repinte" la escena. La solución a esto es el **patrón observador**.
+
+Se ha creado una interfaz `Listener` de la que "heredarán" todas aquellas clases que deban responder ante cambios de una serie
+de entidades observables. En este caso hay que entender quien es el observador y quien el observable.
+
+La ventana de color (que es la que nos compete en este caso), hace un cambio de color. Este será el "notificador" o el objeto
+**observable**. La clase `Renderer` es la que tiene que observar (escuchar) si ha cambiado el color seleccionado. Por tanto,
+esta es la clase **observadora**.
+
+De esta manera, `Renderer` debe heredar de `Listener`. Los `Listener` (como son llamados por ventanas) se "despertarán" en 
+cuanto alguna ventana lo requiera, por tanto la implementación de Listener es la siguiente:
+
+```c++
+    /**
+     * Enumerado de tipo de ventanas (de Ventanas.h)
+     *
+     * Ellas usan este enumerado para avisar de un evento y que el Listener sepa quién lo produjo
+     */
+    enum TipoVentana {
+        V_Mensajes,
+        V_Selecc_Color,
+        V_Selecc_Escala
+    };
+
+    class Listener {
+    public:
+        Listener () = default;
+        virtual ~Listener () = default;
+        // TipoVentana es un enum para identificar el tipo de ventana
+        // de la interfaz que quiere despertarme
+        virtual void wakeUp ( TipoVentana t, ... ) = 0;
+
+    };
+```
+
+Así, Renderer reimplementará el método `wakeUp`. En este caso, solo tenemos que discernir el caso en el que la ventana de selección
+de color haga cambios:
+
+```c++
+    void Renderer::wakeUp(TipoVentana t, ...) {
+        switch (t) {
+            case TipoVentana::V_Selecc_Color: {
+                std::va_list args;
+                va_start(args, t);
+                GLfloat* nuevoColor = va_arg(args, GLfloat*);   //Se espera que la ventana V_Selecc_Color traiga consigo un color de tipo GLFloat*
+                //En el guión aparece vec3 de GLM. De momento lo dejo así para que no haya leak de memoria
+                if (nuevoColor) {
+                    _colorFondo[0] = nuevoColor[0];
+                    _colorFondo[1] = nuevoColor[1];
+                    _colorFondo[2] = nuevoColor[2];
+                    _colorFondo[3] = nuevoColor[3];
+                    refrescar();    //<------------ AQUÍ ES DONDE SE REFRESCA (todo esto viene de dibujar ventanas) por tanto el glfwSwapBuffers(window) se hace después
+                }
+                va_end(args);
+                break;
+            }
+            default: ;
+                // Procesar el resto de tipos de ventana
+        }
+        // Terminar cualquier otro procesamiento que sea necesario
+    }
+```
+
+Así, solo se llama cuando es necesario. Lo único que nos queda es que la ventana de color invoque a `wakeUp`. Para ello,
+en la clase abstracta Ventanas se ha añadido un vector de `Listeners` que se rellenará con todas las entidades que quieran
+escuchar cambios (en este caso solo Renderer):
 
 
+```c++
+    /**
+     * Clase abstracta para establecer una jerarquía entre el tipo de ventanas
+     */
+    class Ventanas {
+    protected:
+        float x = 10;                     
+        float y = 10;
+        static float _escalaTexto;         
+        std::vector<Listener*> _listeners;  //Observadores que se suscriben a los cambios producidos en las ventanas
+    public:
+        virtual ~Ventanas() = default;
+        void addListener ( Listener *listener );    //Método para añadir observadores
+        virtual void dibujar() = 0;   
+    };
+```
+
+De esta manera, todas las ventanas tienen acceso a los `_listeners`. Ahora, quien quiera puede avisarlos cuando lo crea
+conveniente. En el caso de la ventana de selección de color, se hace de la siguiente manera:
+
+```c++
+    void VentanaSelectorColor::dibujar() {
+        ...
+                if (ImGui::ColorPicker3("##Color de paleta", (float*)_colorSeleccionado, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha)) {
+                    cambio_color = true;
+                }
+
+        ...
+                if (cambio_color) {
+                    warn_listeners();   //Avisamos a observadores si el color cambió
+                }
+        ...
+    }
+
+    void VentanaSelectorColor::warn_listeners()
+    {
+        for (Listener* listener : _listeners) {
+            listener->wakeUp(TipoVentana::V_Selecc_Color, _colorSeleccionado);  //<---- Anuncia el tipo de ventana y otorga la variable que necesita el observador
+        }
+    }
+```
+
+Así, la única entidad que se actualiza en cada iteración del ciclo de eventos son las ventanas de ImGui (por su naturaleza
+interactiva). Luego, si se producen cambios en estas ventanas se renderiza la escena de nuevo actualizando las propiedades
+que cambiaron en la clase `Renderer`. El diagrama que nos queda, es el siguiente:
 
 
+```mermaid
+classDiagram
+    namespace PAG {
 
+        class Renderer {
+            Implementa llamadas de OpenGL
+        }
 
+        class GUI { 
+            Usa la biblioteca ImGui
+        }
 
+        class Ventanas {
+            <<abstracta>>
+            #float x
+            #float y
+            #static float _escalaTexto
+            +virtual ~Ventanas()
+            +virtual void dibujar()*
+        }
 
+        class VentanaMensajes {
+            -stringstream& _textoSalida
+            +VentanaMensajes(stringstream& textoInicial, float x, float y)
+            +void dibujar() override
+        }
 
+        class VentanaSelectorColor {
+            -GLfloat *_colorSeleccionado
+            +VentanaSelectorColor(GLfloat* colorFondo, float x, float y)
+            +void warn_listeners();
+            +void dibujar() override
+        }
+
+        class VentanaSelectorEscala {
+            +VentanaSelectorEscala(float x, float y)
+            +void dibujar() override
+        }
+
+        class Listener {
+            +virtual void wakeUp ( TipoVentana t, ... ) = 0;
+        }
+    }
+
+    class main {
+        Módulo main.cpp que lleva GLFW
+    }
+
+    Ventanas --> "0..*" Listener : almacena
+
+    Ventanas <|-- VentanaMensajes
+    Ventanas <|-- VentanaSelectorColor
+    Ventanas <|-- VentanaSelectorEscala
+
+    GUI "1" --> "0..*" Ventanas : dibuja
+    
+    VentanaSelectorColor --> Listener : los despierta ante cambio
+
+    main --> Renderer : usa getInstancia()
+    main --> GUI : usa getInstancia()
+    Renderer --|> Listener : implementa wakeUp()
+```
 
 
 
