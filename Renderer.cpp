@@ -1,7 +1,7 @@
 #include "Renderer.h"
 
 namespace PAG {
-    //Inicialización de los atributos
+    //Inicialización de la instancia única a nulo
     PAG::Renderer *PAG::Renderer::instancia = nullptr;
 
     Renderer::Renderer() {

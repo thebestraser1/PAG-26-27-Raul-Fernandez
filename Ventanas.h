@@ -16,9 +16,9 @@ namespace PAG {
      */
     class Ventanas {
     protected:
-        float x = 10;
+        float x = 10;                       //Posiciones x,y de las ventanas
         float y = 10;
-        static float _escalaTexto;           //Compartida por todas las ventanas (para mantener consistencia)
+        static float _escalaTexto;          //Compartida por todas las ventanas (para mantener consistencia)
         std::vector<Listener*> _listeners;  //Observadores que se suscriben a los cambios producidos en las ventanas
     public:
         virtual ~Ventanas() = default;

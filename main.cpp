@@ -83,8 +83,8 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
     GLfloat VARIACION = (GLfloat) yoffset / 10;     //Calculo la variación. En este caso (-0.1 o 0.1)
 
-    GLfloat color_actual[4]; //Creamos un vector de 4 para el color actual de la ventana
-    PAG::Renderer::getInstancia().getColorFondo(color_actual);
+    //Creamos un vector de 4 para el color actual de la ventana
+    GLfloat *color_actual = PAG::Renderer::getInstancia().getColorFondo();
 
     if (yoffset > 0) {
         std::cout << "Moviste la rueda del raton hacia arriba" << std::endl;

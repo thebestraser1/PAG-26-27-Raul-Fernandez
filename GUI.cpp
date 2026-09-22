@@ -64,7 +64,6 @@ namespace PAG {
             ventana->dibujar();
         }
 
-
         // Aquí va el dibujado de la escena con instrucciones OpenGL
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData ( ImGui::GetDrawData() );
