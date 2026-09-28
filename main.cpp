@@ -209,12 +209,16 @@ int main() {
     // Inicialización de escena
 
     //Creación de shaderProgram y modelo
+    bool shadersCreados = true;
     try {
         PAG::Renderer::getInstancia().creaShaderProgram();
         PAG::Renderer::getInstancia().creaModelo();
     }catch (std::exception &e) {
-        std::cout << "\n-------------------\nEXCEPCIÓN: " << e.what() << "\n-------------------\n" << std::endl;
+        std::cout << "EXCEPCIÓN: " << e.what() << "" << std::endl;
+        shadersCreados = false;
     }
+
+    if (shadersCreados) std::cout << "Shader Program procesado satisfactoriamente" << std::endl;
 
     //Establecemos las ventanas: una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 10);

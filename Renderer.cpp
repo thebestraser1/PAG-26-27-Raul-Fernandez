@@ -70,80 +70,6 @@ namespace PAG {
 
 
     /**
-     * Función para establecer una referencia a las funciones OpenGL del driver gráfico
-     *
-     * @var ubicacionFunciones es un puntero a una función genérica. Después se castea a GLADloadproc
-     */
-    bool Renderer::inicializarGLAD(void *ubicacionFunciones) {
-        return gladLoadGLLoader((GLADloadproc) ubicacionFunciones); //Casteo dentro
-    }
-
-
-    /**
-     * Mostrar propiedades del contexto gráfico
-     */
-    void Renderer::mostrarPropiedadesContextoGrafico() {
-        std::cout << "Grafica en uso: " << glGetString(GL_RENDERER) << std::endl
-                << "Fabricante: " << glGetString(GL_VENDOR) << std::endl
-                << "Version de OpenGL: " << glGetString(GL_VERSION) << std::endl
-                << "OpenGL Shading Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-    }
-
-
-    /**
-     * Función para activar la prueba de profundidad (Z-buffering). Esto
-     * determina qué superficies son visibles y cuáles están ocultas
-     */
-    void Renderer::inicializarOpenGL() {
-        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_MULTISAMPLE);
-    }
-
-
-    /**
-     * Función para crear, compilar y enlazar el shader program
-     * @note No se incluye ninguna comprobación de errores
-     */
-    void PAG::Renderer::creaShaderProgram() {
-        try {
-
-            //Cargamos ficheros de shaders (vértices y fragmento)
-            std::string miVertexShader = cargarFichero("pag03-vs.glsl");
-            std::string miFragmentShader = cargarFichero("pag03-fs.glsl");
-
-            //Creamos y compilamos shaders de vértice
-            idVS = glCreateShader(GL_VERTEX_SHADER);
-            if (idVS == 0) {throw std::invalid_argument("Falló la sentencia glCreateShader para el shader de vertices");}
-            const GLchar *fuenteVS = miVertexShader.c_str();
-            glShaderSource(idVS, 1, &fuenteVS, nullptr);
-            glCompileShader(idVS);
-            revisarFallosCompilacion(idVS, "vertices");
-
-            //Creamos y compilamos shaders de fragmento
-            idFS = glCreateShader(GL_FRAGMENT_SHADER);
-            if (idFS == 0) {throw std::invalid_argument("Falló la sentencia glCreateShader para el shader de fragmentos");}
-            const GLchar *fuenteFS = miFragmentShader.c_str();
-            glShaderSource(idFS, 1, &fuenteFS, nullptr);
-            glCompileShader(idFS);
-            revisarFallosCompilacion(idFS, "fragmentos");
-
-            idSP = glCreateProgram();
-            if (idSP == 0) {throw std::invalid_argument("Falló la sentencia glCreateProgram, por lo que no se pudo crear el Shader Program");}
-            glAttachShader(idSP, idVS);
-            glAttachShader(idSP, idFS);
-            glLinkProgram(idSP);
-            revisarFallosEnlazadoPrograma(idSP);
-
-        } catch (std::invalid_argument &e) {
-            throw std::invalid_argument(
-                std::string("No se pudo cargar el Shader Program\nRazon: ") + e.what());
-        }
-    }
-
-
-
-    /**
      * Función que lanza excepción en caso de que haya habido algún tipo de fallo con la compilación de shaders
      * @param id Id a revisar
      * @param tipoShader String identificativo para la excepción
@@ -203,9 +129,80 @@ namespace PAG {
                 delete[] mensajeFormatoC;
                 mensajeFormatoC = nullptr;
 
-                throw std::runtime_error("Fallo de compilación de programa\nMotivo: " + mensaje);
+                throw std::runtime_error("Fallo de enlazado del Program Shader\nMotivo: " + mensaje);
             }
-            throw std::runtime_error("Fallo de compilación de programa");
+            throw std::runtime_error("Fallo de enlazado del Program Shader");
+        }
+    }
+
+    /**
+     * Función para establecer una referencia a las funciones OpenGL del driver gráfico
+     *
+     * @var ubicacionFunciones es un puntero a una función genérica. Después se castea a GLADloadproc
+     */
+    bool Renderer::inicializarGLAD(void *ubicacionFunciones) {
+        return gladLoadGLLoader((GLADloadproc) ubicacionFunciones); //Casteo dentro
+    }
+
+
+    /**
+     * Mostrar propiedades del contexto gráfico
+     */
+    void Renderer::mostrarPropiedadesContextoGrafico() {
+        std::cout << "Grafica en uso: " << glGetString(GL_RENDERER) << std::endl
+                << "Fabricante: " << glGetString(GL_VENDOR) << std::endl
+                << "Version de OpenGL: " << glGetString(GL_VERSION) << std::endl
+                << "OpenGL Shading Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    }
+
+
+    /**
+     * Función para activar la prueba de profundidad (Z-buffering). Esto
+     * determina qué superficies son visibles y cuáles están ocultas
+     */
+    void Renderer::inicializarOpenGL() {
+        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_MULTISAMPLE);
+    }
+
+
+    /**
+     * Función para crear, compilar y enlazar el shader program
+     */
+    void PAG::Renderer::creaShaderProgram() {
+        try {
+
+            //Cargamos ficheros de shaders (vértices y fragmento)
+            std::string miVertexShader = cargarFichero("pag03-vs.glsl");
+            std::string miFragmentShader = cargarFichero("pag03-fs.glsl");
+
+            //Creamos y compilamos shaders de vértice
+            idVS = glCreateShader(GL_VERTEX_SHADER);
+            if (idVS == 0) {throw std::invalid_argument("Falló la sentencia glCreateShader para el shader de vertices");}
+            const GLchar *fuenteVS = miVertexShader.c_str();
+            glShaderSource(idVS, 1, &fuenteVS, nullptr);
+            glCompileShader(idVS);
+            revisarFallosCompilacion(idVS, "vertices");
+
+            //Creamos y compilamos shaders de fragmento
+            idFS = glCreateShader(GL_FRAGMENT_SHADER);
+            if (idFS == 0) {throw std::invalid_argument("Falló la sentencia glCreateShader para el shader de fragmentos");}
+            const GLchar *fuenteFS = miFragmentShader.c_str();
+            glShaderSource(idFS, 1, &fuenteFS, nullptr);
+            glCompileShader(idFS);
+            revisarFallosCompilacion(idFS, "fragmentos");
+
+            idSP = glCreateProgram();
+            if (idSP == 0) {throw std::invalid_argument("Falló la sentencia glCreateProgram, por lo que no se pudo crear el Shader Program");}
+            glAttachShader(idSP, idVS);
+            glAttachShader(idSP, idFS);
+            glLinkProgram(idSP);
+            revisarFallosEnlazadoPrograma(idSP);
+
+        } catch (std::invalid_argument &e) {
+            throw std::invalid_argument(
+                std::string("No se pudo cargar el Shader Program\nRazon: ") + e.what());
         }
     }
 
@@ -228,7 +225,7 @@ namespace PAG {
         glGenVertexArrays(1, &idVAO);
         glBindVertexArray(idVAO);
 
-        //Creación del VBO de posiciones de vértices
+        //Creación de un ÚNICO VBO de posiciones y color de los vértices
         glGenBuffers(1, &idVBO);
         glBindBuffer(GL_ARRAY_BUFFER, idVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -251,7 +248,7 @@ namespace PAG {
         };
         glGenBuffers(1, &idVBO);
         glBindBuffer(GL_ARRAY_BUFFER, idVBO);
-        glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GLfloat), colores, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(colores), colores, GL_STATIC_DRAW);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
         glEnableVertexAttribArray(1); //Colocamos color de vértices como atributo 1
         */

@@ -578,6 +578,288 @@ classDiagram
     Renderer --|> Listener : implementa wakeUp()
 ```
 
+## Práctica 3
+
+En esta práctica, se busca la incorporación del primer Shader Program para mostrar un triángulo en la escena. Veamos cada
+uno de estos pasos.
+
+### Incorporación del Shader Program
+
+En este caso, se ha implementado un Shader Program que incorpora los shaders de vértices y de fragmentos desde ficheros aparte.
+Para ello, se ha implementado un método en la clase `Renderer` que lee desde una ruta un fichero para asignarlo a un id de
+shader. En caso de fallar esta apertura de fichero, se lanza una excepción indicando el tipo de shader que falló:
+
+```c++
+std::string PAG::Renderer::cargarFichero(const std::string &ruta) {
+    std::ifstream archivoShader;
+    archivoShader.open(ruta);
+    if (!archivoShader.is_open()) {
+        throw std::invalid_argument("El fichero " + ruta + " no se pudo cargar. Revisa la ruta.");
+    }
+
+    std::stringstream streamShader;
+    streamShader << archivoShader.rdbuf();
+    std::string codigoFuenteShader = streamShader.str();
+    archivoShader.close();
+
+    return codigoFuenteShader;
+}
+```
+
+Así, el método `crearShaderProgram` se encarga de crear el Shader Program capturando todos los errores que pudieran haber
+en el proceso. En este ejemplo, se han dejado unas posibles rutas de los ficheros, pero podrían tomar cualquier nombre (
+se ha asumido la carpeta del proyecto como directorio de trabajo):
+
+```c++
+void PAG::Renderer::creaShaderProgram() {
+    try {
+
+        //Cargamos ficheros de shaders (vértices y fragmento)
+        std::string miVertexShader = cargarFichero("pag03-vs.glsl");
+        std::string miFragmentShader = cargarFichero("pag03-fs.glsl");
+
+        //Creamos y compilamos shaders de vértice
+        idVS = glCreateShader(GL_VERTEX_SHADER);
+        if (idVS == 0) {throw std::invalid_argument("Falló la sentencia glCreateShader para el shader de vertices");}
+        const GLchar *fuenteVS = miVertexShader.c_str();
+        glShaderSource(idVS, 1, &fuenteVS, nullptr);
+        glCompileShader(idVS);
+        revisarFallosCompilacion(idVS, "vertices");
+
+        //Creamos y compilamos shaders de fragmento
+        idFS = glCreateShader(GL_FRAGMENT_SHADER);
+        if (idFS == 0) {throw std::invalid_argument("Falló la sentencia glCreateShader para el shader de fragmentos");}
+        const GLchar *fuenteFS = miFragmentShader.c_str();
+        glShaderSource(idFS, 1, &fuenteFS, nullptr);
+        glCompileShader(idFS);
+        revisarFallosCompilacion(idFS, "fragmentos");
+
+        idSP = glCreateProgram();
+        if (idSP == 0) {throw std::invalid_argument("Falló la sentencia glCreateProgram, por lo que no se pudo crear el Shader Program");}
+        glAttachShader(idSP, idVS);
+        glAttachShader(idSP, idFS);
+        glLinkProgram(idSP);
+        revisarFallosEnlazadoPrograma(idSP);
+
+    } catch (std::invalid_argument &e) {
+        throw std::invalid_argument(
+            std::string("No se pudo cargar el Shader Program\nRazon: ") + e.what());
+    }
+}
+```
+
+_NOTA: Esta función escala la excepción a `main.cpp`. Es por ello por lo que se hace un `throw` en el `catch`._
+
+Se puede observar en la función anterior la presencia de funciones comprobadoras tanto de la compilación de shaders como del
+enlazado del shader program. Lo único que hacen es lanzar una excepción si el código del fichero del shader es incorrecto o
+si no se pudieron enlazar entre sí los shaders en el Shader Program. Sus implementaciones son las siguientes:
+
+**Compilado de shaders**
+
+```c++
+void PAG::Renderer::revisarFallosCompilacion (GLuint id, const std::string& tipoShader) {
+    //Comprobamos errores
+    GLint resultadoCompilacion;
+    glGetShaderiv ( id, GL_COMPILE_STATUS, &resultadoCompilacion );
+
+    if ( resultadoCompilacion == GL_FALSE )
+    {  /* Ha habido un error en la compilación.
+          Para saber qué ha pasado, tenemos que recuperar el mensaje de error de
+          OpenGL */
+        GLint tamMsj = 0;
+        std::string mensaje = "";
+        glGetShaderiv ( id, GL_INFO_LOG_LENGTH, &tamMsj );
+
+        if ( tamMsj > 0 )
+        {
+            GLchar* mensajeFormatoC = new GLchar[tamMsj];
+            GLint datosEscritos = 0;
+            glGetShaderInfoLog ( id, tamMsj, &datosEscritos, mensajeFormatoC );
+            mensaje.assign ( mensajeFormatoC );
+            delete[] mensajeFormatoC;
+            mensajeFormatoC = nullptr;
+
+            throw std::runtime_error("Fallo de compilación de shader de " + tipoShader + "\nMotivo: " + mensaje);
+        }
+        throw std::runtime_error("Fallo de compilación del shader");
+    }
+}
+```
+
+**Enlazado del programa**
+
+```c++
+void PAG::Renderer::revisarFallosEnlazadoPrograma (GLuint idPrograma) {
+    //Comprobamos errores
+    GLint resultadoEnlazado = 0;
+    glGetProgramiv ( idPrograma, GL_LINK_STATUS, &resultadoEnlazado );
+
+    if ( resultadoEnlazado == GL_FALSE )
+    {  /* Ha habido un error en la compilación.
+          Para saber qué ha pasado, tenemos que recuperar el mensaje de error de
+          OpenGL */
+        GLint tamMsj = 0;
+        std::string mensaje = "";
+        glGetProgramiv ( idPrograma, GL_INFO_LOG_LENGTH, &tamMsj );
+
+        if ( tamMsj > 0 )
+        {  GLchar* mensajeFormatoC = new GLchar[tamMsj];
+            GLint datosEscritos = 0;
+            glGetProgramInfoLog ( idPrograma, tamMsj, &datosEscritos, mensajeFormatoC );
+            mensaje.assign ( mensajeFormatoC );
+            delete[] mensajeFormatoC;
+            mensajeFormatoC = nullptr;
+
+            throw std::runtime_error("Fallo de enlazado del Program Shader\nMotivo: " + mensaje);
+        }
+        throw std::runtime_error("Fallo de enlazado del Program Shader");
+    }
+}
+```
 
 
+### Creación del modelo (triángulo)
 
+Para este ejemplo, se ha optado por tener un triángulo en pantalla con 3 colores distintos en sus vértices. Como el 
+rasterizador interpola los colores, se obtiene un triángulo con gradiente de colores. Estos colores se han implementado
+con VBOs entrelazados y no entrelazados:
+
+
+**VBOs no entrelazados**
+
+```c++
+void PAG::Renderer::creaModelo() {
+    GLfloat vertices[] = {  //Creación del VBO de manera ENTRELAZADA (posición, color)
+        -.5, -.5, 0, 
+        .5, -.5, 0, 
+        .0, .5, 0
+    };
+    GLuint indices[] = {0, 1, 2};
+
+    //Generación y activación del VAO
+    glGenVertexArrays(1, &idVAO);
+    glBindVertexArray(idVAO);
+
+    //Creación de un ÚNICO VBO de posiciones y color de los vértices
+    glGenBuffers(1, &idVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, idVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+    glEnableVertexAttribArray(0); //Colocamos posición de vértices como atributo 0
+
+
+    //Creación del VBO de colores de los vértices de manera NO ENTRELAZADA
+    //--------------------------------------------------------------------
+    GLfloat colores[] = {
+        1.0, 0.4, 0.2,
+        0.2, 1.0, 0.4,
+        0.4, 0.2, 1.0
+    };
+    glGenBuffers(1, &idVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, idVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(colores), colores, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+    glEnableVertexAttribArray(1); //Colocamos color de vértices como atributo 1
+
+    glGenBuffers(1, &idIBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(GLuint), indices, GL_STATIC_DRAW);
+}
+```
+
+**VBO entrelazado**
+
+```c++
+void PAG::Renderer::creaModelo() {
+    GLfloat vertices[] = {  //Creación del VBO de manera ENTRELAZADA (posición, color)
+        -.5, -.5, 0, 1.0, 0.4, 0.2,
+        .5, -.5, 0, 0.2, 1.0, 0.4,
+        .0, .5, 0, 0.4, 0.2, 1.0
+    };
+    GLuint indices[] = {0, 1, 2};
+
+    //Generación y activación del VAO
+    glGenVertexArrays(1, &idVAO);
+    glBindVertexArray(idVAO);
+
+    //Creación de un ÚNICO VBO de posiciones y color de los vértices
+    glGenBuffers(1, &idVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, idVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    //Datos de posiciones (location = 0)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), nullptr);
+    glEnableVertexAttribArray(0); //Colocamos posición de vértices como atributo 0
+
+    //Datos de color (location = 1)
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), ((GLfloat *) NULL + (3)));
+    glEnableVertexAttribArray(1); //Colocamos color de vértices como atributo 1
+
+    glGenBuffers(1, &idIBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(GLuint), indices, GL_STATIC_DRAW);
+}
+```
+
+### Alteración del triángulo ante redimensión de la ventana
+
+Al redimensionar el viewport sucede una cosa muy curiosa: el triángulo se transforma. Se aplasta o se estira según el 
+redimensionamiento que se produce.
+
+El motivo de esto es la proyección en el viewport del volumen de visión canónico. Recordemos que el volumen de visión
+canónico tiene sus coordenadas normalizadas. Concretamente (una vez se "elimina" la profundidad Z) van desde el (-1, -1) 
+al (1, 1). Estas posteriormente se proyectan en el tamaño del viewport que se tenga. Sucede según las siguientes fórmulas:
+
+
+$$
+x_{vp} = \frac{w(x_w + 1)}{2} \qquad y_{vp} = \frac{h(y_w + 1)}{2}
+$$
+
+_En esencia, expresa las coordenadas x e y entre (0, 2) al sumarle 1. Divide entre 2 para que las coordenadas queden
+expresadas en el rango (0, 1). Por último, se multiplican esas coordenadas por las dimensiones de la ventana._
+
+Esta transformación de ventana a puerto de visión (viewport) trabaja, por tanto, con **coordenadas relativas** (x_w + 1) / 2
+para conseguir **coordenadas absolutas** al multiplicar por $w$ y $h$. Se puede entender como porcentajes. 
+Por ejemplo, si un punto ha de estar en el 50% de las dimensiones del viewport, siempre aparecerá en el centro (esto es 
+lo que hace la conversión al rango (0, 1) de la fórmula).
+
+Por tanto, al redimensionar el viewport, se está refrescando el `Renderer` y se están volviendo a realizar todos estos
+cálculos.
+
+_NOTA: ImGui tiene esto solventado en sus ventanas. Se puede observar que tiene el mismo efecto que el triángulo durante
+el arrastre, pero luego las ventanas se adaptan para conseguir mantener sus dimensiones_
+
+Investigando, si quisiéramos mantener las dimensiones del triángulo hay que tocar el shader de vértices. Lo más inteligente 
+es expresar una de las coordenadas (pre-proyección, porque estamos antes de transformar al viewport) en función de la otra. 
+Si igualamos, tenemos:
+
+$$
+\frac{w(x + 1)}{2} = \frac{h(y + 1)}{2}
+$$
+
+$$
+w(x + 1) = h(y + 1)
+$$
+
+$$
+w(x) = h(y)
+$$
+
+$$
+y = \frac{w}{h}x
+$$
+
+Por tanto, $\frac{w}{h}$ es la **proporción de aspecto** por la que multiplicar, en este caso, la coordenada x. Por tanto,
+el shader podría lucir así:
+
+**Vertex shader**
+
+```plain
+#version 410
+layout (location = 0) in vec3 posicion;
+uniform float aspecto;   // ancho / alto del viewport
+
+void main() {
+    gl_Position = vec4(posicion.x / aspecto, posicion.y, posicion.z, 1.0);
+}
+```
