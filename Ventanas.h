@@ -16,8 +16,8 @@ namespace PAG {
      */
     class Ventanas {
     protected:
-        float x = 10;                       //Posiciones x,y de las ventanas
-        float y = 10;
+        float pos_x = 10;                       //Posiciones x,y de las ventanas
+        float pos_y = 10;
         static float _escalaTexto;          //Compartida por todas las ventanas (para mantener consistencia)
         std::vector<Listener*> _listeners;  //Observadores que se suscriben a los cambios producidos en las ventanas
     public:
@@ -42,11 +42,11 @@ namespace PAG {
     /**
      * Ventana que muestra un selector de color para cambiar el fondo de la aplicación
      */
-    class VentanaSelectorColor : public Ventanas{
+    class VentanaSelectorColorFondo : public Ventanas{
     private:
-        GLfloat *_colorSeleccionado;
+        GLfloat *_colorFondoSeleccionado;   //Será un puntero al color de fondo de Renderer
     public:
-        VentanaSelectorColor(GLfloat *colorInicial, float x, float y);
+        VentanaSelectorColorFondo(GLfloat *colorInicial, float x, float y);
         void dibujar() override;
         void warn_listeners();
     };

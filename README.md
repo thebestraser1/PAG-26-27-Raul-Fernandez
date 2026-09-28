@@ -111,9 +111,7 @@ Así, para incluir la función de refresco de Renderer hay 2 posibilidades:
 unívoca al existir tan solo una instancia de esta clase.
 
 En la práctica 2 se ha optado por la segunda solución. Por tanto, entiendo que en algún punto (alguna práctica futura) 
-la función de refresco será dependiente de la instancia de ``Renderer``. De hecho, revisando la práctica 2, 
-se puede considerar que ``refrescar_ventana()`` ha de hacer uso del atributo ``color_fondo`` propio de la instancia de ``Renderer``
-para cambiar el color del fondo en cada refresco (llamado por los observables: las ventanas).
+la función de refresco será dependiente de la instancia de ``Renderer``.
 
 
 ## Práctica 2
@@ -311,7 +309,7 @@ ciclo de eventos, mostrarlas. En esta práctica añadí también una ventana de 
 ```c++
     //Establecenmos una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 10);
-    auto *ventana_color = new PAG::VentanaSelectorColor(PAG::Renderer::getInstancia().getColorFondo(), 280,40);
+    auto *ventana_color = new PAG::VentanaSelectorColorFondo(PAG::Renderer::getInstancia().getColorFondo(), 280,40);
     auto *ventana_escala = new PAG::VentanaSelectorEscala(100, 400);
 
     std::vector<PAG::Ventanas*> ventanas = {
@@ -345,6 +343,7 @@ classDiagram
 
         class Renderer {
             Implementa llamadas de OpenGL
+            -GLfloat *_colorFondo
         }
 
         class GUI { 
@@ -366,9 +365,9 @@ classDiagram
             +void dibujar() override
         }
 
-        class VentanaSelectorColor {
-            -GLfloat *_colorSeleccionado
-            +VentanaSelectorColor(GLfloat* colorFondo, float x, float y)
+        class VentanaSelectorColorFondoFondo {
+            -GLfloat *_colorFondoSeleccionado
+            +VentanaSelectorColorFondo(GLfloat* colorFondo, float x, float y)
             +void dibujar() override
         }
 
@@ -379,11 +378,11 @@ classDiagram
     }
 
     Ventanas <|-- VentanaMensajes
-    Ventanas <|-- VentanaSelectorColor
+    Ventanas <|-- VentanaSelectorColorFondoFondo
     Ventanas <|-- VentanaSelectorEscala
 
     GUI "1" --> "0..*" Ventanas : dibuja
-    VentanaSelectorColor --> Renderer : modifica color de fondo
+    VentanaSelectorColorFondoFondo --> Renderer : modifica color de fondo
 
     class main {
         Módulo main.cpp que lleva GLFW
@@ -397,37 +396,31 @@ _NOTA: No he introducido todas las variables y métodos de las clases para hacer
 
 ### Implementación del patrón observador
 
-Si se observa el **ciclo de eventos** anterior, se observa la siguiente sentencia:
+Hasta este instante, la clase **Renderer** tan solo tiene un único atributo: **_colorFondo**, que además es un puntero
+(por lo que las ventanas pueden modificarlo sin problema). Entonces, tal y como está la práctica ya es completamente funcional.
+Es más, el hecho de que el color sea un puntero permite que una ventana de `ImGui` pueda cambiar el color de `Renderer`y que, si `Renderer` 
+cambia, cambie la ventana de `ImGui` en consecuencia. Hay comunicación bidireccional. Sin embargo, aún hay una cuestión a resolver:
+¿cuándo se cambia ese color con `glClearColor`?
+
+Una primera solución pasa por implementar `glClearColor` dentro del método de refrescar en `Renderer`. De esta manera, el método 
+quedaría así:
 
 ```c++
-PAG::Renderer::getInstancia().refrescar();
-```
-
-Este método se encarga de hacer efectivos los cambios que deban producirse en pantalla. Para ello, pinta el buffer trasero
-con todas las propiedades reflejadas por las variables de la clase **Renderer**. Como hasta ahora solo tenemos el color,
-lo hace de la siguiente manera:
-
-```c++
-    void Renderer::refrescar() 
-    {
+    void Renderer::refrescar() {
         glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     //Pinta el Buffer trasero
     }
 ```
 
-En un futuro, se tendrán aquí muchos más parámetros para controlar la escena. Por tanto, tenemos un problema: esta llamada
-está haciéndose en cada iteración del bucle de eventos sin que quizá sea necesario. Puede que el color no cambie y sin embargo
-se "repinte" la escena. La solución a esto es el **patrón observador**.
+Sin embargo, resulta ineficiente estar cambiando el color todo el tiempo sin que tan siquiera haya habido un cambio. Es aquí donde entra el **Patrón observador**.
 
-Se ha creado una interfaz `Listener` de la que "heredarán" todas aquellas clases que deban responder ante cambios de una serie
-de entidades observables. En este caso hay que entender quien es el observador y quien el observable.
+Las ventanas serán los elementos observables y `Renderer` el observador. En cuanto algo cambie en las ventanas, `Renderer`
+ejecutará algo. Por ejemplo, en este caso, cada vez que cambie el color, la ventana de selección de color de fondo llamará
+a `Renderer` para que ejecute la sentencia de OpenGL acorde. En un futuro, las distintas ventanas "despertarán" a `Renderer`
+para que ejecuten las sentencias que se necesiten.
 
-La ventana de color (que es la que nos compete en este caso), hace un cambio de color. Este será el "notificador" o el objeto
-**observable**. La clase `Renderer` es la que tiene que observar (escuchar) si ha cambiado el color seleccionado. Por tanto,
-esta es la clase **observadora**.
-
-De esta manera, `Renderer` debe heredar de `Listener`. Los `Listener` (como son llamados por ventanas) se "despertarán" en 
-cuanto alguna ventana lo requiera, por tanto la implementación de Listener es la siguiente:
+Para la implementación de esto, se ha optado por tener una clase abstracta `Listener` que contendrá un método `wakeUp`. 
+Este, se encarga de ejecutar el código necesario según la ventana que despierte al observador.
 
 ```c++
     /**
@@ -437,7 +430,7 @@ cuanto alguna ventana lo requiera, por tanto la implementación de Listener es l
      */
     enum TipoVentana {
         V_Mensajes,
-        V_Selecc_Color,
+        V_Selecc_Color_Fondo,
         V_Selecc_Escala
     };
 
@@ -456,21 +449,10 @@ Así, Renderer reimplementará el método `wakeUp`. En este caso, solo tenemos q
 de color haga cambios:
 
 ```c++
-    void Renderer::wakeUp(TipoVentana t, ...) {
+    void Renderer::wakeUp(TipoVentana t, ...) {     // ... = Lista de argumentos variables según la ventana.
         switch (t) {
-            case TipoVentana::V_Selecc_Color: {
-                std::va_list args;
-                va_start(args, t);
-                GLfloat* nuevoColor = va_arg(args, GLfloat*);   //Se espera que la ventana V_Selecc_Color traiga consigo un color de tipo GLFloat*
-                //En el guión aparece vec3 de GLM. De momento lo dejo así para que no haya leak de memoria
-                if (nuevoColor) {
-                    _colorFondo[0] = nuevoColor[0];
-                    _colorFondo[1] = nuevoColor[1];
-                    _colorFondo[2] = nuevoColor[2];
-                    _colorFondo[3] = nuevoColor[3];
-                    refrescar();    //<------------ AQUÍ ES DONDE SE REFRESCA (todo esto viene de dibujar ventanas) por tanto el glfwSwapBuffers(window) se hace después
-                }
-                va_end(args);
+            case TipoVentana::V_Selecc_Color_Fondo: {     //Podría pasar un color, pero en realidad ya está cambiando _colorFondo por puntero
+                glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
                 break;
             }
             default: ;
@@ -506,7 +488,7 @@ De esta manera, todas las ventanas tienen acceso a los `_listeners`. Ahora, quie
 conveniente. En el caso de la ventana de selección de color, se hace de la siguiente manera:
 
 ```c++
-    void VentanaSelectorColor::dibujar() {
+    void VentanaSelectorColorFondo::dibujar() {
         ...
                 if (ImGui::ColorPicker3("##Color de paleta", (float*)_colorSeleccionado, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha)) {
                     cambio_color = true;
@@ -519,7 +501,7 @@ conveniente. En el caso de la ventana de selección de color, se hace de la sigu
         ...
     }
 
-    void VentanaSelectorColor::warn_listeners()
+    void VentanaSelectorColorFondo::warn_listeners()
     {
         for (Listener* listener : _listeners) {
             listener->wakeUp(TipoVentana::V_Selecc_Color, _colorSeleccionado);  //<---- Anuncia el tipo de ventana y otorga la variable que necesita el observador
@@ -538,6 +520,7 @@ classDiagram
 
         class Renderer {
             Implementa llamadas de OpenGL
+            -GLfloat *_colorFondo
         }
 
         class GUI { 
@@ -559,9 +542,9 @@ classDiagram
             +void dibujar() override
         }
 
-        class VentanaSelectorColor {
-            -GLfloat *_colorSeleccionado
-            +VentanaSelectorColor(GLfloat* colorFondo, float x, float y)
+        class VentanaSelectorColorFondo {
+            -GLfloat *_colorFondoSeleccionado
+            +VentanaSelectorColorFondo(GLfloat* colorFondo, float x, float y)
             +void warn_listeners();
             +void dibujar() override
         }
@@ -583,12 +566,12 @@ classDiagram
     Ventanas --> "0..*" Listener : almacena
 
     Ventanas <|-- VentanaMensajes
-    Ventanas <|-- VentanaSelectorColor
+    Ventanas <|-- VentanaSelectorColorFondo
     Ventanas <|-- VentanaSelectorEscala
 
     GUI "1" --> "0..*" Ventanas : dibuja
     
-    VentanaSelectorColor --> Listener : los despierta ante cambio
+    VentanaSelectorColorFondo --> Listener : los despierta ante cambio
 
     main --> Renderer : usa getInstancia()
     main --> GUI : usa getInstancia()

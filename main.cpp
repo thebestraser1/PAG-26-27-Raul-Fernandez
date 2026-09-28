@@ -36,6 +36,22 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     std::cout << "Callback de redimension llamado" << std::endl;
 }
 
+
+/**
+ * Callback de refresco (con ImGui no es necesario porque se llama a refrescar en cada
+ * ejecución del ciclo de eventos)
+ *
+void window_refresh_callback ( GLFWwindow *window ) {
+    PAG::Renderer::getInstancia().refrescar();
+
+    //Aquí irían las ventanas
+
+    glfwSwapBuffers ( window );
+}
+*/
+
+
+
 /**
  * Esta función callback será llamada cada vez que se pulse una tecla dirigida al área de dibujo OpenGL.
  */
@@ -165,9 +181,6 @@ int main() {
         return -3;
     }
 
-    //Primer refresco (para que las variables iniciadas de Renderer se apliquen a la escena (tras iniciar GLAD))
-    PAG::Renderer::getInstancia().refrescar();
-
     // Propiedades del contexto 3D construido
     PAG::Renderer::getInstancia().mostrarPropiedadesContextoGrafico();
 
@@ -188,14 +201,14 @@ int main() {
 
 
     // Le decimos a OpenGL que tenga en cuenta la profundidad a la hora de dibujar.
-    PAG::Renderer::getInstancia().activarPruebaProfundidad();
+    PAG::Renderer::getInstancia().inicializarOpenGL();
 
 
     // Inicialización de escena
 
     //Establecenmos una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 10);
-    auto *ventana_color = new PAG::VentanaSelectorColor(PAG::Renderer::getInstancia().getColorFondo(), 280,40);
+    auto *ventana_color = new PAG::VentanaSelectorColorFondo(PAG::Renderer::getInstancia().getColorFondo(), 280,40);
     auto *ventana_escala = new PAG::VentanaSelectorEscala(100, 400);
 
     std::vector<PAG::Ventanas*> ventanas = {
@@ -216,8 +229,10 @@ int main() {
      */
     while (!glfwWindowShouldClose(window)) {
 
-        // DIBUJADO DE VENTANAS (ellas refrescan el Renderer con el patrón observador)
-        //----------------------------------------------------------------------------
+        PAG::Renderer::getInstancia().refrescar();
+
+        // DIBUJADO DE VENTANAS
+        //---------------------
 
         PAG::GUI::getInstancia().dibujarVentanas(ventanas);
 

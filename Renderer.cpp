@@ -55,7 +55,8 @@ namespace PAG {
      * Función para activar la prueba de profundidad (Z-buffering). Esto
      * determina qué superficies son visibles y cuáles están ocultas
      */
-    void Renderer::activarPruebaProfundidad() {
+    void Renderer::inicializarOpenGL() {
+        glClearColor ( _colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3] );
         glEnable(GL_DEPTH_TEST);
     }
 
@@ -63,8 +64,8 @@ namespace PAG {
     /**
      * Función OpenGL que devuelve el color del fondo
      */
-    GLfloat *Renderer::getColorFondo() {
-        return _colorFondo;
+    GLfloat *Renderer::getColorFondo() const {
+        return this->_colorFondo;
     }
 
 
@@ -72,7 +73,6 @@ namespace PAG {
      * Función OpenGL para refrescar la ventana (encapsula la parte de OpenGL)
      */
     void Renderer::refrescar() {
-        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     //Pinta el Buffer trasero
     }
 
@@ -86,23 +86,11 @@ namespace PAG {
 
     void Renderer::wakeUp(TipoVentana t, ...) {
         switch (t) {
-            case TipoVentana::V_Selecc_Color: {
-                std::va_list args;
-                va_start(args, t);
-                GLfloat* nuevoColor = va_arg(args, GLfloat*);
-                //En el guión aparece vec3 de GLM. De momento lo dejo así para que no haya leak de memoria
-                if (nuevoColor) {
-                    _colorFondo[0] = nuevoColor[0];
-                    _colorFondo[1] = nuevoColor[1];
-                    _colorFondo[2] = nuevoColor[2];
-                    _colorFondo[3] = nuevoColor[3];
-                    refrescar();
-                }
-                va_end(args);
+            case TipoVentana::V_Selecc_Color_Fondo: {     //Podría pasar un color, pero en realidad ya está cambiando _colorFondo por puntero
+                glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
                 break;
             }
             default: ;
-                // Procesar el resto de tipos de ventana
         }
         // Terminar cualquier otro procesamiento que sea necesario
     }

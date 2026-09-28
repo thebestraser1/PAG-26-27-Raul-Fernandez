@@ -38,13 +38,13 @@ namespace PAG {
 
         void mostrarPropiedadesContextoGrafico();
 
-        void activarPruebaProfundidad();
+        void inicializarOpenGL();
 
         void refrescar();
 
         void redimensionar(int width, int height);
 
-        GLfloat* getColorFondo();
+        GLfloat* getColorFondo() const;
 
         void wakeUp(TipoVentana t, ...) override;
 
