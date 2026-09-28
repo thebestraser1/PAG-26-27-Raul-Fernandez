@@ -2,10 +2,15 @@
 #define PRACTICA1_RENDERER_H
 
 #include <iostream>
-#include <cstdarg>
+#include <cstdarg>  //Para funciones con número variable de elementos
 
 #include "Listener.h"
 #include "glad/glad.h"
+
+#include <fstream>
+#include <sstream>
+
+
 
 /**
 * Espacio de nombres para las prácticas de Programación de Aplicaciones
@@ -41,6 +46,8 @@ namespace PAG {
         ~Renderer() override;
 
         static Renderer &getInstancia();
+
+        static std::string cargarFichero(const std::string& ruta);
 
         bool inicializarGLAD(void* ubicacionFunciones);
 

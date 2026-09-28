@@ -51,6 +51,26 @@ namespace PAG {
     }
 
     /**
+     * Cargar fichero de shaders
+     */
+    std::string PAG::Renderer::cargarFichero(const std::string& ruta) {
+        std::ifstream archivoShader;
+        archivoShader.open(ruta);
+        if (!archivoShader.is_open()) {
+            /* Error abriendo el archivo.  TODO*/
+        }
+
+        std::stringstream streamShader;
+        streamShader << archivoShader.rdbuf();
+        std::string codigoFuenteShader = streamShader.str();
+        archivoShader.close();
+
+        return codigoFuenteShader;
+    }
+
+
+
+    /**
      * Función para establecer una referencia a las funciones OpenGL del driver gráfico
      *
      * @var ubicacionFunciones es un puntero a una función genérica. Después se castea a GLADloadproc
@@ -87,19 +107,9 @@ namespace PAG {
      * @note No se incluye ninguna comprobación de errores
      */
     void PAG::Renderer::creaShaderProgram() {
-        std::string miVertexShader =
-                "#version 410\n"
-                "layout (location = 0) in vec3 posicion;\n"
-                "void main ()\n"
-                "{ gl_Position = vec4 ( posicion, 1 );\n"
-                "}\n";
+        std::string miVertexShader = cargarFichero("pag03-vs.glsl");
 
-        std::string miFragmentShader =
-                "#version 410\n"
-                "out vec4 colorFragmento;\n"
-                "void main ()\n"
-                "{ colorFragmento = vec4 ( 1.0, 4, .2, 1.0 );\n"  //Color rojo
-                "}\n";
+        std::string miFragmentShader = cargarFichero("pag03-fs.glsl");
 
         idVS = glCreateShader(GL_VERTEX_SHADER);
         const GLchar *fuenteVS = miVertexShader.c_str();
@@ -123,7 +133,6 @@ namespace PAG {
      * @note No se incluye ninguna comprobación de errores
      */
     void PAG::Renderer::creaModelo() {
-
         GLfloat vertices[] = {
             -.5, -.5, 0,
             .5, -.5, 0,
@@ -140,7 +149,7 @@ namespace PAG {
         glBindBuffer(GL_ARRAY_BUFFER, idVBO);
         glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
-        glEnableVertexAttribArray(0);   //Colocamos posición de vértices como atributo 0
+        glEnableVertexAttribArray(0); //Colocamos posición de vértices como atributo 0
 
         glGenBuffers(1, &idIBO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
