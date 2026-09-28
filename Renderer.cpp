@@ -217,10 +217,10 @@ namespace PAG {
      * @note No se incluye ninguna comprobación de errores
      */
     void PAG::Renderer::creaModelo() {
-        GLfloat vertices[] = {
-            -.5, -.5, 0,
-            .5, -.5, 0,
-            .0, .5, 0
+        GLfloat vertices[] = {  //Creación del VBO de manera ENTRELAZADA (posición, color)
+            -.5, -.5, 0, 1.0, 0.4, 0.2,
+            .5, -.5, 0, 0.2, 1.0, 0.4,
+            .0, .5, 0, 0.4, 0.2, 1.0
         };
         GLuint indices[] = {0, 1, 2};
 
@@ -231,12 +231,19 @@ namespace PAG {
         //Creación del VBO de posiciones de vértices
         glGenBuffers(1, &idVBO);
         glBindBuffer(GL_ARRAY_BUFFER, idVBO);
-        glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        //Datos de posiciones (location = 0)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), nullptr);
         glEnableVertexAttribArray(0); //Colocamos posición de vértices como atributo 0
+
+        //Datos de color (location = 1)
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), ((GLfloat *) NULL + (3)));
+        glEnableVertexAttribArray(1); //Colocamos color de vértices como atributo 1
 
         //Creación del VBO de colores de los vértices de manera NO ENTRELAZADA
         //--------------------------------------------------------------------
+        /*
         GLfloat colores[] = {
             1.0, 0.4, 0.2,
             0.2, 1.0, 0.4,
@@ -246,7 +253,8 @@ namespace PAG {
         glBindBuffer(GL_ARRAY_BUFFER, idVBO);
         glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GLfloat), colores, GL_STATIC_DRAW);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
-        glEnableVertexAttribArray(1); //Colocamos color de vértices como atributo 0
+        glEnableVertexAttribArray(1); //Colocamos color de vértices como atributo 1
+        */
 
         glGenBuffers(1, &idIBO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
