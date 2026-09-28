@@ -42,12 +42,16 @@ namespace PAG {
 
         Renderer(); //Constructor privado (Singletone)
 
+        static std::string cargarFichero(const std::string& ruta);
+
+        static void revisarFallosCompilacion(GLuint id, const std::string& tipoShader);
+
+        static void revisarFallosEnlazadoPrograma(GLuint idPrograma);
+
     public:
         ~Renderer() override;
 
         static Renderer &getInstancia();
-
-        static std::string cargarFichero(const std::string& ruta);
 
         bool inicializarGLAD(void* ubicacionFunciones);
 
