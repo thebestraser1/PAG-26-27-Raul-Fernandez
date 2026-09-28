@@ -200,11 +200,17 @@ int main() {
     //Nota: considero que las 2 sentencias de arriba van en main.cpp porque acoplarían GUI si las meto en la clase
 
 
-    // Le decimos a OpenGL que tenga en cuenta la profundidad a la hora de dibujar.
+    // Inicialización de todas las propiedades que se buscan en OpenGL
     PAG::Renderer::getInstancia().inicializarOpenGL();
 
 
+
+
     // Inicialización de escena
+
+    //Creación de shaderProgram y modelo
+    PAG::Renderer::getInstancia().creaShaderProgram();
+    PAG::Renderer::getInstancia().creaModelo();
 
     //Establecenmos una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 10);

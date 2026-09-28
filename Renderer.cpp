@@ -13,6 +13,26 @@ namespace PAG {
         //Liberamos punteros
         delete[] _colorFondo;
         _colorFondo = nullptr;
+
+        //Liberamos recursos del Shader Program y el modelo
+        if (idVS != 0) {
+            glDeleteShader(idVS);
+        }
+        if (idFS != 0) {
+            glDeleteShader(idFS);
+        }
+        if (idSP != 0) {
+            glDeleteProgram(idSP);
+        }
+        if (idVBO != 0) {
+            glDeleteBuffers(1, &idVBO);
+        }
+        if (idIBO != 0) {
+            glDeleteBuffers(1, &idIBO);
+        }
+        if (idVAO != 0) {
+            glDeleteVertexArrays(1, &idVAO);
+        }
     }
 
 
@@ -56,8 +76,75 @@ namespace PAG {
      * determina qué superficies son visibles y cuáles están ocultas
      */
     void Renderer::inicializarOpenGL() {
-        glClearColor ( _colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3] );
+        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_MULTISAMPLE);
+    }
+
+
+    /**
+     * Función para crear, compilar y enlazar el shader program
+     * @note No se incluye ninguna comprobación de errores
+     */
+    void PAG::Renderer::creaShaderProgram() {
+        std::string miVertexShader =
+                "#version 410\n"
+                "layout (location = 0) in vec3 posicion;\n"
+                "void main ()\n"
+                "{ gl_Position = vec4 ( posicion, 1 );\n"
+                "}\n";
+
+        std::string miFragmentShader =
+                "#version 410\n"
+                "out vec4 colorFragmento;\n"
+                "void main ()\n"
+                "{ colorFragmento = vec4 ( 1.0, 4, .2, 1.0 );\n"  //Color rojo
+                "}\n";
+
+        idVS = glCreateShader(GL_VERTEX_SHADER);
+        const GLchar *fuenteVS = miVertexShader.c_str();
+        glShaderSource(idVS, 1, &fuenteVS, nullptr);
+        glCompileShader(idVS);
+
+        idFS = glCreateShader(GL_FRAGMENT_SHADER);
+        const GLchar *fuenteFS = miFragmentShader.c_str();
+        glShaderSource(idFS, 1, &fuenteFS, nullptr);
+        glCompileShader(idFS);
+
+        idSP = glCreateProgram();
+        glAttachShader(idSP, idVS);
+        glAttachShader(idSP, idFS);
+        glLinkProgram(idSP);
+    }
+
+
+    /**
+     * Función para crear el VAO para el modelo a renderizar
+     * @note No se incluye ninguna comprobación de errores
+     */
+    void PAG::Renderer::creaModelo() {
+
+        GLfloat vertices[] = {
+            -.5, -.5, 0,
+            .5, -.5, 0,
+            .0, .5, 0
+        };
+        GLuint indices[] = {0, 1, 2};
+
+        //Generación y activación del VAO
+        glGenVertexArrays(1, &idVAO);
+        glBindVertexArray(idVAO);
+
+        //Creación del VBO
+        glGenBuffers(1, &idVBO);
+        glBindBuffer(GL_ARRAY_BUFFER, idVBO);
+        glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+        glEnableVertexAttribArray(0);   //Colocamos posición de vértices como atributo 0
+
+        glGenBuffers(1, &idIBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(GLuint), indices, GL_STATIC_DRAW);
     }
 
 
@@ -73,7 +160,13 @@ namespace PAG {
      * Función OpenGL para refrescar la ventana (encapsula la parte de OpenGL)
      */
     void Renderer::refrescar() {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     //Pinta el Buffer trasero
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Limpia el buffer actual
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glUseProgram(idSP);
+        glBindVertexArray(idVAO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
     }
 
     /**
@@ -86,7 +179,8 @@ namespace PAG {
 
     void Renderer::wakeUp(TipoVentana t, ...) {
         switch (t) {
-            case TipoVentana::V_Selecc_Color_Fondo: {     //Podría pasar un color, pero en realidad ya está cambiando _colorFondo por puntero
+            case TipoVentana::V_Selecc_Color_Fondo: {
+                //Podría pasar un color, pero en realidad ya está cambiando _colorFondo por puntero
                 glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
                 break;
             }

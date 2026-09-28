@@ -27,6 +27,14 @@ namespace PAG {
         static Renderer *instancia;
         GLfloat *_colorFondo;
 
+        //Práctica 3
+        GLuint idVS = 0; // Identificador del vertex shader
+        GLuint idFS = 0; // Identificador del fragment shader
+        GLuint idSP = 0; // Identificador del shader program
+        GLuint idVAO = 0; // Identificador del vertex array object
+        GLuint idVBO = 0; // Identificador del vertex buffer object
+        GLuint idIBO = 0; // Identificador del index buffer object
+
         Renderer(); //Constructor privado (Singletone)
 
     public:
@@ -39,6 +47,10 @@ namespace PAG {
         void mostrarPropiedadesContextoGrafico();
 
         void inicializarOpenGL();
+
+        void creaShaderProgram();
+
+        void creaModelo();
 
         void refrescar();
 
