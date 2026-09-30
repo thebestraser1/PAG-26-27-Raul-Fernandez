@@ -95,6 +95,8 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 
 /**
  * Callback de cambio de color con rueda del ratón. Va cambiando entre tonalidades de grises
+ *
+ * COMENTADO PARA LIBERAR LOS CONTROLES DE RUEDA DEL RATÓN PARA FUTURAS PRÁCTICAS
 
 void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
     GLfloat VARIACION = (GLfloat) yoffset / 10;     //Calculo la variación. En este caso (-0.1 o 0.1)
