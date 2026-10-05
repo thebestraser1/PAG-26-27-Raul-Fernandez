@@ -226,11 +226,13 @@ int main() {
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 10);
     auto *ventana_color = new PAG::VentanaSelectorColorFondo(PAG::Renderer::getInstancia().getColorFondo(), 280,40);
     auto *ventana_escala = new PAG::VentanaSelectorEscala(100, 400);
+    auto *ventana_texto_shader = new PAG::VentanaTextoShader(100, 200);
 
     std::vector<PAG::Ventanas*> ventanas = {
         ventana_mensajes,
         ventana_color,
-        ventana_escala
+        ventana_escala,
+        ventana_texto_shader
     };
 
     //Añadimos los observadores de esas ventanas (en este caso solo Renderer)

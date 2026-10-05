@@ -4,6 +4,8 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <iostream>
+#include <imgui_stdlib.h>
 #include <sstream>
 #include <vector>
 #include "Listener.h"
@@ -59,6 +61,18 @@ namespace PAG {
     private:
     public:
         VentanaSelectorEscala(float x, float y);
+        void dibujar() override;
+    };
+
+
+    /**
+     * Ventana en la que se inserta texto para cargar el shader correspondiented¡
+     */
+    class VentanaTextoShader : public Ventanas{
+    private:
+        std::string _nombre;
+    public:
+        VentanaTextoShader(float x, float y);
         void dibujar() override;
     };
 } // PAG

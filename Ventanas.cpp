@@ -167,5 +167,48 @@ namespace PAG {
     }
 
 
+    /** ------------------------------------------
+     *  VENTANA DE SELECCIÓN DE SHADER POR TEXTO
+     *  ------------------------------------------
+     */
+
+    /**
+     * Constructor de ventana de selección de escala
+     */
+    VentanaTextoShader::VentanaTextoShader(float x, float y){
+        this->pos_x = x;
+        this->pos_y = y;
+    }
+
+    /**
+     * Dibujar la ventana selección de Escala
+     */
+    void VentanaTextoShader::dibujar() {
+
+        //Posición a dibujar
+        ImGui::SetNextWindowPos ( ImVec2 (pos_x, pos_y), ImGuiCond_Once );
+
+        bool _buttonPressed = false;
+
+        if ( ImGui::Begin ( "Selector de Shader" ) ){ // La ventana está desplegada
+
+            ImVec2 posActual = ImGui::GetWindowPos();
+
+            ImGui::SetWindowFontScale ( _escalaTexto ); // Escalamos el texto si fuera necesario
+
+            ImGui::InputText ( "##", &_nombre, ImGuiInputTextFlags_AutoSelectAll%20);
+            _buttonPressed = ImGui::Button ( "Cargar" );
+
+        }
+
+        if (_buttonPressed) {
+            std::cout << "Shader a cargar: " << _nombre << std::endl;
+            //Implementar cambio en renderer
+        }
+
+        // Si la ventana no está desplegada, Begin devuelve false
+        ImGui::End ();
+    }
+
 
 }
