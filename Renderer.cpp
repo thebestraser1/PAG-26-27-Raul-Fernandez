@@ -4,17 +4,20 @@ namespace PAG {
     //Inicialización de la instancia única a nulo
     PAG::Renderer *PAG::Renderer::instancia = nullptr;
 
-    Renderer::Renderer() : _camara((float)anchoVentana, (float)altoVentana) {
+    Renderer::Renderer(){
         //Inicizalización de variables
         _colorFondo = new GLfloat[4]{0.6f, 0.6f, 0.6f, 1.0f};
         shader_program = ShaderProgram();
 
+        _camara = new Camara((float)anchoVentana, (float)altoVentana);
     }
 
     Renderer::~Renderer() {
         //Liberamos punteros
         delete[] _colorFondo;
         _colorFondo = nullptr;
+        delete[] _camara;
+        _camara = nullptr;
 
         //Liberamos recursos del modelo
         if (idVBO != 0) {
@@ -160,7 +163,7 @@ namespace PAG {
             std::string nombreUniform = "matrizMVP";
             GLint posicion = glGetUniformLocation ( idSP, nombreUniform.c_str () );
             if ( posicion != -1 ){  // El uniform existe y se ha podido localizar correctamente
-                glm::mat4 matrizVP_camara = _camara.getMatVP();
+                glm::mat4 matrizVP_camara = _camara->getMatVP();
                 glUniformMatrix4fv ( posicion, 1, GL_FALSE, &matrizVP_camara[0][0]);}
         }
         else {
@@ -177,7 +180,7 @@ namespace PAG {
         anchoVentana = width;
         altoVentana = height;
 
-        _camara.redimensionar((float)anchoVentana, (float)altoVentana);
+        _camara->redimensionar((float)anchoVentana, (float)altoVentana);
 
         //Aplicamos el cambio a la ventana
         glViewport(0, 0, anchoVentana, altoVentana);
@@ -210,7 +213,7 @@ namespace PAG {
      * Getter de cámara del Renderer
      * @return Camara
      */
-    Camara PAG::Renderer::getCamara() const {
+    Camara* PAG::Renderer::getCamara() const {
         return _camara;
     }
 
@@ -218,14 +221,19 @@ namespace PAG {
     /**
      * Se ejecuta cuando lo hace el callback de ratón
      */
-    void PAG::Renderer::hacerZoomRaton() {
+    void PAG::Renderer::hacerMovimientoRaton() {
 
-        //Cogemos el ángulo de visión
-        GLfloat anguloVision = _camara.getAnguloVision();
-        anguloVision = anguloVision + 2.0f;
-        _camara.mover(TipoMovimiento::Zoom, &anguloVision);
+        if (_tipoMovimientoSeleccionado == TipoMovimiento::Zoom) {
+            //Cogemos el ángulo de visión
+            GLfloat anguloVision = _camara->getAnguloVision();
+            anguloVision = anguloVision + 2.0f;
 
-        warn_listeners_camara();
+            //Actualizo la cámara
+            _camara->mover(TipoMovimiento::Zoom, &anguloVision);
+
+            //Actualizo la interfaz
+            warn_listeners_camara();
+        }
     }
 
     /**
@@ -260,8 +268,16 @@ namespace PAG {
             case TipoVentana::V_Manejo_Camara: {
                 std::va_list args;
                 va_start(args, ventana_a_renderer);
-                GLfloat* angulo = va_arg(args, GLfloat*);
-                if (angulo) {_camara.mover(TipoMovimiento::Zoom, angulo);}
+
+                //Se setearía el tipo de movimiento seleccionado
+                _tipoMovimientoSeleccionado = *va_arg(args, TipoMovimiento*);
+
+                //Se actualizarían los parámetros de la cámara según el tipo
+                if (_tipoMovimientoSeleccionado == TipoMovimiento::Zoom) {
+                    GLfloat* angulo = va_arg(args, GLfloat*);
+                    _camara->mover(_tipoMovimientoSeleccionado, angulo);
+                }
+
                 va_end(args);
                 break;
             }
@@ -285,13 +301,15 @@ namespace PAG {
     }
 
     /**
-     * Avisar a los observadores de un cambio en la ventana de selección de color
+     * Avisar a la ventana de cámara
      */
     void PAG::Renderer::warn_listeners_camara()
     {
-        GLfloat anguloVision = _camara.getAnguloVision();
-        for (Listener* listener : _listeners) {
-            listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &anguloVision);
+        if (_tipoMovimientoSeleccionado == TipoMovimiento::Zoom) {
+            GLfloat anguloVision = _camara->getAnguloVision();
+            for (Listener* listener : _listeners) {
+                listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &_tipoMovimientoSeleccionado, &anguloVision); //Pasarías aquí todos los parámetros de la cámara para la ventana
+            }
         }
     }
 

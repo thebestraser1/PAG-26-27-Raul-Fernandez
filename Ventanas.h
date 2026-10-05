@@ -85,9 +85,9 @@ namespace PAG {
     private:
         GLfloat _angulo;        //Ángulo en grados!!!
     public:
-        VentanaCamara(float x, float y, GLfloat angulo);
+        VentanaCamara(float x, float y, Camara* camara);
         void dibujar() override;
-        void warn_listeners() const;
+        void warn_listeners(TipoMovimiento t_movimiento) const;
         void wakeUp ( TipoVentana t, bool ventana_a_renderer ... ) override;
     };
 } // PAG

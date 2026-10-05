@@ -57,7 +57,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
         //std::cout << "Pulsado el boton: " << button << std::endl;
 
         if (button == 1) {
-            PAG::Renderer::getInstancia().hacerZoomRaton();
+            PAG::Renderer::getInstancia().hacerMovimientoRaton();
         }
 
         //Tras procesarlo con GLFW, se pasa el callback a ImGui
@@ -212,7 +212,7 @@ int main() {
     //Establecemos las ventanas: una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
     auto *ventana_texto_shader = new PAG::VentanaTextoShader(10, 10);
     auto *ventana_escala = new PAG::VentanaSelectorEscala(10, 110);
-    auto *ventana_camara = new PAG::VentanaCamara(10, 200, PAG::Renderer::getInstancia().getCamara().getAnguloVision());
+    auto *ventana_camara = new PAG::VentanaCamara(10, 200, PAG::Renderer::getInstancia().getCamara());
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 400);
     auto *ventana_color = new PAG::VentanaSelectorColorFondo(PAG::Renderer::getInstancia().getColorFondo(), 600,10);
 

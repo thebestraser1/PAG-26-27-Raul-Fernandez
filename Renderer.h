@@ -42,8 +42,11 @@ namespace PAG {
         int anchoVentana = 1024;
         int altoVentana = 576;
 
+        //Tipo de movimiento de cámara seleccionado
+        TipoMovimiento _tipoMovimientoSeleccionado = Zoom;
+
         //Camara
-        Camara _camara;
+        Camara* _camara;
 
         //Ventanas que escuchan a lo que cambie en el Renderer
         std::vector<Listener*> _listeners;
@@ -75,9 +78,9 @@ namespace PAG {
 
         int alto_ventana() const;
 
-        Camara getCamara() const;
+        Camara* getCamara() const;
 
-        void hacerZoomRaton();
+        void hacerMovimientoRaton();
 
         void addListener ( Listener *listener );
 

@@ -234,10 +234,10 @@ namespace PAG {
     /**
      * Constructor de ventana de manejo de cámara
      */
-    VentanaCamara::VentanaCamara(float x, float y, GLfloat angulo){
+    VentanaCamara::VentanaCamara(float x, float y, Camara* cam){
         this->pos_x = x;
         this->pos_y = y;
-        this->_angulo = angulo;
+        this->_angulo = cam->getAnguloVision();
     }
 
     /**
@@ -259,7 +259,7 @@ namespace PAG {
         }
 
         if (ha_cambiado_angulo) {
-            warn_listeners();
+            warn_listeners(TipoMovimiento::Zoom);
         }
 
 
@@ -272,9 +272,11 @@ namespace PAG {
     /**
      * Avisar a los observadores de un cambio en la ventana de manejo de cámara
      */
-    void VentanaCamara::warn_listeners() const {
-        for (Listener* listener : _listeners) {
-            listener->wakeUp(TipoVentana::V_Manejo_Camara, true, &_angulo);
+    void VentanaCamara::warn_listeners(TipoMovimiento t_movimiento) const {
+        if (t_movimiento == TipoMovimiento::Zoom) {
+            for (Listener* listener : _listeners) {
+                listener->wakeUp(TipoVentana::V_Manejo_Camara, true, &t_movimiento, &_angulo);
+            }
         }
     }
 
@@ -286,9 +288,15 @@ namespace PAG {
      */
     void VentanaCamara::wakeUp(TipoVentana t, bool ventana_a_renderer, ...) {
         if (t == TipoVentana::V_Manejo_Camara && ventana_a_renderer == false){
+
             std::va_list args;
             va_start(args, ventana_a_renderer);
-            _angulo = *va_arg(args, GLfloat*);
+
+            TipoMovimiento tipo_movimiento_realizado = *va_arg(args, TipoMovimiento*);
+
+            if (tipo_movimiento_realizado == TipoMovimiento::Zoom) {
+                _angulo = *va_arg(args, GLfloat*);
+            }
             va_end(args);
         }
 
