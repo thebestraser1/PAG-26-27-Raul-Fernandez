@@ -42,7 +42,7 @@ namespace PAG {
         ImGui::SetNextWindowPos ( ImVec2 (pos_x, pos_y), ImGuiCond_Once );
 
         {
-            if ( ImGui::Begin ( "Mensajes" ) ){ // La ventana está desplegada
+            if ( ImGui::Begin ( "Mensajes")){ // La ventana está desplegada (aquí no he puesto redimensión automática)
 
                 ImGui::SetWindowFontScale ( _escalaTexto ); // Escalamos el texto si fuera necesario
 
@@ -79,7 +79,7 @@ namespace PAG {
         ImGui::SetNextWindowPos ( ImVec2 (pos_x, pos_y), ImGuiCond_Once );
         ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_Once);
 
-        if ( ImGui::Begin ( "Selector de Color" ) ){ // La ventana está desplegada
+        if ( ImGui::Begin ( "Selector de Color", nullptr, ImGuiWindowFlags_AlwaysAutoResize)){ // La ventana está desplegada
 
             ImGui::SetWindowFontScale ( _escalaTexto ); // Escalamos el texto si fuera necesario
 
@@ -152,13 +152,14 @@ namespace PAG {
         //Posición a dibujar
         ImGui::SetNextWindowPos ( ImVec2 (pos_x, pos_y), ImGuiCond_Once );
 
-        if ( ImGui::Begin ( "Selector de Escala" ) ){ // La ventana está desplegada
+        if ( ImGui::Begin ( "Selector de Escala", nullptr, ImGuiWindowFlags_AlwaysAutoResize)){ // La ventana está desplegada
 
             ImVec2 posActual = ImGui::GetWindowPos();
 
             ImGui::SetWindowFontScale ( _escalaTexto ); // Escalamos el texto si fuera necesario
 
-            ImGui::DragFloat("Escala de fuente (0-4)", &_escalaTexto, 0.005f, 0.0f, 4.0f, "%.3f");
+            ImGui::Text("Escala de fuente");
+            ImGui::SliderFloat("##Escala de fuente", &_escalaTexto, 0.5f, 2.5f);
 
         }
 
@@ -190,13 +191,14 @@ namespace PAG {
 
         bool _buttonPressed = false;
 
-        if ( ImGui::Begin ( "Selector de Shader" ) ){ // La ventana está desplegada
+        if ( ImGui::Begin ( "Selector de Shader", nullptr, ImGuiWindowFlags_AlwaysAutoResize)){ // La ventana está desplegada
 
             ImVec2 posActual = ImGui::GetWindowPos();
 
             ImGui::SetWindowFontScale ( _escalaTexto ); // Escalamos el texto si fuera necesario
 
-            ImGui::InputText ( "##", &_nombre, ImGuiInputTextFlags_AutoSelectAll%20);
+            ImGui::Text("Nombre de fichero:");
+            ImGui::InputText ( "##", &_nombre, ImGuiInputTextFlags_AutoSelectAll);
             _buttonPressed = ImGui::Button ( "Cargar" );
 
         }

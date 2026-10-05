@@ -33,22 +33,8 @@ void error_callback(int errno, const char *desc) {
  */
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     PAG::Renderer::getInstancia().redimensionar(width, height);
-    std::cout << "Callback de redimension llamado" << std::endl;
+    //std::cout << "Callback de redimension llamado" << std::endl;
 }
-
-
-/**
- * Callback de refresco (con ImGui no es necesario porque se llama a refrescar en cada
- * ejecución del ciclo de eventos)
- *
-void window_refresh_callback ( GLFWwindow *window ) {
-    PAG::Renderer::getInstancia().refrescar();
-
-    //Aquí irían las ventanas
-
-    glfwSwapBuffers ( window );
-}
-*/
 
 
 
@@ -60,7 +46,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
-    std::cout << "Callback de tecla llamado" << std::endl;
+    //std::cout << "Callback de tecla llamado" << std::endl;
 }
 
 /**
@@ -68,14 +54,14 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
  */
 void mouse_button_callback(GLFWwindow *window, int button, int action, int mods) {
     if (action == GLFW_PRESS) {
-        std::cout << "Pulsado el boton: " << button << std::endl;
+        //std::cout << "Pulsado el boton: " << button << std::endl;
 
         //Tras procesarlo con GLFW, se pasa el callback a ImGui
         ImGuiIO& io = ImGui::GetIO ();
         io.AddMouseButtonEvent ( button, true );
 
     } else if (action == GLFW_RELEASE) {
-        std::cout << "Soltado el boton: " << button << std::endl;
+        //std::cout << "Soltado el boton: " << button << std::endl;
 
         //Tras procesarlo con GLFW, se pasa el callback a ImGui
         ImGuiIO& io = ImGui::GetIO ();
@@ -87,9 +73,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
  * Esta función callback será llamada cada vez que se mueva la rueda del ratón sobre el área de dibujo OpenGL.
  */
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-    std::cout << "Movida la rueda del raton " << xoffset
-            << " Unidades en horizontal y " << yoffset
-            << " unidades en vertical" << std::endl;
+    //std::cout << "Movida la rueda del raton " << xoffset << " Unidades en horizontal y " << yoffset << " unidades en vertical" << std::endl;
 }
 
 
@@ -222,10 +206,10 @@ int main() {
     if (modeloCreado) std::cout << "Modelo procesado satisfactoriamente" << std::endl;
 
     //Establecemos las ventanas: una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
-    auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 10);
-    auto *ventana_color = new PAG::VentanaSelectorColorFondo(PAG::Renderer::getInstancia().getColorFondo(), 280,40);
-    auto *ventana_escala = new PAG::VentanaSelectorEscala(100, 400);
-    auto *ventana_texto_shader = new PAG::VentanaTextoShader(100, 200);
+    auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 400);
+    auto *ventana_color = new PAG::VentanaSelectorColorFondo(PAG::Renderer::getInstancia().getColorFondo(), 600,10);
+    auto *ventana_escala = new PAG::VentanaSelectorEscala(10, 200);
+    auto *ventana_texto_shader = new PAG::VentanaTextoShader(10, 10);
 
     std::vector<PAG::Ventanas*> ventanas = {
         ventana_mensajes,
