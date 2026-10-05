@@ -174,7 +174,7 @@ namespace PAG {
      */
 
     /**
-     * Constructor de ventana de selección de escala
+     * Constructor de ventana de carga de shader
      */
     VentanaTextoShader::VentanaTextoShader(float x, float y){
         this->pos_x = x;
@@ -182,7 +182,7 @@ namespace PAG {
     }
 
     /**
-     * Dibujar la ventana selección de Escala
+     * Dibujar la ventana de carga de shader
      */
     void VentanaTextoShader::dibujar() {
 
@@ -220,6 +220,63 @@ namespace PAG {
     void VentanaTextoShader::warn_listeners() const {
         for (Listener* listener : _listeners) {
             listener->wakeUp(TipoVentana::V_Texto_Shaders, _nombre.c_str());
+        }
+    }
+
+
+
+
+    /** ------------------------------------------
+     *  VENTANA DE MANEJO DE CÁMARA
+     *  ------------------------------------------
+     */
+
+    /**
+     * Constructor de ventana de manejo de cámara
+     */
+    VentanaCamara::VentanaCamara(float x, float y, float angulo){
+        this->pos_x = x;
+        this->pos_y = y;
+        this->_angulo = angulo;
+    }
+
+    /**
+     * Dibujar la ventana de manejo de cámara
+     */
+    void VentanaCamara::dibujar() {
+
+        //Posición a dibujar
+        ImGui::SetNextWindowPos ( ImVec2 (pos_x, pos_y), ImGuiCond_Once );
+
+        bool ha_cambiado_angulo = false;
+
+        if ( ImGui::Begin ( "Manejador de cámara", nullptr, ImGuiWindowFlags_AlwaysAutoResize)){ // La ventana está desplegada
+
+            ImVec2 posActual = ImGui::GetWindowPos();
+
+            ImGui::SetWindowFontScale ( _escalaTexto ); // Escalamos el texto si fuera necesario
+
+            ImGui::Text("Zoom");
+            ha_cambiado_angulo = ImGui::SliderFloat("##SliderZoom", &_angulo, 20, 120, "%2.2fº");
+        }
+
+        if (ha_cambiado_angulo) {
+            warn_listeners();
+        }
+
+
+        // Si la ventana no está desplegada, Begin devuelve false
+        ImGui::End ();
+    }
+
+
+
+    /**
+     * Avisar a los observadores de un cambio en la ventana de manejo de cámara
+     */
+    void VentanaCamara::warn_listeners() const {
+        for (Listener* listener : _listeners) {
+            listener->wakeUp(TipoVentana::V_Manejo_Camara, &_angulo);
         }
     }
 

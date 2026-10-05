@@ -128,28 +128,6 @@ namespace PAG {
 
 
     /**
-     * Función OpenGL que devuelve el color del fondo
-     */
-    GLfloat *Renderer::getColorFondo() const {
-        return this->_colorFondo;
-    }
-
-    /**
-    * Getter del ancho de ventana
-    */
-    int PAG::Renderer::ancho_ventana() const {
-        return anchoVentana;
-    }
-
-    /**
-     * Getter del alto de ventana
-     */
-    int PAG::Renderer::alto_ventana() const {
-        return altoVentana;
-    }
-
-
-    /**
      * Función OpenGL para refrescar la ventana (encapsula la parte de OpenGL)
      */
     void Renderer::refrescar() {
@@ -206,6 +184,42 @@ namespace PAG {
     }
 
 
+    /**
+     * Función OpenGL que devuelve el color del fondo
+     */
+    GLfloat *Renderer::getColorFondo() const {
+        return this->_colorFondo;
+    }
+
+    /**
+    * Getter del ancho de ventana
+    */
+    int PAG::Renderer::ancho_ventana() const {
+        return anchoVentana;
+    }
+
+    /**
+     * Getter del alto de ventana
+     */
+    int PAG::Renderer::alto_ventana() const {
+        return altoVentana;
+    }
+
+
+    /**
+     * Getter de cámara del Renderer
+     * @return Camara
+     */
+    Camara PAG::Renderer::getCamara() const {
+        return _camara;
+    }
+
+
+    /**
+     * Función para reaccionar ante cambios en las ventanas
+     * @param t
+     * @param ...
+     */
     void Renderer::wakeUp(TipoVentana t, ...) {
         switch (t) {
             case TipoVentana::V_Selecc_Color_Fondo: {
@@ -228,6 +242,15 @@ namespace PAG {
                     }
                 }
                 va_end(args);
+                break;
+            }
+            case TipoVentana::V_Manejo_Camara: {
+                std::va_list args;
+                va_start(args, t);
+                GLfloat* angulo = va_arg(args, GLfloat*);
+                if (angulo) {_camara.mover(TipoMovimiento::Zoom, angulo);}
+                va_end(args);
+                break;
             }
             default: ;
         }

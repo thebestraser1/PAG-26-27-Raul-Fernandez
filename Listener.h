@@ -16,8 +16,10 @@ namespace PAG {
         V_Mensajes,
         V_Selecc_Color_Fondo,
         V_Selecc_Escala,
-        V_Texto_Shaders
+        V_Texto_Shaders,
+        V_Manejo_Camara
     };
+
 
     class Listener {
     public:

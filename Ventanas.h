@@ -77,6 +77,20 @@ namespace PAG {
 
         void warn_listeners() const;
     };
+
+
+    /**
+     * Ventana de manejo de la cámara
+     */
+    class VentanaCamara : public Ventanas{
+    private:
+        GLfloat _angulo;        //Ángulo en grados!!!
+    public:
+        VentanaCamara(float x, float y, float angulo);
+        void dibujar() override;
+
+        void warn_listeners() const;
+    };
 } // PAG
 
 #endif //PRACTICA1_VENTANA_H

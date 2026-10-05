@@ -206,22 +206,24 @@ int main() {
     if (modeloCreado) std::cout << "Modelo procesado satisfactoriamente" << std::endl;
 
     //Establecemos las ventanas: una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
+    auto *ventana_texto_shader = new PAG::VentanaTextoShader(10, 10);
+    auto *ventana_escala = new PAG::VentanaSelectorEscala(10, 110);
+    auto *ventana_camara = new PAG::VentanaCamara(10, 200, PAG::Renderer::getInstancia().getCamara().getAnguloVision());
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 400);
     auto *ventana_color = new PAG::VentanaSelectorColorFondo(PAG::Renderer::getInstancia().getColorFondo(), 600,10);
-    auto *ventana_escala = new PAG::VentanaSelectorEscala(10, 200);
-    auto *ventana_texto_shader = new PAG::VentanaTextoShader(10, 10);
 
     std::vector<PAG::Ventanas*> ventanas = {
         ventana_mensajes,
         ventana_color,
         ventana_escala,
-        ventana_texto_shader
+        ventana_texto_shader,
+        ventana_camara
     };
 
     //Añadimos los observadores de esas ventanas (en este caso solo Renderer)
     ventana_color->addListener(&PAG::Renderer::getInstancia());
     ventana_texto_shader->addListener(&PAG::Renderer::getInstancia());
-
+    ventana_camara->addListener(&PAG::Renderer::getInstancia());
 
     // Ciclo de eventos de la aplicación. La condición de parada es que la ventana principal deba cerrarse.
     /**

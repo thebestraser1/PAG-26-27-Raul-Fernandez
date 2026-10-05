@@ -72,9 +72,9 @@ namespace PAG {
 
         int alto_ventana() const;
 
+        Camara getCamara() const;
+
         void wakeUp(TipoVentana t, ...) override;
-
-
     };
 } // PAG
 

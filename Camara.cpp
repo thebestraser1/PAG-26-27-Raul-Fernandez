@@ -35,5 +35,45 @@ namespace PAG {
         aspect = ancho / alto;
     }
 
+    /**
+     * Función para obtener el ángulo de visión (en horizontal) de la cámara (en grados)
+     *
+     * Es decir fovX en grados
+     */
+    GLfloat PAG::Camara::getAnguloVision() const {
 
+        //Obtener fovX (con despejar en la fórmula sale esto):
+        GLfloat fovX = 2.0f * atanf(tanf(fovY * 0.5f) * aspect);
+
+        return glm::degrees(fovX);
+    }
+
+
+    /**
+     * Función para mover la cámara según los diferentes movimientos establecidos
+     */
+    void Camara::mover(TipoMovimiento movimiento, ...) {
+        switch (movimiento) {
+            case (TipoMovimiento::Zoom): {
+                std::va_list args;
+                va_start(args, movimiento);
+
+                GLfloat* angulo = va_arg(args, GLfloat*);
+                fovY = FovX_a_FovY_grados(glm::radians(*angulo));
+
+                va_end(args);
+                break;
+            }
+            default:;
+        }
+    }
+
+    /**
+     * Devuelve FovY a partir de un ángulo de visión (horizontal) en radianes. Útil para el zoom.
+     * @param angulo
+     * @return FovY en radianes
+     */
+    GLfloat PAG::Camara::FovX_a_FovY_grados(GLfloat angulo) const {
+        return 2.0f * atanf(tanf(angulo * 0.5f) / aspect);
+    }
 } // PAG
