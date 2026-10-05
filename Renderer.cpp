@@ -16,7 +16,7 @@ namespace PAG {
         //Liberamos punteros
         delete[] _colorFondo;
         _colorFondo = nullptr;
-        delete[] _camara;
+        delete _camara;
         _camara = nullptr;
 
         //Liberamos recursos del modelo
