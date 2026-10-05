@@ -10,8 +10,6 @@
 
 
 
-
-
 /**
 * Espacio de nombres para las prácticas de Programación de Aplicaciones
 * Gráficas
@@ -40,6 +38,10 @@ namespace PAG {
         GLuint idVBO = 0; // Identificador del vertex buffer object
         GLuint idIBO = 0; // Identificador del index buffer object
 
+        //Aspecto de ventana
+        int anchoVentana = 1024;
+        int altoVentana = 576;
+
         //Camara
         Camara _camara;
 
@@ -65,6 +67,10 @@ namespace PAG {
         void redimensionar(int width, int height);
 
         GLfloat* getColorFondo() const;
+
+        int ancho_ventana() const;
+
+        int alto_ventana() const;
 
         void wakeUp(TipoVentana t, ...) override;
 

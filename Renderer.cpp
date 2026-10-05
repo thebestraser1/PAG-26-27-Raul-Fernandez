@@ -4,11 +4,11 @@ namespace PAG {
     //Inicialización de la instancia única a nulo
     PAG::Renderer *PAG::Renderer::instancia = nullptr;
 
-    Renderer::Renderer() {
+    Renderer::Renderer() : _camara((float)anchoVentana, (float)altoVentana) {
         //Inicizalización de variables
         _colorFondo = new GLfloat[4]{0.6f, 0.6f, 0.6f, 1.0f};
         shader_program = ShaderProgram();
-        _camara = Camara();
+
     }
 
     Renderer::~Renderer() {
@@ -134,6 +134,20 @@ namespace PAG {
         return this->_colorFondo;
     }
 
+    /**
+    * Getter del ancho de ventana
+    */
+    int PAG::Renderer::ancho_ventana() const {
+        return anchoVentana;
+    }
+
+    /**
+     * Getter del alto de ventana
+     */
+    int PAG::Renderer::alto_ventana() const {
+        return altoVentana;
+    }
+
 
     /**
      * Función OpenGL para refrescar la ventana (encapsula la parte de OpenGL)
@@ -180,7 +194,15 @@ namespace PAG {
      * Función OpenGL para redimensionar ventana
      */
     void Renderer::redimensionar(int width, int height) {
-        glViewport(0, 0, width, height);
+
+        //Seteamos las variables globales del namespace
+        anchoVentana = width;
+        altoVentana = height;
+
+        _camara.redimensionar((float)anchoVentana, (float)altoVentana);
+
+        //Aplicamos el cambio a la ventana
+        glViewport(0, 0, anchoVentana, altoVentana);
     }
 
 

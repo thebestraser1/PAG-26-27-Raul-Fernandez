@@ -22,16 +22,16 @@ namespace PAG {
 
         //Parámetros de la cámara (proyección)
         GLfloat fovY = 0.785;       //Unos 45º
-        GLfloat aspect = 1.778;     //16:9
+        GLfloat aspect;             //Se inicializa en constructor
         GLfloat zNear = 0.0001;
         GLfloat zFar = 500;
 
     public:
-        Camara() = default;
+        Camara(float anchoVentana, float altoVentana);
 
-        glm::mat4 getMatVP () const;
+        glm::mat4 getMatVP ();
 
-        
+        void redimensionar(float ancho, float alto);
     };
 } // PAG
 

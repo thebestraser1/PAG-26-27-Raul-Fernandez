@@ -145,7 +145,7 @@ int main() {
     // Tamaño, título de la ventana, en ventana y no en pantalla completa,
     // El primer nullptr --> Es el monitor donde quiero que se inicialice la ventana en pantalla completa
     // El segundo nullptr --> Sirve para compartir recursos OpenGL con otra ventana
-    window = glfwCreateWindow(1024, 576, "PAG. Practica 1", nullptr, nullptr);
+    window = glfwCreateWindow(PAG::Renderer::getInstancia().ancho_ventana(), PAG::Renderer::getInstancia().alto_ventana(), "PAG. Practica 1", nullptr, nullptr);
 
     // Comprobamos si la creación de la ventana ha tenido éxito.
     if (window == nullptr) {
