@@ -203,11 +203,22 @@ namespace PAG {
 
         if (_buttonPressed) {
             std::cout << "Shader a cargar: " << _nombre << std::endl;
-            //Implementar cambio en renderer
+            warn_listeners();
         }
 
         // Si la ventana no está desplegada, Begin devuelve false
         ImGui::End ();
+    }
+
+
+
+    /**
+     * Avisar a los observadores de un cambio en la ventana de selección de shader
+     */
+    void VentanaTextoShader::warn_listeners() const {
+        for (Listener* listener : _listeners) {
+            listener->wakeUp(TipoVentana::V_Texto_Shaders, _nombre.c_str());
+        }
     }
 
 

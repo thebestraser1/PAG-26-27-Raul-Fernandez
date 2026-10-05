@@ -17,6 +17,8 @@ add_executable(${PROJECT_NAME} ${MY_FILES} ${GLAD_FILES} ${IMGUI_FILES}
         Ventanas.h
         Ventanas.cpp
         Listener.h
+        ShaderProgram.cpp
+        ShaderProgram.h
 )
 
 #Definimos este directorio para buscar includes

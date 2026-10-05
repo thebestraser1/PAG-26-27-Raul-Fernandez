@@ -15,7 +15,8 @@ namespace PAG {
     enum TipoVentana {
         V_Mensajes,
         V_Selecc_Color_Fondo,
-        V_Selecc_Escala
+        V_Selecc_Escala,
+        V_Texto_Shaders
     };
 
     class Listener {

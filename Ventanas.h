@@ -74,6 +74,8 @@ namespace PAG {
     public:
         VentanaTextoShader(float x, float y);
         void dibujar() override;
+
+        void warn_listeners() const;
     };
 } // PAG
 

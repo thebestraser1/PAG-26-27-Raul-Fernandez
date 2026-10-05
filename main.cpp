@@ -211,16 +211,15 @@ int main() {
     // Inicialización de escena
 
     //Creación de shaderProgram y modelo
-    bool shadersCreados = true;
+    bool modeloCreado = true;
     try {
-        PAG::Renderer::getInstancia().creaShaderProgram();
         PAG::Renderer::getInstancia().creaModelo();
     }catch (std::exception &e) {
-        std::cout << "EXCEPCIÓN: " << e.what() << "" << std::endl;
-        shadersCreados = false;
+        std::cout << "\n--------------------\n" << "EXCEPCIÓN: " << e.what() << "\n--------------------\n" << std::endl;
+        modeloCreado = false;
     }
 
-    if (shadersCreados) std::cout << "Shader Program procesado satisfactoriamente" << std::endl;
+    if (modeloCreado) std::cout << "Modelo procesado satisfactoriamente" << std::endl;
 
     //Establecemos las ventanas: una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 10);
@@ -237,6 +236,7 @@ int main() {
 
     //Añadimos los observadores de esas ventanas (en este caso solo Renderer)
     ventana_color->addListener(&PAG::Renderer::getInstancia());
+    ventana_texto_shader->addListener(&PAG::Renderer::getInstancia());
 
 
     // Ciclo de eventos de la aplicación. La condición de parada es que la ventana principal deba cerrarse.
