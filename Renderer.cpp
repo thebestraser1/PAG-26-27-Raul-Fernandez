@@ -141,10 +141,16 @@ namespace PAG {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Limpia el buffer actual
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glUseProgram(shader_program.id_sp());
-        glBindVertexArray(idVAO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
-        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+
+        //Si no hay shader aún cargado, no cargar ninguno
+        int idSP = shader_program.id_sp();
+
+        if (idSP != 0) {
+            glUseProgram(shader_program.id_sp());
+            glBindVertexArray(idVAO);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
+            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+        }
     }
 
     /**
