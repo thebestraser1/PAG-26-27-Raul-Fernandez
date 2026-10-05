@@ -111,10 +111,12 @@ namespace PAG {
         try {
 
             //Cargamos ficheros de shaders (vértices y fragmento)
+            std::string carpetaProyecto = "shaders/";
+
             std::cout << "Cargando fichero " << nombre_shaders << "-vs.glsl" << std::endl;
-            std::string miVertexShader = cargarFichero(nombre_shaders + "-vs.glsl");
+            std::string miVertexShader = cargarFichero(carpetaProyecto + nombre_shaders + "-vs.glsl");
             std::cout << "Cargando fichero " << nombre_shaders << "-fs.glsl" << std::endl;
-            std::string miFragmentShader = cargarFichero(nombre_shaders + "-fs.glsl");
+            std::string miFragmentShader = cargarFichero(carpetaProyecto + nombre_shaders + "-fs.glsl");
 
             //Creamos y compilamos shaders de vértice
             idVS = glCreateShader(GL_VERTEX_SHADER);
