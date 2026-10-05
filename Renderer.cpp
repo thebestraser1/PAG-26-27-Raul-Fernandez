@@ -8,6 +8,7 @@ namespace PAG {
         //Inicizalización de variables
         _colorFondo = new GLfloat[4]{0.6f, 0.6f, 0.6f, 1.0f};
         shader_program = ShaderProgram();
+        _camara = Camara();
     }
 
     Renderer::~Renderer() {
@@ -147,9 +148,31 @@ namespace PAG {
 
         if (idSP != 0) {
             glUseProgram(shader_program.id_sp());
+            controlarUniforms(idSP);
             glBindVertexArray(idVAO);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+        }
+    }
+
+    /**
+     * Función encargada de otorgar los uniforms que necesite el shader program de cada práctica en concreto
+     */
+    void Renderer::controlarUniforms(int idSP) {
+        const std::string& nombre = shader_program.nombre_shader();
+
+        if (nombre == "pag03") {
+            //No tiene uniforms
+        }
+        else if (nombre == "pag05") {
+            std::string nombreUniform = "matrizMVP";
+            GLint posicion = glGetUniformLocation ( idSP, nombreUniform.c_str () );
+            if ( posicion != -1 ){  // El uniform existe y se ha podido localizar correctamente
+                glm::mat4 matrizVP_camara = _camara.getMatVP();
+                glUniformMatrix4fv ( posicion, 1, GL_FALSE, &matrizVP_camara[0][0]);}
+        }
+        else {
+            //Shader desconocido: no se envían uniforms
         }
     }
 
@@ -188,6 +211,6 @@ namespace PAG {
         }
 
 
-        // Terminar cualquier otro procesamiento que sea necesario
-    }
-} // PAG
+            // Terminar cualquier otro procesamiento que sea necesario
+        }
+    } // PAG

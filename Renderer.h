@@ -4,9 +4,9 @@
 #include <iostream>
 #include <cstdarg>  //Para funciones con número variable de elementos
 
+#include "Camara.h"
 #include "Listener.h"
 #include "ShaderProgram.h"
-#include "glad/glad.h"
 
 
 
@@ -30,13 +30,18 @@ namespace PAG {
     class Renderer : public Listener{
     private:
         static Renderer *instancia;
+
         GLfloat *_colorFondo;
 
         ShaderProgram shader_program;
 
+        //Modelo
         GLuint idVAO = 0; // Identificador del vertex array object
         GLuint idVBO = 0; // Identificador del vertex buffer object
         GLuint idIBO = 0; // Identificador del index buffer object
+
+        //Camara
+        Camara _camara;
 
         Renderer(); //Constructor privado (Singletone)
 
@@ -54,6 +59,8 @@ namespace PAG {
         void creaModelo();
 
         void refrescar();
+
+        void controlarUniforms(int idSP);
 
         void redimensionar(int width, int height);
 

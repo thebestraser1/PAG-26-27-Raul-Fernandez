@@ -141,6 +141,9 @@ namespace PAG {
             glLinkProgram(idSP);
             revisarFallosEnlazadoPrograma(idSP);
 
+            //En este punto, la carga del shader ha ido bien. Ponemos el nombre del shader:
+            _nombreShader = nombre_shaders;
+
         } catch (std::invalid_argument &e) {
             throw std::invalid_argument(
                 std::string("No se pudo cargar el Shader Program\nRazon: ") + e.what());
@@ -153,5 +156,12 @@ namespace PAG {
      */
     GLuint PAG::ShaderProgram::id_sp() const {
         return idSP;
+    }
+
+    /**
+     * Getter del nombre del shader. Esto permitirá cargar luego sus uniforms según el shader que sea
+     */
+    std::string PAG::ShaderProgram::nombre_shader() const {
+        return _nombreShader;
     }
 } // PAG

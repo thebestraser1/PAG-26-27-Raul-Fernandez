@@ -1,10 +1,12 @@
 #version 410
 
-in vec3 colores;
+/* Entradas */
+in vec3 color_vertex;
 
+/* Salidas */
 out vec4 colorFragmento;
 
 void main ()
 {
-    colorFragmento = vec4 ( colores, 1.0 );
+    colorFragmento = vec4 ( color_vertex, 1.0 );
 }

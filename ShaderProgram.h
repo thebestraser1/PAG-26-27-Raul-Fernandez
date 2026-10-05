@@ -22,6 +22,8 @@ namespace PAG {
         GLuint idFS = 0; // Identificador del fragment shader
         GLuint idSP = 0; // Identificador del shader program
 
+        std::string _nombreShader; //Nombre del shader (permitirá saber sus uniforms)
+
         static std::string cargarFichero(const std::string &ruta);
         static void revisarFallosCompilacion(GLuint id, const std::string& tipoShader);
         static void revisarFallosEnlazadoPrograma(GLuint idPrograma);
@@ -29,6 +31,7 @@ namespace PAG {
         ~ShaderProgram();
         void creaShaderProgram(const std::string &nombre_shaders);
         GLuint id_sp() const;
+        std::string nombre_shader() const;
     };
 } // PAG
 
