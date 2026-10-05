@@ -216,11 +216,24 @@ namespace PAG {
 
 
     /**
+     * Se ejecuta cuando lo hace el callback de ratón
+     */
+    void PAG::Renderer::hacerZoomRaton() {
+
+        //Cogemos el ángulo de visión
+        GLfloat anguloVision = _camara.getAnguloVision();
+        anguloVision = anguloVision + 2.0f;
+        _camara.mover(TipoMovimiento::Zoom, &anguloVision);
+
+        warn_listeners_camara();
+    }
+
+    /**
      * Función para reaccionar ante cambios en las ventanas
      * @param t
      * @param ...
      */
-    void Renderer::wakeUp(TipoVentana t, ...) {
+    void Renderer::wakeUp(TipoVentana t, bool ventana_a_renderer, ...) {
         switch (t) {
             case TipoVentana::V_Selecc_Color_Fondo: {
                 //Podría pasar un color, pero en realidad ya está cambiando _colorFondo por puntero
@@ -230,7 +243,7 @@ namespace PAG {
             case TipoVentana::V_Texto_Shaders: {
                 //Pasará el nombre de los shaders
                 std::va_list args;
-                va_start(args, t);
+                va_start(args, ventana_a_renderer);
                 std::string nombreShader(va_arg(args, char*));
 
                 //En el guión aparece vec3 de GLM. De momento lo dejo así para que no haya leak de memoria
@@ -246,7 +259,7 @@ namespace PAG {
             }
             case TipoVentana::V_Manejo_Camara: {
                 std::va_list args;
-                va_start(args, t);
+                va_start(args, ventana_a_renderer);
                 GLfloat* angulo = va_arg(args, GLfloat*);
                 if (angulo) {_camara.mover(TipoMovimiento::Zoom, angulo);}
                 va_end(args);
@@ -258,4 +271,36 @@ namespace PAG {
 
             // Terminar cualquier otro procesamiento que sea necesario
         }
+
+
+
+
+
+    /**
+     * Añadir observadores para eventos del renderer
+     */
+    void PAG::Renderer::addListener ( Listener *listener )
+    {
+        _listeners.push_back ( listener );
+    }
+
+    /**
+     * Avisar a los observadores de un cambio en la ventana de selección de color
+     */
+    void PAG::Renderer::warn_listeners_camara()
+    {
+        GLfloat anguloVision = _camara.getAnguloVision();
+        for (Listener* listener : _listeners) {
+            listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &anguloVision);
+        }
+    }
+
+
+
+
+
+
+
+
+
     } // PAG

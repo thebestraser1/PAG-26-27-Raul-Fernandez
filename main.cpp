@@ -56,6 +56,10 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     if (action == GLFW_PRESS) {
         //std::cout << "Pulsado el boton: " << button << std::endl;
 
+        if (button == 1) {
+            PAG::Renderer::getInstancia().hacerZoomRaton();
+        }
+
         //Tras procesarlo con GLFW, se pasa el callback a ImGui
         ImGuiIO& io = ImGui::GetIO ();
         io.AddMouseButtonEvent ( button, true );
@@ -220,10 +224,13 @@ int main() {
         ventana_camara
     };
 
-    //Añadimos los observadores de esas ventanas (en este caso solo Renderer)
+    //Añadimos que el Renderer esté pendiente de los cambios en estas ventanas
     ventana_color->addListener(&PAG::Renderer::getInstancia());
     ventana_texto_shader->addListener(&PAG::Renderer::getInstancia());
     ventana_camara->addListener(&PAG::Renderer::getInstancia());
+
+    //Añadimos también la relación contraria (las ventanas deben atender a los cambios de Renderer)
+    PAG::Renderer::getInstancia().addListener((PAG::Listener*)ventana_camara);
 
     // Ciclo de eventos de la aplicación. La condición de parada es que la ventana principal deba cerrarse.
     /**

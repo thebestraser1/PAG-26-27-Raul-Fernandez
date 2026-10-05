@@ -8,15 +8,14 @@
 #include <imgui_stdlib.h>
 #include <sstream>
 #include <vector>
-#include "Listener.h"
-#include <GL/gl.h>
+#include "Renderer.h"
 
 namespace PAG {
 
     /**
      * Clase abstracta para establecer una jerarquía entre el tipo de ventanas
      */
-    class Ventanas {
+    class Ventanas{
     protected:
         float pos_x = 10;                       //Posiciones x,y de las ventanas
         float pos_y = 10;
@@ -82,14 +81,14 @@ namespace PAG {
     /**
      * Ventana de manejo de la cámara
      */
-    class VentanaCamara : public Ventanas{
+    class VentanaCamara : public Ventanas, Listener{
     private:
         GLfloat _angulo;        //Ángulo en grados!!!
     public:
-        VentanaCamara(float x, float y, float angulo);
+        VentanaCamara(float x, float y, GLfloat angulo);
         void dibujar() override;
-
         void warn_listeners() const;
+        void wakeUp ( TipoVentana t, bool ventana_a_renderer ... ) override;
     };
 } // PAG
 

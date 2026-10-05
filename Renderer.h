@@ -45,6 +45,9 @@ namespace PAG {
         //Camara
         Camara _camara;
 
+        //Ventanas que escuchan a lo que cambie en el Renderer
+        std::vector<Listener*> _listeners;
+
         Renderer(); //Constructor privado (Singletone)
 
     public:
@@ -62,7 +65,7 @@ namespace PAG {
 
         void refrescar();
 
-        void controlarUniforms(int idSP);
+        void wakeUp(TipoVentana t, bool ventana_a_renderer ...) override;
 
         void redimensionar(int width, int height);
 
@@ -74,7 +77,13 @@ namespace PAG {
 
         Camara getCamara() const;
 
-        void wakeUp(TipoVentana t, ...) override;
+        void hacerZoomRaton();
+
+        void addListener ( Listener *listener );
+
+    private:
+        void controlarUniforms(int idSP);
+        void warn_listeners_camara();
     };
 } // PAG
 

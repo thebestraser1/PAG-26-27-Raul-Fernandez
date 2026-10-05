@@ -123,7 +123,7 @@ namespace PAG {
     void VentanaSelectorColorFondo::warn_listeners()
     {
         for (Listener* listener : _listeners) {
-            listener->wakeUp(TipoVentana::V_Selecc_Color_Fondo, _colorFondoSeleccionado);
+            listener->wakeUp(TipoVentana::V_Selecc_Color_Fondo, true, _colorFondoSeleccionado);
         }
     }
 
@@ -219,7 +219,7 @@ namespace PAG {
      */
     void VentanaTextoShader::warn_listeners() const {
         for (Listener* listener : _listeners) {
-            listener->wakeUp(TipoVentana::V_Texto_Shaders, _nombre.c_str());
+            listener->wakeUp(TipoVentana::V_Texto_Shaders, true, _nombre.c_str());
         }
     }
 
@@ -234,7 +234,7 @@ namespace PAG {
     /**
      * Constructor de ventana de manejo de cámara
      */
-    VentanaCamara::VentanaCamara(float x, float y, float angulo){
+    VentanaCamara::VentanaCamara(float x, float y, GLfloat angulo){
         this->pos_x = x;
         this->pos_y = y;
         this->_angulo = angulo;
@@ -251,8 +251,6 @@ namespace PAG {
         bool ha_cambiado_angulo = false;
 
         if ( ImGui::Begin ( "Manejador de cámara", nullptr, ImGuiWindowFlags_AlwaysAutoResize)){ // La ventana está desplegada
-
-            ImVec2 posActual = ImGui::GetWindowPos();
 
             ImGui::SetWindowFontScale ( _escalaTexto ); // Escalamos el texto si fuera necesario
 
@@ -276,8 +274,26 @@ namespace PAG {
      */
     void VentanaCamara::warn_listeners() const {
         for (Listener* listener : _listeners) {
-            listener->wakeUp(TipoVentana::V_Manejo_Camara, &_angulo);
+            listener->wakeUp(TipoVentana::V_Manejo_Camara, true, &_angulo);
         }
+    }
+
+
+    /**
+     * Función para reaccionar ante cambios en las ventanas
+     * @param t
+     * @param ...
+     */
+    void VentanaCamara::wakeUp(TipoVentana t, bool ventana_a_renderer, ...) {
+        if (t == TipoVentana::V_Manejo_Camara && ventana_a_renderer == false){
+            std::va_list args;
+            va_start(args, ventana_a_renderer);
+            _angulo = *va_arg(args, GLfloat*);
+            va_end(args);
+        }
+
+
+        // Terminar cualquier otro procesamiento que sea necesario
     }
 
 

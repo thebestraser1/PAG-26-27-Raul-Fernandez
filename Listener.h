@@ -27,7 +27,7 @@ namespace PAG {
         virtual ~Listener () = default;
         // TipoVentana es un enum para identificar el tipo de ventana
         // de la interfaz que quiere despertarme
-        virtual void wakeUp ( TipoVentana t, ... ) = 0;
+        virtual void wakeUp ( TipoVentana t, bool ventana_a_renderer ... ) = 0;
 
     };
 } // PAG
