@@ -401,19 +401,7 @@ Hasta este instante, la clase **Renderer** tan solo tiene un único atributo: **
 (por lo que las ventanas pueden modificarlo sin problema). Entonces, tal y como está la práctica ya es completamente funcional.
 Es más, el hecho de que el color sea un puntero permite que una ventana de `ImGui` pueda cambiar el color de `Renderer`y que, si `Renderer` 
 cambia, cambie la ventana de `ImGui` en consecuencia. Hay comunicación bidireccional. Sin embargo, aún hay una cuestión a resolver:
-¿cuándo se cambia ese color con `glClearColor`?
-
-Una primera solución pasa por implementar `glClearColor` dentro del método de refrescar en `Renderer`. De esta manera, el método 
-quedaría así:
-
-```c++
-    void Renderer::refrescar() {
-        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     //Pinta el Buffer trasero
-    }
-```
-
-Sin embargo, resulta ineficiente estar cambiando el color todo el tiempo sin que tan siquiera haya habido un cambio. Es aquí donde entra el **Patrón observador**.
+¿cuándo se cambia ese color con `glClearColor`? Es aquí donde entra el **Patrón observador**.
 
 Las ventanas serán los elementos observables y `Renderer` el observador. En cuanto algo cambie en las ventanas, `Renderer`
 ejecutará algo. Por ejemplo, en este caso, cada vez que cambie el color, la ventana de selección de color de fondo llamará
@@ -578,6 +566,30 @@ classDiagram
     main --> GUI : usa getInstancia()
     Renderer --|> Listener : implementa wakeUp()
 ```
+
+_NOTA: En prácticas posteriores, se incorporó el cambio de color por scroll del ratón. Esto supone un cambio que se produce en 
+Renderer y que debe "observarlo" la Ventana de Color. Como era un puntero, funcionaba bidireccionalmente como se ha dicho
+anteriormente. Sin embargo, para mantener la coherencia a lo largo de todos los parámetros de futuras prácticas con el 
+patrón observador, se modificó el atributo de color para pasar a ser un atributo *estático* `GLfloat[4]`._
+
+_Así, la `Ventana` pasa el color al `Renderer` (de forma completa) y al revés cuando se requiere. Esto hace que el `glClearColor` deba
+ser ejecutado en cada iteración del método refrescar (para reflejar cambios de color de la ventana o del scroll del ratón)._
+
+_Como hay 2 fuentes que pueden modificar el atributo estático de color (ventana o scroll), el método `refrescar()` es el 
+que tiene el `glClearColor`:_
+
+```c++
+    void Renderer::refrescar() {
+        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);     //Limpia el buffer actual
+    }
+```
+
+_De esta manera, la implementación anterior, que presentaba cómo se hacían cambios de `Ventana` a `Renderer`, sirve
+como guía para implementar el patrón observador desde `Renderer` a `Ventana` (que servirá para futuros parámetros)._
+
+
+
 
 ## Práctica 3
 
