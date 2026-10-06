@@ -43,13 +43,14 @@ namespace PAG {
     /**
      * Ventana que muestra un selector de color para cambiar el fondo de la aplicación
      */
-    class VentanaSelectorColorFondo : public Ventanas{
+    class VentanaSelectorColorFondo : public Ventanas, Listener{
     private:
-        GLfloat *_colorFondoSeleccionado;   //Será un puntero al color de fondo de Renderer
+        GLfloat _colorFondoSeleccionado[4];
     public:
         VentanaSelectorColorFondo(GLfloat *colorInicial, float x, float y);
         void dibujar() override;
         void warn_listeners();
+        void wakeUp(TipoVentana t, bool ventana_a_renderer, ...) override;
     };
 
 

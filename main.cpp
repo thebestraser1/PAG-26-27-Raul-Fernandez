@@ -73,24 +73,16 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     }
 }
 
-/**
- * Esta función callback será llamada cada vez que se mueva la rueda del ratón sobre el área de dibujo OpenGL.
- */
-void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-    //std::cout << "Movida la rueda del raton " << xoffset << " Unidades en horizontal y " << yoffset << " unidades en vertical" << std::endl;
-}
-
 
 /**
  * Callback de cambio de color con rueda del ratón. Va cambiando entre tonalidades de grises
- *
- * COMENTADO PARA LIBERAR LOS CONTROLES DE RUEDA DEL RATÓN PARA FUTURAS PRÁCTICAS
+ */
 
 void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
     GLfloat VARIACION = (GLfloat) yoffset / 10;     //Calculo la variación. En este caso (-0.1 o 0.1)
 
     //Creamos un vector de 4 para el color actual de la ventana
-    GLfloat *color_actual = PAG::Renderer::getInstancia().getColorFondo();
+    GLfloat* color_fondo_renderer = PAG::Renderer::getInstancia().getColorFondo();
 
     if (yoffset > 0) {
         std::cout << "Moviste la rueda del raton hacia arriba" << std::endl;
@@ -99,20 +91,17 @@ void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
     }
     //En caso de == 0 no se hace nada
 
-    GLfloat rojo = color_actual[0] + VARIACION;
-    GLfloat verde = color_actual[1] + VARIACION;
-    GLfloat azul = color_actual[2] + VARIACION;
+    GLfloat rojo = color_fondo_renderer[0] + VARIACION;
+    GLfloat verde = color_fondo_renderer[1] + VARIACION;
+    GLfloat azul = color_fondo_renderer[2] + VARIACION;
 
-    if (rojo > 1) rojo = 0;       if (rojo < 0) rojo = 1;
-    if (verde > 1) verde = 0;     if (verde < 0) verde = 1;
-    if (azul > 1) azul = 0;       if (azul < 0) azul = 1;
+    //Operadores ternarios para hacer una transición de color en bucle
+    color_fondo_renderer[0] = (rojo > 1) ? 0 : (rojo < 0) ? 1 : rojo;
+    color_fondo_renderer[1] = (verde > 1) ? 0 : (verde < 0) ? 1 : verde;
+    color_fondo_renderer[2] = (azul > 1) ? 0 : (azul < 0) ? 1 : azul;
 
-    //NOTA: Los 6 ifs es porque quiero un bucle de escala de grises. Si simplemente quisiera controlar los
-    //colores, bastaría con la función "clamp" vista en teoría.
-
-    PAG::Renderer::getInstancia().cambiarColorFondo(rojo, verde, azul, 1.0);
+    PAG::Renderer::getInstancia().setColorFondo(color_fondo_renderer);
 }
-*/
 
 // -----------------------------------------------------
 // --------------------   MAIN    ----------------------
@@ -178,7 +167,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
-    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetScrollCallback(window, scroll_color_callback);
 
 
     //Inicialización de ImGui
@@ -225,12 +214,13 @@ int main() {
     };
 
     //Añadimos que el Renderer esté pendiente de los cambios en estas ventanas
-    ventana_color->addListener(&PAG::Renderer::getInstancia());
-    ventana_texto_shader->addListener(&PAG::Renderer::getInstancia());
-    ventana_camara->addListener(&PAG::Renderer::getInstancia());
+    for (PAG::Ventanas* v : ventanas) {
+        v->addListener(&PAG::Renderer::getInstancia());
+    }
 
-    //Añadimos también la relación contraria (las ventanas deben atender a los cambios de Renderer)
+    //Añadimos también la relación contraria (*algunas* ventanas deben atender a los cambios de Renderer)
     PAG::Renderer::getInstancia().addListener((PAG::Listener*)ventana_camara);
+    PAG::Renderer::getInstancia().addListener((PAG::Listener*)ventana_color);
 
     // Ciclo de eventos de la aplicación. La condición de parada es que la ventana principal deba cerrarse.
     /**

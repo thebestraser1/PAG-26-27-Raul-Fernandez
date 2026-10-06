@@ -4,18 +4,15 @@ namespace PAG {
     //Inicialización de la instancia única a nulo
     PAG::Renderer *PAG::Renderer::instancia = nullptr;
 
-    Renderer::Renderer(){
-        //Inicizalización de variables
-        _colorFondo = new GLfloat[4]{0.6f, 0.6f, 0.6f, 1.0f};
-        shader_program = ShaderProgram();
+    Renderer::Renderer() {
 
+        //Inicizalización de variables
+        shader_program = ShaderProgram();
         _camara = new Camara((float)anchoVentana, (float)altoVentana);
     }
 
     Renderer::~Renderer() {
         //Liberamos punteros
-        delete[] _colorFondo;
-        _colorFondo = nullptr;
         delete _camara;
         _camara = nullptr;
 
@@ -134,6 +131,8 @@ namespace PAG {
      * Función OpenGL para refrescar la ventana (encapsula la parte de OpenGL)
      */
     void Renderer::refrescar() {
+
+        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Limpia el buffer actual
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -190,8 +189,20 @@ namespace PAG {
     /**
      * Función OpenGL que devuelve el color del fondo
      */
-    GLfloat *Renderer::getColorFondo() const {
-        return this->_colorFondo;
+    GLfloat* PAG::Renderer::getColorFondo() {
+        return &_colorFondo[0];
+    }
+
+    /**
+     * Función OpenGL que devuelve el color del fondo
+     */
+    void PAG::Renderer::setColorFondo(GLfloat colorFondo[4]) {
+        _colorFondo[0] = colorFondo[0];
+        _colorFondo[1] = colorFondo[1];
+        _colorFondo[2] = colorFondo[2];
+        _colorFondo[3] = colorFondo[3];
+
+        warn_listeners_color_fondo();   //Actualiza las ventanas de color asociadas
     }
 
     /**
@@ -219,7 +230,7 @@ namespace PAG {
 
 
     /**
-     * Se ejecuta cuando lo hace el callback de ratón
+     * Se ejecuta cuando lo hace el callback de ratón (en un futuro se pasará por parámetro el movimiento relativo del ratón)
      */
     void PAG::Renderer::hacerMovimientoRaton() {
 
@@ -236,6 +247,16 @@ namespace PAG {
         }
     }
 
+
+
+
+    /**
+     * ----------------------------------------------------
+     *          EVENTOS LISTENER ----> RENDERER
+     * ----------------------------------------------------
+     */
+
+
     /**
      * Función para reaccionar ante cambios en las ventanas
      * @param t
@@ -244,14 +265,27 @@ namespace PAG {
     void Renderer::wakeUp(TipoVentana t, bool ventana_a_renderer, ...) {
         switch (t) {
             case TipoVentana::V_Selecc_Color_Fondo: {
-                //Podría pasar un color, pero en realidad ya está cambiando _colorFondo por puntero
-                glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
+
+                //Pasa el color que tendrá el fondo
+                std::va_list args;
+                va_start(args, ventana_a_renderer);
+
+                GLfloat* colorFondoVentana = va_arg(args, GLfloat*);
+
+                _colorFondo[0] = colorFondoVentana[0];
+                _colorFondo[1] = colorFondoVentana[1];
+                _colorFondo[2] = colorFondoVentana[2];
+                _colorFondo[3] = colorFondoVentana[3];
+
+                va_end(args);
+
                 break;
             }
             case TipoVentana::V_Texto_Shaders: {
                 //Pasará el nombre de los shaders
                 std::va_list args;
                 va_start(args, ventana_a_renderer);
+
                 std::string nombreShader(va_arg(args, char*));
 
                 //En el guión aparece vec3 de GLM. De momento lo dejo así para que no haya leak de memoria
@@ -262,6 +296,7 @@ namespace PAG {
                         std::cout << "\n--------------------\n" << "EXCEPCIÓN: " << e.what() << "\n--------------------\n" << std::endl;
                     }
                 }
+
                 va_end(args);
                 break;
             }
@@ -290,6 +325,11 @@ namespace PAG {
 
 
 
+    /**
+     * ----------------------------------------------------
+     *          EVENTOS RENDERER ----> LISTENER
+     * ----------------------------------------------------
+     */
 
 
     /**
@@ -298,6 +338,17 @@ namespace PAG {
     void PAG::Renderer::addListener ( Listener *listener )
     {
         _listeners.push_back ( listener );
+    }
+
+
+    /**
+     * Avisar a la ventana del color de fondo
+     */
+    void PAG::Renderer::warn_listeners_color_fondo()
+    {
+        for (Listener* listener : _listeners) {
+            listener->wakeUp(TipoVentana::V_Selecc_Color_Fondo, false, &_colorFondo);
+        }
     }
 
     /**

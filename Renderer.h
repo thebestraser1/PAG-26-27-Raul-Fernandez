@@ -29,7 +29,7 @@ namespace PAG {
     private:
         static Renderer *instancia;
 
-        GLfloat *_colorFondo;
+        GLfloat _colorFondo[4] = {0.6f, 0.6f, 0.6f, 1.0f};
 
         ShaderProgram shader_program;
 
@@ -72,7 +72,9 @@ namespace PAG {
 
         void redimensionar(int width, int height);
 
-        GLfloat* getColorFondo() const;
+        GLfloat* getColorFondo();
+
+        void setColorFondo(GLfloat colorFondo[4]);
 
         int ancho_ventana() const;
 
@@ -86,6 +88,7 @@ namespace PAG {
 
     private:
         void controlarUniforms(int idSP);
+        void warn_listeners_color_fondo();
         void warn_listeners_camara();
     };
 } // PAG
