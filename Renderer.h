@@ -68,7 +68,7 @@ namespace PAG {
 
         void refrescar();
 
-        void wakeUp(TipoVentana t, bool ventana_a_renderer ...) override;
+        void wakeUp(TipoVentana t, bool ventana_pidiendo ...) override;
 
         void redimensionar(int width, int height);
 

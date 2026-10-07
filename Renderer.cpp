@@ -5,10 +5,9 @@ namespace PAG {
     PAG::Renderer *PAG::Renderer::instancia = nullptr;
 
     Renderer::Renderer() {
-
         //Inicizalización de variables
         shader_program = ShaderProgram();
-        _camara = new Camara((float)anchoVentana, (float)altoVentana);
+        _camara = new Camara((float) anchoVentana, (float) altoVentana);
     }
 
     Renderer::~Renderer() {
@@ -131,7 +130,6 @@ namespace PAG {
      * Función OpenGL para refrescar la ventana (encapsula la parte de OpenGL)
      */
     void Renderer::refrescar() {
-
         glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Limpia el buffer actual
 
@@ -153,19 +151,19 @@ namespace PAG {
      * Función encargada de otorgar los uniforms que necesite el shader program de cada práctica en concreto
      */
     void Renderer::controlarUniforms(int idSP) {
-        const std::string& nombre = shader_program.nombre_shader();
+        const std::string &nombre = shader_program.nombre_shader();
 
         if (nombre == "pag03") {
             //No tiene uniforms
-        }
-        else if (nombre == "pag05") {
+        } else if (nombre == "pag05") {
             std::string nombreUniform = "matrizMVP";
-            GLint posicion = glGetUniformLocation ( idSP, nombreUniform.c_str () );
-            if ( posicion != -1 ){  // El uniform existe y se ha podido localizar correctamente
+            GLint posicion = glGetUniformLocation(idSP, nombreUniform.c_str());
+            if (posicion != -1) {
+                // El uniform existe y se ha podido localizar correctamente
                 glm::mat4 matrizVP_camara = _camara->getMatVP();
-                glUniformMatrix4fv ( posicion, 1, GL_FALSE, &matrizVP_camara[0][0]);}
-        }
-        else {
+                glUniformMatrix4fv(posicion, 1, GL_FALSE, &matrizVP_camara[0][0]);
+            }
+        } else {
             //Shader desconocido: no se envían uniforms
         }
     }
@@ -174,12 +172,11 @@ namespace PAG {
      * Función OpenGL para redimensionar ventana
      */
     void Renderer::redimensionar(int width, int height) {
-
         //Seteamos las variables globales del namespace
         anchoVentana = width;
         altoVentana = height;
 
-        _camara->redimensionar((float)anchoVentana, (float)altoVentana);
+        _camara->redimensionar((float) anchoVentana, (float) altoVentana);
 
         //Aplicamos el cambio a la ventana
         glViewport(0, 0, anchoVentana, altoVentana);
@@ -189,7 +186,7 @@ namespace PAG {
     /**
      * Función OpenGL que devuelve el color del fondo
      */
-    GLfloat* PAG::Renderer::getColorFondo() {
+    GLfloat *PAG::Renderer::getColorFondo() {
         return &_colorFondo[0];
     }
 
@@ -201,8 +198,6 @@ namespace PAG {
         _colorFondo[1] = colorFondo[1];
         _colorFondo[2] = colorFondo[2];
         _colorFondo[3] = colorFondo[3];
-
-        warn_listeners_color_fondo();   //Actualiza las ventanas de color asociadas
     }
 
     /**
@@ -224,7 +219,7 @@ namespace PAG {
      * Getter de cámara del Renderer
      * @return Camara
      */
-    Camara* PAG::Renderer::getCamara() const {
+    Camara *PAG::Renderer::getCamara() const {
         return _camara;
     }
 
@@ -233,7 +228,6 @@ namespace PAG {
      * Se ejecuta cuando lo hace el callback de ratón (en un futuro se pasará por parámetro el movimiento relativo del ratón)
      */
     void PAG::Renderer::hacerMovimientoRaton() {
-
         if (_tipoMovimientoSeleccionado == TipoMovimiento::Zoom) {
             //Cogemos el ángulo de visión
             GLfloat anguloVision = _camara->getAnguloVision();
@@ -241,135 +235,127 @@ namespace PAG {
 
             //Actualizo la cámara
             _camara->mover(TipoMovimiento::Zoom, &anguloVision);
-
-            //Actualizo la interfaz
-            warn_listeners_camara();
         }
     }
 
 
-
-
     /**
-     * ----------------------------------------------------
-     *          EVENTOS VENTANAS ----> RENDERER
-     * ----------------------------------------------------
+     * --------------------------------------
+     *          PATRÓN OBSERVADOR
+     * --------------------------------------
      */
 
 
     /**
-     * Función para reaccionar ante cambios en las ventanas
+     * Función para reaccionar ante peticiones de datos de las ventanas o cambios en las ventanas
      * @param t
      * @param ...
      */
-    void Renderer::wakeUp(TipoVentana t, bool ventana_a_renderer, ...) {
-        switch (t) {
-            case TipoVentana::V_Selecc_Color_Fondo: {
+    void Renderer::wakeUp(TipoVentana t, bool ventana_pidiendo, ...) {
+        /**
+         * ----------------------------------------------
+         *          RENDERER ----> VENTANAS
+         * ----------------------------------------------
+         */
 
-                //Pasa el color que tendrá el fondo
-                std::va_list args;
-                va_start(args, ventana_a_renderer);
+        if (ventana_pidiendo) {
+            //Si la ventana está pidiendo atributos, según la que sea, se le trasfieren los datos necesarios
+            //La ventana dará por parámetro los punteros que han de ser actualizados
 
-                GLfloat* colorFondoVentana = va_arg(args, GLfloat*);
+            //En caso contrario, la ventana solo está avisando al Renderer de que algo cambió
 
-                _colorFondo[0] = colorFondoVentana[0];
-                _colorFondo[1] = colorFondoVentana[1];
-                _colorFondo[2] = colorFondoVentana[2];
-                _colorFondo[3] = colorFondoVentana[3];
+            switch (t) {
+                case TipoVentana::V_Selecc_Color_Fondo: {
+                    //Pasa el color que tendrá el fondo
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
 
-                va_end(args);
+                    GLfloat *colorFondoVentana = va_arg(args, GLfloat*);
 
-                break;
+                    colorFondoVentana[0] = _colorFondo[0];
+                    colorFondoVentana[1] = _colorFondo[1];
+                    colorFondoVentana[2] = _colorFondo[2];
+                    colorFondoVentana[3] = _colorFondo[3];
+
+                    va_end(args);
+
+                    break;
+                }
+                case TipoVentana::V_Manejo_Camara: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    GLfloat *angulo = va_arg(args, GLfloat*);
+
+                    *angulo = _camara->getAnguloVision();
+
+                    va_end(args);
+                    break;
+                }
+                default: ;
             }
-            case TipoVentana::V_Texto_Shaders: {
-                //Pasará el nombre de los shaders
-                std::va_list args;
-                va_start(args, ventana_a_renderer);
 
-                std::string nombreShader(va_arg(args, char*));
+        /**
+         * ----------------------------------------------
+         *          VENTANAS ----> RENDERER
+         * ----------------------------------------------
+         */
+        } else {
+            switch (t) {
+                case TipoVentana::V_Selecc_Color_Fondo: {
+                    //Pasa el color que tendrá el fondo
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
 
-                //En el guión aparece vec3 de GLM. De momento lo dejo así para que no haya leak de memoria
-                if (!nombreShader.empty()) {
-                    try {
-                        shader_program.creaShaderProgram(nombreShader);
-                    } catch (std::exception &e) {
-                        std::cout << "\n--------------------\n" << "EXCEPCIÓN: " << e.what() << "\n--------------------\n" << std::endl;
+                    GLfloat *colorFondoVentana = va_arg(args, GLfloat*);
+
+                    _colorFondo[0] = colorFondoVentana[0];
+                    _colorFondo[1] = colorFondoVentana[1];
+                    _colorFondo[2] = colorFondoVentana[2];
+                    _colorFondo[3] = colorFondoVentana[3];
+
+                    va_end(args);
+
+                    break;
+                }
+                case TipoVentana::V_Texto_Shaders: {
+                    //Pasará el nombre de los shaders
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    std::string nombreShader(va_arg(args, char*));
+
+                    //En el guión aparece vec3 de GLM. De momento lo dejo así para que no haya leak de memoria
+                    if (!nombreShader.empty()) {
+                        try {
+                            shader_program.creaShaderProgram(nombreShader);
+                        } catch (std::exception &e) {
+                            std::cout << "\n--------------------\n" << "EXCEPCIÓN: " << e.what() <<
+                                    "\n--------------------\n" << std::endl;
+                        }
                     }
+
+                    va_end(args);
+                    break;
                 }
+                case TipoVentana::V_Manejo_Camara: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
 
-                va_end(args);
-                break;
-            }
-            case TipoVentana::V_Manejo_Camara: {
-                std::va_list args;
-                va_start(args, ventana_a_renderer);
+                    //Se setearía el tipo de movimiento seleccionado
+                    _tipoMovimientoSeleccionado = *va_arg(args, TipoMovimiento*);
 
-                //Se setearía el tipo de movimiento seleccionado
-                _tipoMovimientoSeleccionado = *va_arg(args, TipoMovimiento*);
+                    //Se actualizarían los parámetros de la cámara según el tipo
+                    if (_tipoMovimientoSeleccionado == TipoMovimiento::Zoom) {
+                        GLfloat *angulo = va_arg(args, GLfloat*);
+                        _camara->mover(_tipoMovimientoSeleccionado, angulo);
+                    }
 
-                //Se actualizarían los parámetros de la cámara según el tipo
-                if (_tipoMovimientoSeleccionado == TipoMovimiento::Zoom) {
-                    GLfloat* angulo = va_arg(args, GLfloat*);
-                    _camara->mover(_tipoMovimientoSeleccionado, angulo);
+                    va_end(args);
+                    break;
                 }
-
-                va_end(args);
-                break;
-            }
-            default: ;
-        }
-
-
-            // Terminar cualquier otro procesamiento que sea necesario
-        }
-
-
-
-    /**
-     * ----------------------------------------------------
-     *          EVENTOS RENDERER ----> VENTANAS
-     * ----------------------------------------------------
-     */
-
-
-    /**
-     * Añadir observadores para eventos del renderer
-     */
-    void PAG::Renderer::addListener ( Listener *listener )
-    {
-        _listeners.push_back ( listener );
-    }
-
-
-    /**
-     * Avisar a la ventana del color de fondo
-     */
-    void PAG::Renderer::warn_listeners_color_fondo()
-    {
-        for (Listener* listener : _listeners) {
-            listener->wakeUp(TipoVentana::V_Selecc_Color_Fondo, false, &_colorFondo);
-        }
-    }
-
-    /**
-     * Avisar a la ventana de cámara
-     */
-    void PAG::Renderer::warn_listeners_camara()
-    {
-        if (_tipoMovimientoSeleccionado == TipoMovimiento::Zoom) {
-            GLfloat anguloVision = _camara->getAnguloVision();
-            for (Listener* listener : _listeners) {
-                listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &_tipoMovimientoSeleccionado, &anguloVision); //Pasarías aquí todos los parámetros de la cámara para la ventana
+                default: ;
             }
         }
     }
-
-
-
-
-
-
-
-
-
-    } // PAG
+} // PAG

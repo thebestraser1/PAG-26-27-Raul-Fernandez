@@ -19,8 +19,8 @@ namespace PAG {
     protected:
         float pos_x = 10;                       //Posiciones x,y de las ventanas
         float pos_y = 10;
-        static float _escalaTexto;          //Compartida por todas las ventanas (para mantener consistencia)
-        std::vector<Listener*> _listeners;  //Observadores que se suscriben a los cambios producidos en las ventanas
+        static float _escalaTexto;                    //Compartida por todas las ventanas (para mantener consistencia)
+        Listener* _renderer_listener = nullptr;       //Observadores que se suscriben a los cambios producidos en las ventanas
     public:
         virtual ~Ventanas() = default;
         void addListener ( Listener *listener );
@@ -33,7 +33,7 @@ namespace PAG {
      */
     class VentanaMensajes : public Ventanas{
     private:
-        std::stringstream &_textoSalida;     //Importante por referencia para que se vaya actualizando
+        std::stringstream &_textoSalida;     //Importante por referencia para que se vaya actualizando (viene de main.cpp)
     public:
         VentanaMensajes(std::stringstream &textoInicial, float x, float y);
         void dibujar() override;
@@ -43,14 +43,11 @@ namespace PAG {
     /**
      * Ventana que muestra un selector de color para cambiar el fondo de la aplicación
      */
-    class VentanaSelectorColorFondo : public Ventanas, Listener{
-    private:
-        GLfloat _colorFondoSeleccionado[4];
+    class VentanaSelectorColorFondo : public Ventanas{
     public:
-        VentanaSelectorColorFondo(GLfloat *colorInicial, float x, float y);
+        VentanaSelectorColorFondo(float x, float y);
         void dibujar() override;
-        void warn_listeners();
-        void wakeUp(TipoVentana t, bool ventana_a_renderer, ...) override;
+        void warn_listeners(GLfloat* colorFondoSeleccionado);
     };
 
 
@@ -58,7 +55,6 @@ namespace PAG {
      * Ventana que muestra un selector de escala para el tamaño de fuente de las ventanas
      */
     class VentanaSelectorEscala : public Ventanas{
-    private:
     public:
         VentanaSelectorEscala(float x, float y);
         void dibujar() override;
@@ -82,14 +78,11 @@ namespace PAG {
     /**
      * Ventana de manejo de la cámara
      */
-    class VentanaCamara : public Ventanas, Listener{
-    private:
-        GLfloat _angulo;        //Ángulo en grados!!!
+    class VentanaCamara : public Ventanas{
     public:
-        VentanaCamara(float x, float y, Camara* camara);
+        VentanaCamara(float x, float y);
         void dibujar() override;
-        void warn_listeners(TipoMovimiento t_movimiento) const;
-        void wakeUp ( TipoVentana t, bool ventana_a_renderer ... ) override;
+        void warn_listeners(TipoMovimiento t_movimiento, GLfloat angulo) const;
     };
 } // PAG
 
