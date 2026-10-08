@@ -96,21 +96,6 @@ namespace PAG {
             default:;
         }
 
-        /**
-
-        //Tras mover, comprobamos la EXCEPCIÓN de la cámara --> Ver si n y up son colineales
-        glm::vec3 n = obtener_vector_n();
-
-        glm::bvec3 colineales = glm::epsilonEqual(n, up, glm::epsilon<float>());
-
-        if (glm::all(colineales)) {
-
-            //Cambiamos up (eje Y) por Z para calcular el producto vectorial con u. Cuando salgamos de esta situación, se restaura
-            up = glm::vec3(0,0,1);
-        }else {
-            up = glm::vec3(0, 1, 0);
-        }
-        */
 
     }
 
@@ -173,17 +158,32 @@ namespace PAG {
 
     /**
      * Modifica (rota) el punto LookAt a partir del vector U de la cámara.
+     *
+     * Solo permitirá rotar 180º. Es decir, mirar hacia arriba o hacia abajo (no va más allá --> bug)
+     *
      * @param angulo en radianes
      */
     void PAG::Camara::hacerTilt(GLfloat angulo) {
 
+        glm::vec3 v_actual = obtener_vector_v();
+
         glm::mat4 m = glm::translate(position)
-                    * glm::rotate(angulo, obtener_vector_u())
-                    * glm::translate(-position);
+            * glm::rotate(angulo, obtener_vector_u())
+            * glm::translate(-position);
 
-        glm::vec4 lookAt_aux = m * glm::vec4(lookAt, 1.0f);              // w = 1: es un punto
+        glm::vec4 lookAt_nuevo = m * glm::vec4(lookAt, 1.0f);
 
-        lookAt = glm::vec3(lookAt_aux);
+        //Antes de efectuar comprobamos la EXCEPCIÓN de la vertical de la cámara
+        //Para ello, voy a ver si el vector v es radicalmente distinto con la trasformación que se plantea
+        //(es decir, si se ha pasado al "otro lado")
+        glm::vec3 nuevo_n = glm::normalize(glm::vec3(lookAt_nuevo) - position);
+        glm::vec3 nueva_u = glm::normalize(glm::cross(up, nuevo_n));
+        glm::vec3 nueva_v = glm::cross(nuevo_n, nueva_u);
+
+        //Si las v son muy distintas (una mira casi al lado contrario de la anterior) el coseno es negativo
+        if (glm::dot(v_actual, nueva_v) >= 0.0f) {
+            lookAt = glm::vec3(lookAt_nuevo);
+        }
     }
 
 

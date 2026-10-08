@@ -238,7 +238,7 @@ namespace PAG {
 
                 //Cogemos el ángulo de visión
                 GLfloat anguloVision = _camara->getAnguloVision();
-                anguloVision = anguloVision + movimiento_relativo_y;
+                anguloVision = anguloVision + movimiento_relativo_y/2;
 
                 //Controlo que el ángulo no se escape de los límites (sabiendo los límites que tiene la ventana que lleva esto)
                 float lim_sup = VentanaCamara::_lim_sup_zoom;
@@ -258,7 +258,7 @@ namespace PAG {
             //------------------------------
 
                 //Directamente se mueve la cámara con el movimiento relativo de X
-                GLfloat variacion = movimiento_relativo_x;
+                GLfloat variacion = movimiento_relativo_x/2;
                 _camara->mover(TipoMovimiento::Pan, &variacion);
                 break;
             }
@@ -268,7 +268,7 @@ namespace PAG {
             //------------------------------
 
                 //Directamente se mueve la cámara con el movimiento relativo de X
-                GLfloat variacion = movimiento_relativo_y;
+                GLfloat variacion = movimiento_relativo_y/2;
                 _camara->mover(TipoMovimiento::Tilt, &variacion);
                 break;
             }
