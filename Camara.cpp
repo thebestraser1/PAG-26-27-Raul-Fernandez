@@ -93,12 +93,24 @@ namespace PAG {
                 va_end(args);
                 break;
             }
+
+            case (TipoMovimiento::Dolly): {
+                std::va_list args;
+                va_start(args, movimiento);
+
+                GLfloat* variacion_x = va_arg(args, GLfloat*);
+                GLfloat* variacion_z = va_arg(args, GLfloat*);
+
+                //Dolly puede ser en X o en Z
+                traslacionX(*variacion_x);
+                traslacionZ(*variacion_z);
+
+                va_end(args);
+                break;
+            }
             default:;
         }
-
-
     }
-
 
 
     /**
@@ -184,6 +196,36 @@ namespace PAG {
         if (glm::dot(v_actual, nueva_v) >= 0.0f) {
             lookAt = glm::vec3(lookAt_nuevo);
         }
+    }
+
+    /**
+     * Modifica la posición de la cámara según el eje X (de la cámara) --> U
+     *
+     * @param variacion
+     */
+    void PAG::Camara::traslacionX(GLfloat variacion) {
+        position = glm::vec3(position + (obtener_vector_u() * variacion));
+        lookAt = glm::vec3(lookAt + (obtener_vector_u() * variacion));
+    }
+
+    /**
+    * Modifica la posición de la cámara según el eje Y (de la cámara) --> V
+     *
+     * @param variacion
+     */
+    void PAG::Camara::traslacionY(GLfloat variacion) {
+        position = glm::vec3(position + (obtener_vector_v() * variacion));
+        lookAt = glm::vec3(lookAt + (obtener_vector_v() * variacion));
+    }
+
+    /**
+     * Modifica la posición de la cámara en el eje Z (de la cámara) --> N
+     *
+     * @param variacion
+     */
+    void PAG::Camara::traslacionZ(GLfloat variacion) {
+        position = glm::vec3(position + (obtener_vector_n() * variacion));
+        lookAt = glm::vec3(lookAt + (obtener_vector_n() * variacion));
     }
 
 

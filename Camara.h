@@ -27,6 +27,8 @@ namespace PAG {
         Zoom,
         Pan,
         Tilt,
+        Dolly,
+        Crane,
     };
 
 
@@ -35,7 +37,7 @@ namespace PAG {
         //Inicialización de la cámara por defecto. Todos los parámetros podrán tocarse con ventanas (salvo el aspect)
 
         //Parámetros de la cámara (visión)
-        glm::vec3 position = glm::vec3(0, 0, 0.01);
+        glm::vec3 position = glm::vec3(0, 0, 2);
         glm::vec3 lookAt = glm::vec3(0, 0, -1);
         glm::vec3 up = glm::vec3(0, 1, 0);
 
@@ -71,6 +73,9 @@ namespace PAG {
         void hacerZoom(GLfloat fovX);
         void hacerPan(GLfloat angulo);
         void hacerTilt(GLfloat angulo);
+        void traslacionX(GLfloat variacion);
+        void traslacionY(GLfloat variacion);
+        void traslacionZ(GLfloat variacion);
     };
 } // PAG
 

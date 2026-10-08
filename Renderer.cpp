@@ -272,6 +272,18 @@ namespace PAG {
                 _camara->mover(TipoMovimiento::Tilt, &variacion);
                 break;
             }
+
+            //------------------------------
+            case TipoMovimiento::Dolly: {
+            //------------------------------
+
+                //Directamente se mueve la cámara con el movimiento relativo de X o Z
+                GLfloat variacion_x = movimiento_relativo_x/10;
+                GLfloat variacion_z = -movimiento_relativo_y/10;
+                _camara->mover(TipoMovimiento::Dolly, &variacion_x, &variacion_z);
+                break;
+            }
+
             default: ;
         }
     }
@@ -401,6 +413,12 @@ namespace PAG {
                         case(TipoMovimiento::Tilt): {
                             GLfloat *variacion = va_arg(args, GLfloat*);
                             _camara->mover(TipoMovimiento::Tilt, variacion);
+                            break;
+                        }
+                        case(TipoMovimiento::Dolly): {
+                            GLfloat *variacion_x = va_arg(args, GLfloat*);
+                            GLfloat *variacion_z = va_arg(args, GLfloat*);
+                            _camara->mover(TipoMovimiento::Dolly, variacion_x, variacion_z);
                             break;
                         }
                     }

@@ -256,11 +256,15 @@ namespace PAG {
         //Modificadores fijos
         const GLfloat variacion_Pan = 2.0;  //Angulo de variación
         const GLfloat variacion_Tilt = 2.0;  //Angulo de variación
+        const GLfloat traslacion_X = 0.5;  //Variación de traslación (X)
+        const GLfloat traslacion_Y = 0.5;  //Variación de traslación (Y)
+        const GLfloat traslacion_Z = 0.5;  //Variación de traslación (Z)
 
 
         if (_renderer_listener) {
 
-            //Recuperamos las variables necesarias para las ventanas desde el Renderer (actualizadas)
+            //Recuperamos las variables necesarias para las ventanas desde el Rende
+            //rer (actualizadas)
             TipoMovimiento *tipo_movimiento_camara = nullptr;
             GLfloat angulo_Zoom = 0.0;
 
@@ -328,6 +332,56 @@ namespace PAG {
                             // Acción al pulsar Abajo
                             GLfloat variacion_Tilt_der = -variacion_Tilt;
                             _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Tilt_der);
+                        }
+                        break;
+                    }
+
+                    case TipoMovimiento::Dolly: {
+                        ImGui::Text("Dirección");
+                        if (ImGui::Button("^ Adelante ^", ImVec2(208, 0))) {
+                            GLfloat variacion_X_adelante = 0;
+                            GLfloat variacion_Z_adelante = -traslacion_Z;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_adelante, &variacion_Z_adelante);
+                        }
+
+
+                        if (ImGui::Button("<- Izquierda", ImVec2(100, 0))) {
+                            GLfloat variacion_X_izquierda = -traslacion_X;
+                            GLfloat variacion_Z_izquierda = 0;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_izquierda, &variacion_Z_izquierda);
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("Derecha ->", ImVec2(100, 0))) {
+                            GLfloat variacion_X_derecha = traslacion_X;
+                            GLfloat variacion_Z_derecha = 0;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_derecha, &variacion_Z_derecha);
+                        }
+
+                        if (ImGui::Button("v Atrás v", ImVec2(208, 0))) {
+                            GLfloat variacion_X_atras = 0;
+                            GLfloat variacion_Z_atras = traslacion_Z;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_atras, &variacion_Z_atras);
+                        }
+
+                        break;
+                    }
+
+                    case TipoMovimiento::Crane: {
+                        ImGui::Text("Dirección");
+                        if (ImGui::Button("^ Arriba ^", ImVec2(100, 0))) {
+
+                            GLfloat variacion_Y_arriba = traslacion_Y;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Y_arriba);
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("v Abajo v", ImVec2(100, 0))) {
+
+                            GLfloat variacion_Y_abajo = -traslacion_Y;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Y_abajo);
                         }
                         break;
                     }
