@@ -87,46 +87,45 @@ namespace PAG {
 
             if (_renderer_listener) {
                 _renderer_listener->wakeUp(TipoVentana::V_Selecc_Color_Fondo, true, colorFondoSeleccionado);
+
+                //Variable para comprobar si ha habido un cambio de color (para avisar a observadores)
+                bool cambio_color = false;
+
+                ImGui::Text("Selecciona un color:");
+                float w = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.y) * 0.40f;
+                if (ImGui::ColorPicker3("##Color de paleta", (float *) colorFondoSeleccionado,
+                                        ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview |
+                                        ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha)) {
+                    cambio_color = true;
+                                        }
+                ImGui::SameLine(); //Esto hace que aparezcan en la misma línea
+                ImGui::BeginGroup(); //Se crea un mismo grupo (para que esto aparezca en la misma línea)
+                ImGui::Text("Color Actual");
+                ImGui::ColorButton("##ActualColor", *(ImVec4 *) colorFondoSeleccionado, ImGuiColorEditFlags_NoAlpha,
+                                   ImVec2(100, 50));
+                ImGui::EndGroup();
+                if (ImGui::ColorEdit4("HSV como RGB##1", (float *) colorFondoSeleccionado,
+                                      ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_Float)) {
+                    cambio_color = true;
+                                      }
+                if (ImGui::ColorEdit4("HSV como HSV##1", (float *) colorFondoSeleccionado,
+                                      ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_InputHSV |
+                                      ImGuiColorEditFlags_Float)) {
+                    cambio_color = true;
+                                      }
+                if (ImGui::ColorEdit4("Hexadecimal", (float *) colorFondoSeleccionado,
+                                      ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_NoSmallPreview)) {
+                    cambio_color = true;
+                                      }
+
+                if (cambio_color) {
+                    warn_listeners(colorFondoSeleccionado); //Avisamos a observadores si el color cambió
+                }
             }
 
-
-            //Variable para comprobar si ha habido un cambio de color (para avisar a observadores)
-            bool cambio_color = false;
-
-            ImGui::Text("Selecciona un color:");
-            float w = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.y) * 0.40f;
-            if (ImGui::ColorPicker3("##Color de paleta", (float *) colorFondoSeleccionado,
-                                    ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview |
-                                    ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha)) {
-                cambio_color = true;
-            }
-            ImGui::SameLine(); //Esto hace que aparezcan en la misma línea
-            ImGui::BeginGroup(); //Se crea un mismo grupo (para que esto aparezca en la misma línea)
-            ImGui::Text("Color Actual");
-            ImGui::ColorButton("##ActualColor", *(ImVec4 *) colorFondoSeleccionado, ImGuiColorEditFlags_NoAlpha,
-                               ImVec2(100, 50));
-            ImGui::EndGroup();
-            if (ImGui::ColorEdit4("HSV como RGB##1", (float *) colorFondoSeleccionado,
-                                  ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_Float)) {
-                cambio_color = true;
-            }
-            if (ImGui::ColorEdit4("HSV como HSV##1", (float *) colorFondoSeleccionado,
-                                  ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_InputHSV |
-                                  ImGuiColorEditFlags_Float)) {
-                cambio_color = true;
-            }
-            if (ImGui::ColorEdit4("Hexadecimal", (float *) colorFondoSeleccionado,
-                                  ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_NoSmallPreview)) {
-                cambio_color = true;
-            }
-
-            if (cambio_color) {
-                warn_listeners(colorFondoSeleccionado); //Avisamos a observadores si el color cambió
-            }
+            // Si la ventana no está desplegada, Begin devuelve false
+            ImGui::End();
         }
-
-        // Si la ventana no está desplegada, Begin devuelve false
-        ImGui::End();
     }
 
 
@@ -253,44 +252,77 @@ namespace PAG {
     void VentanaCamara::dibujar() {
         //Posición a dibujar
         ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
-        
-        GLfloat angulo = 0.0;
-        
-        //Recuperamos las variables necesarias actualizadas de Renderer (si existe)
+
+        //Modificadores fijos
+        const GLfloat variacion_Pan = 2.0;  //Angulo de variación
+
+
         if (_renderer_listener) {
-            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, true, &angulo);
-        }
-        
 
-        bool ha_cambiado_angulo = false;
+            //Recuperamos las variables necesarias para las ventanas desde el Renderer (actualizadas)
+            TipoMovimiento *tipo_movimiento_camara = nullptr;
+            GLfloat angulo_Zoom = 0.0;
 
-        if (ImGui::Begin("Manejador de cámara", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            // La ventana está desplegada
+            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, true, &angulo_Zoom, &tipo_movimiento_camara);
 
-            ImGui::SetWindowFontScale(_escalaTexto); // Escalamos el texto si fuera necesario
+            bool ha_cambiado_angulo = false;
 
-            ImGui::Text("Zoom");
-            ha_cambiado_angulo = ImGui::SliderFloat("##SliderZoom", &angulo, _lim_inf_zoom, _lim_sup_zoom, "%2.2fº");
-        }
+            if (ImGui::Begin("Manejador de cámara", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+                // La ventana está desplegada
 
-        if (ha_cambiado_angulo) {
-            warn_listeners(TipoMovimiento::Zoom, angulo);
-        }
+                ImGui::SetWindowFontScale(_escalaTexto); // Escalamos el texto si fuera necesario
 
+                ImGui::Text("Movimiento");
 
-        // Si la ventana no está desplegada, Begin devuelve false
-        ImGui::End();
-    }
+                //Este vector funciona porque he puesto el mismo orden que en el enum de Camara.h
+                //Es para que muestre el nombre de los enumerados
+                const char* movimientos[] = { "Zoom", "Pan", "Tilt", "Dolly", "Crane", "Orbit"};
 
+                //Sacamos el índice que ocupa el tipo de movimiento actual en el enumerado gracias a static_cast
+                int movimientoActual = static_cast<int>(*tipo_movimiento_camara);
 
-    /**
-     * Avisar a los observadores de un cambio en la ventana de manejo de cámara
-     */
-    void VentanaCamara::warn_listeners(TipoMovimiento t_movimiento, GLfloat angulo) const {
-        if (t_movimiento == TipoMovimiento::Zoom) {
-            if (_renderer_listener) {
-                _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &t_movimiento, &angulo);
+                //La ejecución entra aquí solo cuando se ha cambiado el tipo de movimiento
+                if (ImGui::Combo("##Movimiento", &movimientoActual, movimientos, IM_ARRAYSIZE(movimientos))) {
+
+                    //Se puede hacer la operación inversa a lo anterior (sacar un tipo de movimiento desde un índice (int))
+                    *tipo_movimiento_camara = static_cast<TipoMovimiento>(movimientoActual);
+                }
+
+                switch (*tipo_movimiento_camara) {
+                    case TipoMovimiento::Zoom: {
+                        ImGui::Text("Ángulo");
+                        ha_cambiado_angulo = ImGui::SliderFloat("##SliderZoom", &angulo_Zoom, _lim_inf_zoom, _lim_sup_zoom, "%2.2fº");
+
+                        if (ha_cambiado_angulo) {
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &angulo_Zoom);
+                        }
+                        break;
+                    }
+                    case TipoMovimiento::Pan: {
+                        ImGui::Text("Dirección");
+                        if (ImGui::Button("<- Izquierda", ImVec2(100, 0))) {
+                            // Acción al pulsar Izquierda
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Pan);
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("Derecha ->", ImVec2(100, 0))) {
+                            // Acción al pulsar Derecha
+                            GLfloat variacion_Pan_der = -variacion_Pan;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Pan_der);
+                        }
+                    }
+                    default: ;
+                }
+
             }
+
+
+
+
+            // Si la ventana no está desplegada, Begin devuelve false
+            ImGui::End();
         }
     }
 }

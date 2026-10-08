@@ -42,9 +42,6 @@ namespace PAG {
         int anchoVentana = 1024;
         int altoVentana = 576;
 
-        //Tipo de movimiento de cámara seleccionado
-        TipoMovimiento _tipoMovimientoSeleccionado = Zoom;
-
         //Camara
         Camara* _camara;
 

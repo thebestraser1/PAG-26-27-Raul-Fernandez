@@ -245,7 +245,7 @@ int main() {
         modeloCreado = false;
     }
 
-    if (modeloCreado) std::cout << "Modelo procesado satisfactoriamente" << std::endl;
+    if (modeloCreado) std::cout << "Modelo procesado satisfactoriamente. Carga un shader para verlo" << std::endl;
 
     //Establecemos las ventanas: una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
     auto *ventana_texto_shader = new PAG::VentanaTextoShader(10, 10);

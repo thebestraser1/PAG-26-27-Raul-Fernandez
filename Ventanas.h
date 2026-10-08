@@ -85,7 +85,7 @@ namespace PAG {
 
         VentanaCamara(float x, float y);
         void dibujar() override;
-        void warn_listeners(TipoMovimiento t_movimiento, GLfloat angulo) const;
+        void warn_listeners(TipoMovimiento t_movimiento, GLfloat zoom) const;
 
     };
 } // PAG

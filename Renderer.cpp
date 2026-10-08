@@ -230,22 +230,33 @@ namespace PAG {
      * Se ejecuta cuando lo hace el callback de ratón (en un futuro se pasará por parámetro el movimiento relativo del ratón)
      */
     void PAG::Renderer::hacerMovimientoRaton(double movimiento_relativo_x, double movimiento_relativo_y) {
-        if (_tipoMovimientoSeleccionado == TipoMovimiento::Zoom) {
+        switch (*_camara->getTipoMovimientoActual()) {
 
-            //Cogemos el ángulo de visión
-            GLfloat anguloVision = _camara->getAnguloVision();
-            anguloVision = anguloVision + movimiento_relativo_y;
+            case TipoMovimiento::Zoom: {
+                //Cogemos el ángulo de visión
+                GLfloat anguloVision = _camara->getAnguloVision();
+                anguloVision = anguloVision + movimiento_relativo_y;
 
-            //Controlo que el ángulo no se escape de los límites (sabiendo los límites que tiene la ventana que lleva esto)
-            float lim_sup = VentanaCamara::_lim_sup_zoom;
-            float lim_inf = VentanaCamara::_lim_inf_zoom;
+                //Controlo que el ángulo no se escape de los límites (sabiendo los límites que tiene la ventana que lleva esto)
+                float lim_sup = VentanaCamara::_lim_sup_zoom;
+                float lim_inf = VentanaCamara::_lim_inf_zoom;
 
-            //Si excede los límites deshacemos la transformación que se quiere hacer
-            anguloVision = (anguloVision < lim_inf) ? lim_inf : anguloVision;
-            anguloVision = (anguloVision > lim_sup) ? lim_sup : anguloVision;
+                //Si excede los límites deshacemos la transformación que se quiere hacer
+                anguloVision = (anguloVision < lim_inf) ? lim_inf : anguloVision;
+                anguloVision = (anguloVision > lim_sup) ? lim_sup : anguloVision;
 
-            //Actualizo la cámara
-            _camara->mover(TipoMovimiento::Zoom, &anguloVision);
+                //Actualizo la cámara
+                _camara->mover(TipoMovimiento::Zoom, &anguloVision);
+                break;
+            }
+            case TipoMovimiento::Pan: {
+
+                //Directamente se mueve la cámara con el movimiento relativo de X
+                GLfloat variacion = movimiento_relativo_x;
+                _camara->mover(TipoMovimiento::Pan, &variacion);
+                break;
+            }
+            default: ;
         }
     }
 
@@ -298,7 +309,12 @@ namespace PAG {
 
                     GLfloat *angulo = va_arg(args, GLfloat*);
 
+                    //Ventana necesita una dirección de memoria por referencia, no un valor (porque luego podrá modificar
+                    //el tipo de movimiento de la cámara mediante el desplegable)
+                    TipoMovimiento** t_movimiento = va_arg(args, TipoMovimiento**);
+
                     *angulo = _camara->getAnguloVision();
+                    *t_movimiento = _camara->getTipoMovimientoActual();
 
                     va_end(args);
                     break;
@@ -353,13 +369,20 @@ namespace PAG {
                     std::va_list args;
                     va_start(args, ventana_pidiendo);
 
-                    //Se setearía el tipo de movimiento seleccionado
-                    _tipoMovimientoSeleccionado = *va_arg(args, TipoMovimiento*);
-
                     //Se actualizarían los parámetros de la cámara según el tipo
-                    if (_tipoMovimientoSeleccionado == TipoMovimiento::Zoom) {
-                        GLfloat *angulo = va_arg(args, GLfloat*);
-                        _camara->mover(_tipoMovimientoSeleccionado, angulo);
+                    switch (*_camara->getTipoMovimientoActual()) {
+
+                        case(TipoMovimiento::Zoom): {
+                            GLfloat *angulo = va_arg(args, GLfloat*);
+                            _camara->mover(TipoMovimiento::Zoom, angulo);
+                            break;
+                        }
+                        case(TipoMovimiento::Pan): {
+                            GLfloat *variacion = va_arg(args, GLfloat*);
+                            _camara->mover(TipoMovimiento::Pan, variacion);
+                            break;
+
+                        }
                     }
 
                     va_end(args);

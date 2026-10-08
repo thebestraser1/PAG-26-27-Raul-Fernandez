@@ -27,6 +27,7 @@ namespace PAG {
         return devolver;
     }
 
+
     /**
      * Función para actualizar el aspecto (ante una posible redimensión de ventana)
      */
@@ -50,6 +51,14 @@ namespace PAG {
 
 
     /**
+     * Función para obtener la matriz de transformación obtenida tras multiplicar la de visión y proyección
+     */
+    TipoMovimiento* PAG::Camara::getTipoMovimientoActual () {
+        return &_tipoMovimientoSeleccionado;
+    }
+
+
+    /**
      * Función para mover la cámara según los diferentes movimientos establecidos
      */
     void Camara::mover(TipoMovimiento movimiento, ...) {
@@ -59,7 +68,17 @@ namespace PAG {
                 va_start(args, movimiento);
 
                 GLfloat* angulo = va_arg(args, GLfloat*);
-                fovY = FovX_a_FovY_grados(glm::radians(*angulo));
+                hacerZoom(glm::radians(*angulo));
+
+                va_end(args);
+                break;
+            }
+            case (TipoMovimiento::Pan): {
+                std::va_list args;
+                va_start(args, movimiento);
+
+                GLfloat* variacion = va_arg(args, GLfloat*);
+                hacerPan(glm::radians(*variacion));
 
                 va_end(args);
                 break;
@@ -68,12 +87,61 @@ namespace PAG {
         }
     }
 
+
+
     /**
-     * Devuelve FovY a partir de un ángulo de visión (horizontal) en radianes. Útil para el zoom.
-     * @param angulo
-     * @return FovY en radianes
+     * Obtener el vector n de las coordenadas de la cámara
      */
-    GLfloat PAG::Camara::FovX_a_FovY_grados(GLfloat angulo) const {
-        return 2.0f * atanf(tanf(angulo * 0.5f) / aspect);
+    glm::vec3 PAG::Camara::obtener_vector_n() {
+        return glm::normalize(position - lookAt);
     }
+
+    /**
+     * Obtener el vector u de las coordenadas de la cámara
+     */
+    glm::vec3 PAG::Camara::obtener_vector_u() {
+        glm::vec3 n = obtener_vector_n();
+
+        //Con el producto vectorial con el vector vertical (v) sale u
+        return glm::normalize(glm::cross(up, n));
+    }
+
+    /**
+     * Obtener el vector v de las coordenadas de la cámara
+     */
+    glm::vec3 PAG::Camara::obtener_vector_v() {
+        glm::vec3 n = obtener_vector_n();
+        glm::vec3 u = obtener_vector_u();   //Optimizable para no llamar a n 2 veces (pero mejor comprensión del proceso)
+
+        return glm::normalize(glm::cross(n, u));
+    }
+
+
+
+    /**
+     * Morifica FovY a partir de un ángulo de visión (horizontal) en radianes. Útil para el zoom.
+     * @param angulo en radianes
+     */
+    void PAG::Camara::hacerZoom(GLfloat angulo) {
+        fovY = 2.0f * atanf(tanf(angulo * 0.5f) / aspect);
+    }
+
+
+
+    /**
+     * Modifica (rota) el punto LookAt a partir del vector V de la cámara.
+     * @param angulo en radianes
+     */
+    void PAG::Camara::hacerPan(GLfloat angulo) {
+
+        glm::mat4 m = glm::translate(position)
+                    * glm::rotate(angulo, obtener_vector_v())
+                    * glm::translate(-position);
+
+        glm::vec4 lookAt_aux = m * glm::vec4(lookAt, 1.0f);              // w = 1: es un punto
+
+        lookAt = glm::vec3(lookAt_aux);
+    }
+
+
 } // PAG
