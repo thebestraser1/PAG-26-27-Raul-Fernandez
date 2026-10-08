@@ -391,8 +391,6 @@ namespace PAG {
             }
 
 
-
-
             // Si la ventana no está desplegada, Begin devuelve false
             ImGui::End();
         }

@@ -284,6 +284,16 @@ namespace PAG {
                 break;
             }
 
+            //------------------------------
+            case TipoMovimiento::Crane: {
+            //------------------------------
+
+                //Directamente se mueve la cámara con el movimiento relativo de X o Z
+                GLfloat variacion_y = movimiento_relativo_y/10;
+                _camara->mover(TipoMovimiento::Crane, &variacion_y);
+                break;
+            }
+
             default: ;
         }
     }

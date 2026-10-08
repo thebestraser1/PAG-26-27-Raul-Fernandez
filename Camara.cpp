@@ -108,6 +108,19 @@ namespace PAG {
                 va_end(args);
                 break;
             }
+
+            case (TipoMovimiento::Crane): {
+                std::va_list args;
+                va_start(args, movimiento);
+
+                GLfloat* variacion_y = va_arg(args, GLfloat*);
+
+                //Crane es en Y
+                traslacionY(*variacion_y);
+
+                va_end(args);
+                break;
+            }
             default:;
         }
     }
