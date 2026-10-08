@@ -1,5 +1,7 @@
 #include "Renderer.h"
 
+#include "Ventanas.h"
+
 namespace PAG {
     //Inicialización de la instancia única a nulo
     PAG::Renderer *PAG::Renderer::instancia = nullptr;
@@ -227,11 +229,20 @@ namespace PAG {
     /**
      * Se ejecuta cuando lo hace el callback de ratón (en un futuro se pasará por parámetro el movimiento relativo del ratón)
      */
-    void PAG::Renderer::hacerMovimientoRaton() {
+    void PAG::Renderer::hacerMovimientoRaton(double movimiento_relativo_x, double movimiento_relativo_y) {
         if (_tipoMovimientoSeleccionado == TipoMovimiento::Zoom) {
+
             //Cogemos el ángulo de visión
             GLfloat anguloVision = _camara->getAnguloVision();
-            anguloVision = anguloVision + 2.0f;
+            anguloVision = anguloVision + movimiento_relativo_y;
+
+            //Controlo que el ángulo no se escape de los límites (sabiendo los límites que tiene la ventana que lleva esto)
+            float lim_sup = VentanaCamara::_lim_sup_zoom;
+            float lim_inf = VentanaCamara::_lim_inf_zoom;
+
+            //Si excede los límites deshacemos la transformación que se quiere hacer
+            anguloVision = (anguloVision < lim_inf) ? lim_inf : anguloVision;
+            anguloVision = (anguloVision > lim_sup) ? lim_sup : anguloVision;
 
             //Actualizo la cámara
             _camara->mover(TipoMovimiento::Zoom, &anguloVision);

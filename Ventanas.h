@@ -80,9 +80,13 @@ namespace PAG {
      */
     class VentanaCamara : public Ventanas{
     public:
+        static const float _lim_inf_zoom;
+        static const float _lim_sup_zoom;
+
         VentanaCamara(float x, float y);
         void dibujar() override;
         void warn_listeners(TipoMovimiento t_movimiento, GLfloat angulo) const;
+
     };
 } // PAG
 

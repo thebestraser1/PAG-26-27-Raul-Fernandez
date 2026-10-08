@@ -16,6 +16,20 @@
 
 
 // -----------------------------------------------------
+// --------------- VARIABLES GLOBALES ------------------
+// -----------------------------------------------------
+
+// Variables de ratón para calcular su movimiento relativo (con botón pulsado)
+
+static bool CLICK_PULSADO = false;
+static double POS_X_RATON_INICIO_CLICK = -1;
+static double POS_Y_RATON_INICIO_CLICK = -1;
+
+
+
+
+
+// -----------------------------------------------------
 // -------------------- CALLBACKS ----------------------
 // -----------------------------------------------------
 
@@ -56,8 +70,9 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     if (action == GLFW_PRESS) {
         //std::cout << "Pulsado el boton: " << button << std::endl;
 
-        if (button == 1) {
-            PAG::Renderer::getInstancia().hacerMovimientoRaton();
+        if (button == 0) {
+            glfwGetCursorPos(window, &POS_X_RATON_INICIO_CLICK, &POS_Y_RATON_INICIO_CLICK);
+            CLICK_PULSADO = true;
         }
 
         //Tras procesarlo con GLFW, se pasa el callback a ImGui
@@ -67,11 +82,44 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     } else if (action == GLFW_RELEASE) {
         //std::cout << "Soltado el boton: " << button << std::endl;
 
+        if (button == 0) {
+            CLICK_PULSADO = false;
+        }
+
         //Tras procesarlo con GLFW, se pasa el callback a ImGui
         ImGuiIO& io = ImGui::GetIO ();
         io.AddMouseButtonEvent ( button, false );
     }
 }
+
+
+/**
+ * Callback que permite conocer la posición actual del ratón. Este callback se dedica a calcular
+ * el movimiento relativo del ratón (desde la posición anterior a la actual) para realizar modificaciones
+ * en la cámara de Renderer.cpp
+ *
+ * @param window
+ * @param xpos /
+ * @param ypos
+ */
+void callback_pos_raton_camara(GLFWwindow* window, double xpos, double ypos) {
+
+    if (CLICK_PULSADO) {
+        //Si se ha hecho click, podemos calcular el movimiento relativo
+
+        double movimiento_relativo_x = POS_X_RATON_INICIO_CLICK - xpos;
+        double movimiento_relativo_y = POS_Y_RATON_INICIO_CLICK - ypos;
+
+        PAG::Renderer::getInstancia().hacerMovimientoRaton(movimiento_relativo_x, movimiento_relativo_y);
+
+        POS_X_RATON_INICIO_CLICK = xpos;
+        POS_Y_RATON_INICIO_CLICK = ypos;
+    }
+}
+
+
+
+
 
 
 /**
@@ -95,6 +143,13 @@ void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
 
     PAG::Renderer::getInstancia().setColorFondo(color_fondo_renderer);
 }
+
+
+
+
+
+
+
 
 // -----------------------------------------------------
 // --------------------   MAIN    ----------------------
@@ -161,6 +216,7 @@ int main() {
     glfwSetKeyCallback(window, key_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetScrollCallback(window, scroll_color_callback);
+    glfwSetCursorPosCallback(window, callback_pos_raton_camara);
 
 
     //Inicialización de ImGui

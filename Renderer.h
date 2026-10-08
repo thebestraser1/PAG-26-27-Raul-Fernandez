@@ -82,7 +82,7 @@ namespace PAG {
 
         Camara* getCamara() const;
 
-        void hacerMovimientoRaton();
+        void hacerMovimientoRaton(double movimiento_relativo_x, double movimiento_relativo_y);
 
         void addListener ( Listener *listener );
 

@@ -236,6 +236,9 @@ namespace PAG {
      *  ------------------------------------------
      */
 
+    const float VentanaCamara::_lim_inf_zoom = 20;
+    const float VentanaCamara::_lim_sup_zoom = 120;
+
     /**
      * Constructor de ventana de manejo de cámara
      */
@@ -267,7 +270,7 @@ namespace PAG {
             ImGui::SetWindowFontScale(_escalaTexto); // Escalamos el texto si fuera necesario
 
             ImGui::Text("Zoom");
-            ha_cambiado_angulo = ImGui::SliderFloat("##SliderZoom", &angulo, 20, 120, "%2.2fº");
+            ha_cambiado_angulo = ImGui::SliderFloat("##SliderZoom", &angulo, _lim_inf_zoom, _lim_sup_zoom, "%2.2fº");
         }
 
         if (ha_cambiado_angulo) {
