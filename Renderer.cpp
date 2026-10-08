@@ -232,7 +232,10 @@ namespace PAG {
     void PAG::Renderer::hacerMovimientoRaton(double movimiento_relativo_x, double movimiento_relativo_y) {
         switch (*_camara->getTipoMovimientoActual()) {
 
+            //------------------------------
             case TipoMovimiento::Zoom: {
+            //------------------------------
+
                 //Cogemos el ángulo de visión
                 GLfloat anguloVision = _camara->getAnguloVision();
                 anguloVision = anguloVision + movimiento_relativo_y;
@@ -249,11 +252,24 @@ namespace PAG {
                 _camara->mover(TipoMovimiento::Zoom, &anguloVision);
                 break;
             }
+
+            //------------------------------
             case TipoMovimiento::Pan: {
+            //------------------------------
 
                 //Directamente se mueve la cámara con el movimiento relativo de X
                 GLfloat variacion = movimiento_relativo_x;
                 _camara->mover(TipoMovimiento::Pan, &variacion);
+                break;
+            }
+
+            //------------------------------
+            case TipoMovimiento::Tilt: {
+            //------------------------------
+
+                //Directamente se mueve la cámara con el movimiento relativo de X
+                GLfloat variacion = movimiento_relativo_y;
+                _camara->mover(TipoMovimiento::Tilt, &variacion);
                 break;
             }
             default: ;
@@ -381,7 +397,11 @@ namespace PAG {
                             GLfloat *variacion = va_arg(args, GLfloat*);
                             _camara->mover(TipoMovimiento::Pan, variacion);
                             break;
-
+                        }
+                        case(TipoMovimiento::Tilt): {
+                            GLfloat *variacion = va_arg(args, GLfloat*);
+                            _camara->mover(TipoMovimiento::Tilt, variacion);
+                            break;
                         }
                     }
 

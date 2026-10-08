@@ -255,6 +255,7 @@ namespace PAG {
 
         //Modificadores fijos
         const GLfloat variacion_Pan = 2.0;  //Angulo de variación
+        const GLfloat variacion_Tilt = 2.0;  //Angulo de variación
 
 
         if (_renderer_listener) {
@@ -312,6 +313,23 @@ namespace PAG {
                             GLfloat variacion_Pan_der = -variacion_Pan;
                             _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Pan_der);
                         }
+                        break;
+                    }
+                    case TipoMovimiento::Tilt: {
+                        ImGui::Text("Dirección");
+                        if (ImGui::Button("^ Arriba ^", ImVec2(100, 0))) {
+                            // Acción al pulsar Arriba
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Tilt);
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("v Abajo v", ImVec2(100, 0))) {
+                            // Acción al pulsar Abajo
+                            GLfloat variacion_Tilt_der = -variacion_Tilt;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Tilt_der);
+                        }
+                        break;
                     }
                     default: ;
                 }

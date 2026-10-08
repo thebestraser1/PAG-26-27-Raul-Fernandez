@@ -83,8 +83,35 @@ namespace PAG {
                 va_end(args);
                 break;
             }
+            case (TipoMovimiento::Tilt): {
+                std::va_list args;
+                va_start(args, movimiento);
+
+                GLfloat* variacion = va_arg(args, GLfloat*);
+                hacerTilt(glm::radians(*variacion));
+
+                va_end(args);
+                break;
+            }
             default:;
         }
+
+        /**
+
+        //Tras mover, comprobamos la EXCEPCIÓN de la cámara --> Ver si n y up son colineales
+        glm::vec3 n = obtener_vector_n();
+
+        glm::bvec3 colineales = glm::epsilonEqual(n, up, glm::epsilon<float>());
+
+        if (glm::all(colineales)) {
+
+            //Cambiamos up (eje Y) por Z para calcular el producto vectorial con u. Cuando salgamos de esta situación, se restaura
+            up = glm::vec3(0,0,1);
+        }else {
+            up = glm::vec3(0, 1, 0);
+        }
+        */
+
     }
 
 
@@ -136,6 +163,22 @@ namespace PAG {
 
         glm::mat4 m = glm::translate(position)
                     * glm::rotate(angulo, obtener_vector_v())
+                    * glm::translate(-position);
+
+        glm::vec4 lookAt_aux = m * glm::vec4(lookAt, 1.0f);              // w = 1: es un punto
+
+        lookAt = glm::vec3(lookAt_aux);
+    }
+
+
+    /**
+     * Modifica (rota) el punto LookAt a partir del vector U de la cámara.
+     * @param angulo en radianes
+     */
+    void PAG::Camara::hacerTilt(GLfloat angulo) {
+
+        glm::mat4 m = glm::translate(position)
+                    * glm::rotate(angulo, obtener_vector_u())
                     * glm::translate(-position);
 
         glm::vec4 lookAt_aux = m * glm::vec4(lookAt, 1.0f);              // w = 1: es un punto

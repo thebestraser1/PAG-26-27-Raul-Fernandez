@@ -9,6 +9,9 @@
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/vector_relational.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtc/epsilon.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
@@ -16,13 +19,14 @@
 #include <cstdarg>  //Para funciones con número variable de elementos
 
 
-#include <iostream>
+
 
 namespace PAG {
 
     enum TipoMovimiento {
         Zoom,
         Pan,
+        Tilt,
     };
 
 
@@ -66,6 +70,7 @@ namespace PAG {
         //Funciones de movimiento auxiliares
         void hacerZoom(GLfloat fovX);
         void hacerPan(GLfloat angulo);
+        void hacerTilt(GLfloat angulo);
     };
 } // PAG
 
