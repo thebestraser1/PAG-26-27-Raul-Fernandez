@@ -84,13 +84,6 @@ void scroll_color_callback(GLFWwindow *window, double xoffset, double yoffset) {
     //Creamos un vector de 4 para el color actual de la ventana
     GLfloat* color_fondo_renderer = PAG::Renderer::getInstancia().getColorFondo();
 
-    if (yoffset > 0) {
-        std::cout << "Moviste la rueda del raton hacia arriba" << std::endl;
-    } else if (yoffset < 0) {
-        std::cout << "Moviste la rueda del raton hacia abajo" << std::endl;
-    }
-    //En caso de == 0 no se hace nada
-
     GLfloat rojo = color_fondo_renderer[0] + VARIACION;
     GLfloat verde = color_fondo_renderer[1] + VARIACION;
     GLfloat azul = color_fondo_renderer[2] + VARIACION;
