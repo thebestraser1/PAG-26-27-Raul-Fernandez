@@ -256,9 +256,10 @@ namespace PAG {
         //Modificadores fijos
         const GLfloat variacion_Pan = 2.0;  //Angulo de variación
         const GLfloat variacion_Tilt = 2.0;  //Angulo de variación
-        const GLfloat traslacion_X = 0.5;  //Variación de traslación (X)
-        const GLfloat traslacion_Y = 0.5;  //Variación de traslación (Y)
-        const GLfloat traslacion_Z = 0.5;  //Variación de traslación (Z)
+        const GLfloat traslacion_X = 0.1;  //Variación de traslación (X)
+        const GLfloat traslacion_Y = 0.1;  //Variación de traslación (Y)
+        const GLfloat traslacion_Z = 0.1;  //Variación de traslación (Z)
+        const GLfloat variacion_Orbit = 2.0; //Angulo de variacion
 
 
         if (_renderer_listener) {
@@ -385,6 +386,39 @@ namespace PAG {
                         }
                         break;
                     }
+                    case TipoMovimiento::Orbit: {
+                        ImGui::Text("Latitud");
+                        if (ImGui::Button("^ Norte ^", ImVec2(100, 0))) {
+                            GLfloat variacion_Norte_longitud = 0;
+                            GLfloat variacion_Norte_latitud = variacion_Orbit;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Norte_longitud, &variacion_Norte_latitud);
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("v Sur v", ImVec2(100, 0))) {
+                            GLfloat variacion_Sur_longitud = 0;
+                            GLfloat variacion_Sur_latitud = -variacion_Orbit;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Sur_longitud, &variacion_Sur_latitud);
+                        }
+
+                        ImGui::Text("Longitud");
+                        if (ImGui::Button("^ Oeste ^", ImVec2(100, 0))) {
+                            GLfloat variacion_Oeste_longitud = -variacion_Orbit;
+                            GLfloat variacion_Oeste_latitud = 0;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Oeste_longitud, &variacion_Oeste_latitud);
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("v Este v", ImVec2(100, 0))) {
+                            GLfloat variacion_Este_longitud = variacion_Orbit;
+                            GLfloat variacion_Este_latitud = 0;
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Este_longitud, &variacion_Este_latitud);
+                        }
+                        break;
+                    }
+
                     default: ;
                 }
 

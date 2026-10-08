@@ -121,6 +121,21 @@ namespace PAG {
                 va_end(args);
                 break;
             }
+
+            case (TipoMovimiento::Orbit): {
+                std::va_list args;
+                va_start(args, movimiento);
+
+                GLfloat* variacion_longitud = va_arg(args, GLfloat*);
+                GLfloat* variacion_latitud = va_arg(args, GLfloat*);
+
+                //Dolly puede ser en X o en Z
+                hacer_orbit_longitud(glm::radians(*variacion_longitud));
+                hacer_orbit_latitud(glm::radians(*variacion_latitud));
+
+                va_end(args);
+                break;
+            }
             default:;
         }
     }
@@ -196,12 +211,12 @@ namespace PAG {
             * glm::rotate(angulo, obtener_vector_u())
             * glm::translate(-position);
 
-        glm::vec4 lookAt_nuevo = m * glm::vec4(lookAt, 1.0f);
+        glm::vec3 lookAt_nuevo = glm::vec3(m * glm::vec4(lookAt, 1.0f));
 
         //Antes de efectuar comprobamos la EXCEPCIÓN de la vertical de la cámara
         //Para ello, voy a ver si el vector v es radicalmente distinto con la trasformación que se plantea
         //(es decir, si se ha pasado al "otro lado")
-        glm::vec3 nuevo_n = glm::normalize(glm::vec3(lookAt_nuevo) - position);
+        glm::vec3 nuevo_n = glm::normalize(lookAt_nuevo - position);
         glm::vec3 nueva_u = glm::normalize(glm::cross(up, nuevo_n));
         glm::vec3 nueva_v = glm::cross(nuevo_n, nueva_u);
 
@@ -239,6 +254,52 @@ namespace PAG {
     void PAG::Camara::traslacionZ(GLfloat variacion) {
         position = glm::vec3(position + (obtener_vector_n() * variacion));
         lookAt = glm::vec3(lookAt + (obtener_vector_n() * variacion));
+    }
+
+
+    /**
+     * Hace el movimiento Orbit a nivel de longitud
+     *
+     * @param angulo
+     */
+    void PAG::Camara::hacer_orbit_longitud(GLfloat angulo) {
+        glm::mat4 m = glm::translate(lookAt)
+            * glm::rotate(angulo, obtener_vector_v())
+            * glm::translate(-lookAt);
+
+        //Aquí no hay problema con las verticales
+        position = glm::vec3(m * glm::vec4(position, 1.0));
+
+    }
+
+
+    /**
+     * Hace el movimiento Orbit a nivel de latitud (esta genera el problema de la vertical)
+     *
+     * @param angulo
+     */
+    void PAG::Camara::hacer_orbit_latitud(GLfloat angulo) {
+
+        glm::mat4 m = glm::translate(lookAt)
+            * glm::rotate(angulo, obtener_vector_u())
+            * glm::translate(-lookAt);
+
+        //Aquí hay que gestionar las verticales
+        glm::vec3 nueva_position = glm::vec3(m * glm::vec4(position, 1.0));
+
+        glm::vec3 nuevo_n = glm::normalize(lookAt - nueva_position);
+        glm::vec3 nueva_u = glm::normalize(glm::cross(up, nuevo_n));
+        glm::vec3 nueva_v = glm::cross(nuevo_n, nueva_u);
+
+        glm::bvec3 son_colineales = glm::epsilonEqual(nueva_v, up, glm::epsilon<float>());
+
+        if (glm::all(son_colineales)) {
+            up = glm::vec3(0,0,1);
+
+        }else {
+            up = glm::vec3(0,1,0);
+        }
+        position = nueva_position;
     }
 
 

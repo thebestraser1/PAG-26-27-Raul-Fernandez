@@ -29,6 +29,7 @@ namespace PAG {
         Tilt,
         Dolly,
         Crane,
+        Orbit
     };
 
 
@@ -38,7 +39,7 @@ namespace PAG {
 
         //Parámetros de la cámara (visión)
         glm::vec3 position = glm::vec3(0, 0, 2);
-        glm::vec3 lookAt = glm::vec3(0, 0, -1);
+        glm::vec3 lookAt = glm::vec3(0, 0, 0);
         glm::vec3 up = glm::vec3(0, 1, 0);
 
         //Parámetros de la cámara (proyección)
@@ -76,6 +77,8 @@ namespace PAG {
         void traslacionX(GLfloat variacion);
         void traslacionY(GLfloat variacion);
         void traslacionZ(GLfloat variacion);
+        void hacer_orbit_longitud(GLfloat variacion);
+        void hacer_orbit_latitud(GLfloat variacion);
     };
 } // PAG
 

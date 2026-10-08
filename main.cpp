@@ -70,7 +70,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     if (action == GLFW_PRESS) {
         //std::cout << "Pulsado el boton: " << button << std::endl;
 
-        if (button == 0) {
+        if (button == 1) {
             glfwGetCursorPos(window, &POS_X_RATON_INICIO_CLICK, &POS_Y_RATON_INICIO_CLICK);
             CLICK_PULSADO = true;
         }
@@ -82,7 +82,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
     } else if (action == GLFW_RELEASE) {
         //std::cout << "Soltado el boton: " << button << std::endl;
 
-        if (button == 0) {
+        if (button == 1) {
             CLICK_PULSADO = false;
         }
 

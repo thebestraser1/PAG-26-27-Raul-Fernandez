@@ -278,8 +278,8 @@ namespace PAG {
             //------------------------------
 
                 //Directamente se mueve la cámara con el movimiento relativo de X o Z
-                GLfloat variacion_x = movimiento_relativo_x/10;
-                GLfloat variacion_z = -movimiento_relativo_y/10;
+                GLfloat variacion_x = -(movimiento_relativo_x/50);
+                GLfloat variacion_z = -(movimiento_relativo_y/50);
                 _camara->mover(TipoMovimiento::Dolly, &variacion_x, &variacion_z);
                 break;
             }
@@ -289,8 +289,19 @@ namespace PAG {
             //------------------------------
 
                 //Directamente se mueve la cámara con el movimiento relativo de X o Z
-                GLfloat variacion_y = movimiento_relativo_y/10;
+                GLfloat variacion_y = -(movimiento_relativo_y/50);
                 _camara->mover(TipoMovimiento::Crane, &variacion_y);
+                break;
+            }
+
+            //------------------------------
+            case TipoMovimiento::Orbit: {
+            //------------------------------
+
+                //Directamente se mueve la cámara con el movimiento relativo de X o Z
+                GLfloat variacion_y = movimiento_relativo_y/2;
+                GLfloat variacion_x = movimiento_relativo_x/2;
+                _camara->mover(TipoMovimiento::Orbit, &variacion_x, &variacion_y);
                 break;
             }
 
@@ -429,6 +440,17 @@ namespace PAG {
                             GLfloat *variacion_x = va_arg(args, GLfloat*);
                             GLfloat *variacion_z = va_arg(args, GLfloat*);
                             _camara->mover(TipoMovimiento::Dolly, variacion_x, variacion_z);
+                            break;
+                        }
+                        case(TipoMovimiento::Crane): {
+                            GLfloat *variacion_y = va_arg(args, GLfloat*);
+                            _camara->mover(TipoMovimiento::Crane, variacion_y);
+                            break;
+                        }
+                        case(TipoMovimiento::Orbit): {
+                            GLfloat *variacion_latitud = va_arg(args, GLfloat*);
+                            GLfloat *variacion_longitud = va_arg(args, GLfloat*);
+                            _camara->mover(TipoMovimiento::Orbit, variacion_latitud, variacion_longitud);
                             break;
                         }
                     }
