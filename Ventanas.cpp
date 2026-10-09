@@ -97,7 +97,7 @@ namespace PAG {
                                         ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview |
                                         ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha)) {
                     cambio_color = true;
-                                        }
+                }
                 ImGui::SameLine(); //Esto hace que aparezcan en la misma línea
                 ImGui::BeginGroup(); //Se crea un mismo grupo (para que esto aparezca en la misma línea)
                 ImGui::Text("Color Actual");
@@ -271,8 +271,6 @@ namespace PAG {
 
             _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, true, &angulo_Zoom, &tipo_movimiento_camara);
 
-            bool ha_cambiado_angulo = false;
-
             if (ImGui::Begin("Manejador de cámara", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
                 // La ventana está desplegada
 
@@ -297,6 +295,7 @@ namespace PAG {
                 switch (*tipo_movimiento_camara) {
                     case TipoMovimiento::Zoom: {
                         ImGui::Text("Ángulo");
+                        bool ha_cambiado_angulo = false;
                         ha_cambiado_angulo = ImGui::SliderFloat("##SliderZoom", &angulo_Zoom, _lim_inf_zoom, _lim_sup_zoom, "%2.2fº");
 
                         if (ha_cambiado_angulo) {

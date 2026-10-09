@@ -158,8 +158,11 @@ namespace PAG {
         if (nombre == "pag03") {
             //No tiene uniforms
         } else if (nombre == "pag05") {
-            std::string nombreUniform = "matrizMVP";
+
+            //Uniforms de cámara
+            std::string nombreUniform = "matrizVP";
             GLint posicion = glGetUniformLocation(idSP, nombreUniform.c_str());
+
             if (posicion != -1) {
                 // El uniform existe y se ha podido localizar correctamente
                 glm::mat4 matrizVP_camara = _camara->getMatVP();
@@ -401,7 +404,6 @@ namespace PAG {
 
                     std::string nombreShader(va_arg(args, char*));
 
-                    //En el guión aparece vec3 de GLM. De momento lo dejo así para que no haya leak de memoria
                     if (!nombreShader.empty()) {
                         try {
                             shader_program.creaShaderProgram(nombreShader);

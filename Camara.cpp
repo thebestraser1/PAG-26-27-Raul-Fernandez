@@ -190,7 +190,7 @@ namespace PAG {
                     * glm::rotate(angulo, obtener_vector_v())
                     * glm::translate(-position);
 
-        glm::vec4 lookAt_aux = m * glm::vec4(lookAt, 1.0f);              // w = 1: es un punto
+        glm::vec4 lookAt_aux = m * glm::vec4(lookAt, 1.0f);
 
         lookAt = glm::vec3(lookAt_aux);
     }
