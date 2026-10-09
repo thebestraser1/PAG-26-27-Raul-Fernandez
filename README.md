@@ -2201,7 +2201,7 @@ classDiagram
         Módulo main.cpp que lleva GLFW
     }
 
-    Ventanas --> "0..*" Listener : almacena
+    Ventanas --> "0..1" Listener : almacena
 
     Ventanas <|-- VentanaMensajes
     Ventanas <|-- VentanaSelectorColorFondo
