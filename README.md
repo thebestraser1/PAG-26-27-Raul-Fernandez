@@ -6,7 +6,11 @@
 
 - [Práctica 2: Refactorización y desacoplamiento de código. Incorporación de ImGui y patrones **_Singletone_ y Observador**.](#práctica-2)
 
-- [Práctica 3: Implementación de Program Shader y modelo de un triángulo](#práctica)
+- [Práctica 3: Implementación de Program Shader y modelo de un triángulo](#práctica-3)
+
+- [Práctica 4: Gestionando shader programs](#práctica-4)
+
+- [Práctica 5: La cámara virtual](#práctica-5)
 
 ## Práctica 1
 
