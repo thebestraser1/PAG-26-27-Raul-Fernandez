@@ -64,11 +64,12 @@ namespace PAG {
     /**
      * Ventana en la que se inserta texto para cargar el shader correspondiented¡
      */
-    class VentanaTextoShader : public Ventanas{
+    class VentanaCargaModeloYShader : public Ventanas{
     private:
-        std::string _nombre;
+        std::string _nombreModelo;
+        std::string _nombreShader;
     public:
-        VentanaTextoShader(float x, float y);
+        VentanaCargaModeloYShader(float x, float y);
         void dibujar() override;
 
         void warn_listeners() const;

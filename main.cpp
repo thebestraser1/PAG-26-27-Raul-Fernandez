@@ -236,21 +236,10 @@ int main() {
 
     // Inicialización de escena
 
-    //Creación de shaderProgram y modelo
-    bool modeloCreado = true;
-    try {
-        PAG::Renderer::getInstancia().creaModelo();
-    }catch (std::exception &e) {
-        std::cout << "\n--------------------\n" << "EXCEPCIÓN: " << e.what() << "\n--------------------\n" << std::endl;
-        modeloCreado = false;
-    }
-
-    if (modeloCreado) std::cout << "Modelo procesado satisfactoriamente. Carga un shader para verlo" << std::endl;
-
     //Establecemos las ventanas: una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
-    auto *ventana_texto_shader = new PAG::VentanaTextoShader(10, 10);
-    auto *ventana_escala = new PAG::VentanaSelectorEscala(10, 110);
-    auto *ventana_camara = new PAG::VentanaCamara(10, 200);
+    auto *ventana_texto_shader = new PAG::VentanaCargaModeloYShader(10, 10);
+    auto *ventana_escala = new PAG::VentanaSelectorEscala(10, 160);
+    auto *ventana_camara = new PAG::VentanaCamara(10, 250);
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 400);
     auto *ventana_color = new PAG::VentanaSelectorColorFondo(600,10);
 

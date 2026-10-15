@@ -184,7 +184,7 @@ namespace PAG {
     /**
      * Constructor de ventana de carga de shader
      */
-    VentanaTextoShader::VentanaTextoShader(float x, float y) {
+    VentanaCargaModeloYShader::VentanaCargaModeloYShader(float x, float y) {
         this->pos_x = x;
         this->pos_y = y;
     }
@@ -192,7 +192,7 @@ namespace PAG {
     /**
      * Dibujar la ventana de carga de shader
      */
-    void VentanaTextoShader::dibujar() {
+    void VentanaCargaModeloYShader::dibujar() {
         //Posición a dibujar
         ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
 
@@ -205,13 +205,17 @@ namespace PAG {
 
             ImGui::SetWindowFontScale(_escalaTexto); // Escalamos el texto si fuera necesario
 
-            ImGui::Text("Nombre de fichero:");
-            ImGui::InputText("##", &_nombre, ImGuiInputTextFlags_AutoSelectAll);
+            ImGui::Text("Nombre de fichero de modelo:");
+            ImGui::InputText("##TextoModelo", &_nombreModelo, ImGuiInputTextFlags_AutoSelectAll);
+
+            ImGui::Text("Nombre de fichero de shader:");
+            ImGui::InputText("##TextoShader", &_nombreShader, ImGuiInputTextFlags_AutoSelectAll);
             _buttonPressed = ImGui::Button("Cargar");
         }
 
         if (_buttonPressed) {
-            std::cout << "Shader a cargar: " << _nombre << std::endl;
+            std::cout << "Modelo a cargar: " << _nombreModelo << std::endl;
+            std::cout << "Shader a cargar: " << _nombreShader << std::endl;
             warn_listeners();
         }
 
@@ -223,9 +227,9 @@ namespace PAG {
     /**
      * Avisar a los observadores de un cambio en la ventana de selección de shader
      */
-    void VentanaTextoShader::warn_listeners() const {
+    void VentanaCargaModeloYShader::warn_listeners() const {
         if (_renderer_listener) {
-            _renderer_listener->wakeUp(TipoVentana::V_Texto_Shaders, false, _nombre.c_str());
+            _renderer_listener->wakeUp(TipoVentana::V_Texto_Shaders, false, _nombreModelo.c_str(), _nombreShader.c_str());
         }
     }
 

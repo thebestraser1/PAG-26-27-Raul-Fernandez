@@ -6,7 +6,8 @@
 
 #include "Camara.h"
 #include "Listener.h"
-#include "ShaderProgram.h"
+#include "Ventanas.h"
+#include "Modelo.h"
 
 
 
@@ -31,12 +32,7 @@ namespace PAG {
 
         GLfloat _colorFondo[4] = {0.6f, 0.6f, 0.6f, 1.0f};
 
-        ShaderProgram shader_program;
-
-        //Modelo
-        GLuint idVAO = 0; // Identificador del vertex array object
-        GLuint idVBO = 0; // Identificador del vertex buffer object
-        GLuint idIBO = 0; // Identificador del index buffer object
+        Modelo* _modelo = nullptr;
 
         //Aspecto de ventana
         int anchoVentana = 1024;
@@ -84,7 +80,7 @@ namespace PAG {
         void addListener ( Listener *listener );
 
     private:
-        void controlarUniforms(int idSP);
+        void controlarUniforms(GLuint idSP, const std::string nombre);
         void warn_listeners_color_fondo();
         void warn_listeners_camara();
     };

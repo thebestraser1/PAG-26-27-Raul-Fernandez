@@ -1,6 +1,6 @@
 #include "Renderer.h"
 
-#include "Ventanas.h"
+
 
 namespace PAG {
     //Inicialización de la instancia única a nulo
@@ -8,7 +8,6 @@ namespace PAG {
 
     Renderer::Renderer() {
         //Inicizalización de variables
-        shader_program = ShaderProgram();
         _camara = new Camara((float) anchoVentana, (float) altoVentana);
     }
 
@@ -17,16 +16,8 @@ namespace PAG {
         delete _camara;
         _camara = nullptr;
 
-        //Liberamos recursos del modelo
-        if (idVBO != 0) {
-            glDeleteBuffers(1, &idVBO);
-        }
-        if (idIBO != 0) {
-            glDeleteBuffers(1, &idIBO);
-        }
-        if (idVAO != 0) {
-            glDeleteVertexArrays(1, &idVAO);
-        }
+        delete _modelo;
+        _modelo = nullptr;
     }
 
 
@@ -78,57 +69,6 @@ namespace PAG {
 
 
     /**
-     * Función para crear el VAO para el modelo a renderizar
-     * @note No se incluye ninguna comprobación de errores
-     */
-    void PAG::Renderer::creaModelo() {
-        GLfloat vertices[] = {
-            //Creación del VBO de manera ENTRELAZADA (posición, color)
-            -.5, -.5, 0, 1.0, 0.4, 0.2,
-            .5, -.5, 0, 0.2, 1.0, 0.4,
-            .0, .5, 0, 0.4, 0.2, 1.0
-        };
-        GLuint indices[] = {0, 1, 2};
-
-        //Generación y activación del VAO
-        glGenVertexArrays(1, &idVAO);
-        glBindVertexArray(idVAO);
-
-        //Creación de un ÚNICO VBO de posiciones y color de los vértices
-        glGenBuffers(1, &idVBO);
-        glBindBuffer(GL_ARRAY_BUFFER, idVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        //Datos de posiciones (location = 0)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), nullptr);
-        glEnableVertexAttribArray(0); //Colocamos posición de vértices como atributo 0
-
-        //Datos de color (location = 1)
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), ((GLfloat *) NULL + (3)));
-        glEnableVertexAttribArray(1); //Colocamos color de vértices como atributo 1
-
-        //Creación del VBO de colores de los vértices de manera NO ENTRELAZADA
-        //--------------------------------------------------------------------
-        /*
-        GLfloat colores[] = {
-            1.0, 0.4, 0.2,
-            0.2, 1.0, 0.4,
-            0.4, 0.2, 1.0
-        };
-        glGenBuffers(1, &idVBO);
-        glBindBuffer(GL_ARRAY_BUFFER, idVBO);
-        glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(colores), colores, GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
-        glEnableVertexAttribArray(1); //Colocamos color de vértices como atributo 1
-        */
-
-        glGenBuffers(1, &idIBO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(GLuint), indices, GL_STATIC_DRAW);
-    }
-
-
-    /**
      * Función OpenGL para refrescar la ventana (encapsula la parte de OpenGL)
      */
     void Renderer::refrescar() {
@@ -137,23 +77,19 @@ namespace PAG {
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-        //Si no hay shader aún cargado, no cargar ninguno
-        int idSP = shader_program.id_sp();
+        if (_modelo != nullptr) {
 
-        if (idSP != 0) {
-            glUseProgram(shader_program.id_sp());
-            controlarUniforms(idSP);
-            glBindVertexArray(idVAO);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+            glUseProgram(_modelo->getShaderModelo()->id_sp());
+            controlarUniforms(_modelo->getShaderModelo()->id_sp(), _modelo->getShaderModelo()->nombre_shader());
+
+            _modelo->Dibujar();
         }
     }
 
     /**
      * Función encargada de otorgar los uniforms que necesite el shader program de cada práctica en concreto
      */
-    void Renderer::controlarUniforms(int idSP) {
-        const std::string &nombre = shader_program.nombre_shader();
+    void Renderer::controlarUniforms(GLuint idSP, const std::string nombre) {
 
         if (nombre == "pag03") {
             //No tiene uniforms
@@ -402,15 +338,19 @@ namespace PAG {
                     std::va_list args;
                     va_start(args, ventana_pidiendo);
 
+                    std::string nombreModelo(va_arg(args, char*));
                     std::string nombreShader(va_arg(args, char*));
 
                     if (!nombreShader.empty()) {
                         try {
-                            shader_program.creaShaderProgram(nombreShader);
+                            delete _modelo;
+                            _modelo = new Modelo(nombreModelo.c_str(), nombreShader);
                         } catch (std::exception &e) {
                             std::cout << "\n--------------------\n" << "EXCEPCIÓN: " << e.what() <<
                                     "\n--------------------\n" << std::endl;
                         }
+
+
                     }
 
                     va_end(args);
