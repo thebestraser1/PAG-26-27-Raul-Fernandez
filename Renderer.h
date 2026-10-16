@@ -4,6 +4,9 @@
 #include <iostream>
 #include <cstdarg>  //Para funciones con número variable de elementos
 
+//Para aleatorios
+#include <random>
+
 #include "Camara.h"
 #include "Modelo.h"
 #include "Listener.h"
@@ -32,7 +35,9 @@ namespace PAG {
 
         GLfloat _colorFondo[4] = {0.6f, 0.6f, 0.6f, 1.0f};
 
+        //Modelos
         std::vector<Modelo*> _modelos;
+        std::mt19937 _genRandomPos;              //Generador aleatorios de posiciones
 
         //Aspecto de ventana
         int anchoVentana = 1280;

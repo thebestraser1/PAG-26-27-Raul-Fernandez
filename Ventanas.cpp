@@ -595,6 +595,8 @@ namespace PAG {
                         _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &borrado, &_nombreModeloSeleccionado);
                     }
 
+                    ImGui::SameLine();
+
                     if (ImGui::Button("Transformar")) {
 
                         glm::mat4 m1;
@@ -625,6 +627,18 @@ namespace PAG {
                         }
 
                         _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &_operacion_a_realizar, &_nombreModeloSeleccionado, &m1);
+
+                        //Dejo las variables a 0 para que sea más fácil operar con ellas
+                        trasl_x_relativa = 0.0;
+                        trasl_y_relativa = 0.0;
+                        trasl_z_relativa = 0.0;
+
+                        rot_x = 0.0;
+                        rot_y = 0.0;
+                        rot_z = 0.0;
+
+                        escala = 1.0;
+
                     }
                 }else {
                     ImGui::Text("          Carga algún modelo           ");

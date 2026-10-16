@@ -6,6 +6,10 @@ namespace PAG {
     PAG::Renderer *PAG::Renderer::instancia = nullptr;
 
     Renderer::Renderer() {
+        //Para valores aleatorios:
+        std::random_device rd;
+        _genRandomPos = std::mt19937(rd());
+
         //Inicizalización de variables
         _camara = new Camara((float) anchoVentana, (float) altoVentana);
     }
@@ -361,8 +365,16 @@ namespace PAG {
                     if (!nombreShader.empty() && !rutaModelo.empty()) {
                         if (comprobar_modelos_mismo_nombre(nombreModelo)) {
                             try {
-                                //Cargamos el modelo (si no hay uno que tenga ya el mismo nombre)
-                                Modelo *modelo = new Modelo(nombreModelo, rutaModelo.c_str(), nombreShader, {0,0,0});
+                                //Cargamos el modelo en una posición aleatoria (si no hay uno que tenga ya el mismo nombre)
+                                // Distribución entre -2 y 2
+                                std::uniform_real_distribution<float> distribucion(-2.0f, 2.0f);
+
+                                // Generar coordenadas aleatorias
+                                float x = distribucion(_genRandomPos);
+                                float y = distribucion(_genRandomPos);
+                                float z = distribucion(_genRandomPos);
+
+                                Modelo *modelo = new Modelo(nombreModelo, rutaModelo.c_str(), nombreShader, {x,y,z});
 
                                 //Una vez se ha cargado bien, lo añadimos al vector de modelos
                                 _modelos.push_back(modelo);
