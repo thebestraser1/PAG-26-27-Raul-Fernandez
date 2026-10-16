@@ -315,6 +315,7 @@ namespace PAG {
 
                     std::vector<const char*>* nombresModelos = va_arg(args, std::vector<const char*>*);
 
+                    nombresModelos->clear();
                     for (Modelo* modelo : _modelos) {
                         nombresModelos->push_back(modelo->_nombreModelo.c_str());
                     }
@@ -439,14 +440,13 @@ namespace PAG {
                     std::string * nombreModelo = va_arg(args, std::string*);
 
                     //Se actualizarían los parámetros de la cámara según el tipo
-                    switch (*tipo_accion) {
-                        case(TipoAccion::Borrar): {
-                            borrar_modelo_por_nombre(*nombreModelo);
-                            break;
-                        }
+                    if (*tipo_accion == TipoAccion::Borrar) {
+                        borrar_modelo_por_nombre(*nombreModelo);
+                    }else {
+                        //Es una transformación (basta con multiplicar la matriz)
+                        glm::mat4* transformacion = va_arg(args, glm::mat4*);
+                        transformar_modelo_por_nombre(*nombreModelo, *transformacion);
                     }
-
-                    va_end(args);
                     break;
                 }
                 default: ;
@@ -480,6 +480,21 @@ namespace PAG {
                 _modelos[i] = nullptr;
                 _modelos.erase(_modelos.begin() + i);
                 return;
+            }
+        }
+    }
+
+
+    /**
+     * Función para transformar un modelo por nombre
+     */
+    void Renderer::transformar_modelo_por_nombre(const std::string &nombreModelo, glm::mat4 transformacion) {
+        for (int i=0; i<_modelos.size(); i++) {
+            if (_modelos[i]->_nombreModelo == nombreModelo) {
+
+                std::cout << "Se ha modificado " << _modelos[i]->_nombreModelo << std::endl;
+
+                _modelos[i]->aplicarTransformacion(transformacion);
             }
         }
     }

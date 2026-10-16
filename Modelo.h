@@ -11,11 +11,19 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "ShaderProgram.h"
 
 namespace PAG {
 
     enum TipoAccion {
+        Traslacion,
+        RotacionX,
+        RotacionY,
+        RotacionZ,
+        Escalado,
         Borrar,
     };
 
@@ -29,9 +37,9 @@ namespace PAG {
         GLuint idVBO_colores = 0; // Identificador del vertex buffer object de colores
         GLuint idIBO = 0; // Identificador del index buffer object
 
-        std::vector<GLfloat> vertices;
-        std::vector<GLfloat> normales;
-        std::vector<unsigned int> indices;
+        std::vector<glm::vec3> _vertices;
+        std::vector<glm::vec3> _normales;
+        std::vector<unsigned int> _indices;
 
         std::string _directorio;
         ShaderProgram _shader_modelo;
@@ -39,17 +47,19 @@ namespace PAG {
     public:
         std::string _nombreModelo;
 
+        glm::vec3 _posicion;
+
         Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader);
         ~Modelo();
         ShaderProgram* getShaderModelo();
         void Dibujar();
+        void aplicarTransformacion(glm::mat4 transformacion);
 
     private:
         bool cargar_shader_program(std::string ruta);
-
         bool cargar_modelo(std::string ruta);
         void procesarMalla(aiMesh *mesh);
-        void creaVAO(std::vector<GLfloat> vertices, std::vector<GLfloat> color, std::vector<unsigned int> indices);
+        void creaVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec3> color, std::vector<unsigned int> indices);
 
     private:
 

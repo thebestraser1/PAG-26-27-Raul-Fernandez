@@ -488,12 +488,29 @@ namespace PAG {
 
             _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, true, &nombreModelos);
 
-            //Buscamos para el nombre seleccionado qué índice en el vector tiene
+
+            //Si no, buscamos para el nombre seleccionado qué índice en el vector tiene
+            bool algunNombreCoincide = false;
             for (int i=0; i<nombreModelos.size(); i++) {
+
                 if (nombreModelos[i] == _nombreModeloSeleccionado) {
                     _indiceModeloSeleccionado = i;
+                    algunNombreCoincide = true;
                 }
             }
+
+            if (!algunNombreCoincide && _indiceModeloSeleccionado != -1 && !nombreModelos.empty()) {
+                //Esto es porque si se tiene A, B y C (con indice=0) y se borra A, el nombre seleccionado es A y el
+                //indice apunta a B. Entonces se quedan "desactualizadas las variables" al borrar. Por tanto, al borrar
+                //escojo el primer elemento de la lista y problema resuelto
+                _indiceModeloSeleccionado = 0;
+                _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
+            }
+
+
+            //Sacamos el índice que ocupa el tipo de acción actual (como hice con la cámara)
+            int i_operacionSeleccionada = static_cast<int>(_operacion_a_realizar);
+            const char* transformaciones[] = {"Traslacion", "Rotacion en X", "Rotacion en Y", "Rotacion en Z", "Escalado"};   //No meto aquí borrado (por motivos obvios)
 
             if (ImGui::Begin("Transformaciones de modelos", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
                 // La ventana está desplegada
@@ -510,26 +527,119 @@ namespace PAG {
                         _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
                     }
 
-                    PAG::TipoAccion operacion_a_realizar;
+                    if (_indiceModeloSeleccionado != -1) {
+                        ImGui::Text("Transformación:               ");
+
+                        if (ImGui::Combo("##Transformacion seleccionada", &i_operacionSeleccionada, transformaciones, IM_ARRAYSIZE(transformaciones))) {
+                            //Se selecciona una transformacion...
+                            _operacion_a_realizar = static_cast<TipoAccion>(i_operacionSeleccionada);
+                        }
+
+                        /**
+                         *  OPERACIONES DE TRASFORMACIÓN DEL MODELO
+                         */
+
+                        switch (_operacion_a_realizar) {
+                            case TipoAccion::Traslacion: {
+                                ImGui::Text("Traslacion");
+                                ImGui::Separator();
+
+                                ImGui::InputFloat("Traslacion X", &trasl_x_relativa, 0.1f, 1.0f, "%.2f");
+                                ImGui::InputFloat("Traslacion Y", &trasl_y_relativa, 0.1f, 1.0f, "%.2f");
+                                ImGui::InputFloat("Traslacion Z", &trasl_z_relativa, 0.1f, 1.0f, "%.2f");
+
+                                break;
+                            }
+                            case TipoAccion::RotacionX: {
+                                ImGui::Text("Rotacion en X");
+                                ImGui::Separator();
+
+                                ImGui::InputFloat("Angulo X (grados)", &rot_x, 1.0f, 15.0f, "%.2f");
+
+                                break;
+                            }
+
+                            case TipoAccion::RotacionY: {
+                                ImGui::Text("Rotacion en Y");
+                                ImGui::Separator();
+
+                                ImGui::InputFloat("Angulo Y (grados)", &rot_y, 1.0f, 15.0f, "%.2f");
+
+                                break;
+                            }
+
+                            case TipoAccion::RotacionZ: {
+                                ImGui::Text("Rotacion en Z");
+                                ImGui::Separator();
+
+                                ImGui::InputFloat("Angulo Z (grados)", &rot_z, 1.0f, 15.0f, "%.2f");
+
+                                break;
+                            }
+
+                            case TipoAccion::Escalado: {
+                                ImGui::Text("Escalado uniforme");
+                                ImGui::Separator();
+
+                                ImGui::InputFloat("Factor de escala", &escala, 0.1f, 1.0f, "%.2f");
+
+                                break;
+                            }
+                            default:;
+                        }
+                    }
+
 
                     if (ImGui::Button("Borrar Modelo")) {
-                        operacion_a_realizar = PAG::TipoAccion::Borrar;
-                        _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &operacion_a_realizar, &_nombreModeloSeleccionado);
+                        PAG::TipoAccion borrado = PAG::TipoAccion::Borrar;
+                        _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &borrado, &_nombreModeloSeleccionado);
+                    }
+
+                    if (ImGui::Button("Transformar")) {
+
+                        glm::mat4 m1;
+
+                        switch (_operacion_a_realizar) {
+                            case (TipoAccion::Traslacion): {
+                                m1 = glm::translate(glm::vec3(trasl_x_relativa, trasl_y_relativa, trasl_z_relativa));
+                                break;
+                            }
+                            case (TipoAccion::RotacionX): {
+                                //Supongo una rotación sobre su propio eje
+                                glm::vec3 posicion = glm::vec3(trasl_x_relativa, trasl_y_relativa, trasl_z_relativa);
+                                glm::mat4 m = glm::rotate(glm::radians(rot_x), glm::vec3(1,0,0));
+                                break;
+                            }
+                            case (TipoAccion::RotacionY): {
+                                glm::vec3 posicion = glm::vec3(trasl_x_relativa, trasl_y_relativa, trasl_z_relativa);
+                                glm::mat4 m = glm::rotate(glm::radians(rot_y), glm::vec3(0,1,0));
+                                break;
+                            }
+                            case (TipoAccion::RotacionZ): {
+                                glm::vec3 posicion = glm::vec3(trasl_x_relativa, trasl_y_relativa, trasl_z_relativa);
+                                glm::mat4 m = glm::rotate(glm::radians(rot_z), glm::vec3(0,0,1));
+                                break;
+                            }
+                            case (TipoAccion::Escalado): {
+                                //Considero escalado uniforme
+                                m1 = glm::scale(glm::vec3(escala, escala, escala));
+                                break;
+                            }
+                            default:;
+                        }
+
+                        _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &_operacion_a_realizar, &_nombreModeloSeleccionado, &m1);
                     }
                 }else {
                     ImGui::Text("          Carga algún modelo           ");
+                    _indiceModeloSeleccionado = -1;
                 }
-
-
-
 
             }
 
             // Si la ventana no está desplegada, Begin devuelve false
             ImGui::End();
         }
-
-
 
     }
 }

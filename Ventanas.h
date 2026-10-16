@@ -98,6 +98,25 @@ namespace PAG {
     class VentanaTrasformacionesModelos : public Ventanas{
         std::string _nombreModeloSeleccionado;
         int _indiceModeloSeleccionado = -1;   //Indice equivalente al vector de modelos de Renderer.cpp
+
+        //--------------------------
+        //Operaciones con el modelo
+        //--------------------------
+        PAG::TipoAccion _operacion_a_realizar = PAG::TipoAccion::Traslacion;
+
+        //Traslación
+        GLfloat trasl_x_relativa = 0.0;
+        GLfloat trasl_y_relativa = 0.0;
+        GLfloat trasl_z_relativa = 0.0;
+
+        //Rotación
+        GLfloat rot_x = 0.0;
+        GLfloat rot_y = 0.0;
+        GLfloat rot_z = 0.0;
+
+        //Escalado
+        GLfloat escala = 1.0;
+
     public:
         VentanaTrasformacionesModelos(float x, float y);
         void dibujar() override;

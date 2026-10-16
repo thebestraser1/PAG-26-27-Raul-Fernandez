@@ -79,13 +79,9 @@ namespace PAG {
         //Procesar los vértices y normales
         for(unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
-            vertices.push_back(mesh->mVertices[i].x);
-            vertices.push_back(mesh->mVertices[i].y);
-            vertices.push_back(mesh->mVertices[i].z);
+            _vertices.emplace_back(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
 
-            normales.push_back(mesh->mNormals[i].x);
-            normales.push_back(mesh->mNormals[i].y);
-            normales.push_back(mesh->mNormals[i].z);
+            _normales.emplace_back(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
         }
 
         //Procesamos los índices
@@ -93,19 +89,19 @@ namespace PAG {
         {
             for(unsigned int j = 0; j < mesh->mFaces[i].mNumIndices; j++)
             {
-                indices.push_back(mesh->mFaces[i].mIndices[j]);
+                _indices.push_back(mesh->mFaces[i].mIndices[j]);
             }
         }
 
         //OJO: usaré las normales como color del objeto...
-        creaVAO(vertices, normales, indices);
+        creaVAO(_vertices, _normales, _indices);
     }
 
 
     /**
      * Función para crear el VAO para el modelo a renderizar. Lo hace con VBO NO ENTRELAZADO
      */
-    void PAG::Modelo::creaVAO(std::vector<GLfloat> vertices, std::vector<GLfloat> color, std::vector<unsigned int> indices) {
+    void PAG::Modelo::creaVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec3> color, std::vector<unsigned int> indices) {
 
         //Generación y activación del VAO
         glGenVertexArrays(1, &idVAO);
@@ -114,15 +110,15 @@ namespace PAG {
         //Datos de posiciones (location = 0)
         glGenBuffers(1, &idVBO_posiciones);
         glBindBuffer(GL_ARRAY_BUFFER, idVBO_posiciones);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
         glEnableVertexAttribArray(0); //Colocamos posición de vértices como atributo 0
 
         //Datos de color (location = 1)
         glGenBuffers(1, &idVBO_colores);
         glBindBuffer(GL_ARRAY_BUFFER, idVBO_colores);
-        glBufferData(GL_ARRAY_BUFFER, color.size() * sizeof(GLfloat), color.data(), GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), nullptr);
+        glBufferData(GL_ARRAY_BUFFER, color.size() * sizeof(glm::vec3), color.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
         glEnableVertexAttribArray(1); //Colocamos color de vértices como atributo 1
 
         //Procesamiento de índices (IBOs)
@@ -143,7 +139,43 @@ namespace PAG {
     void Modelo::Dibujar() {
         glBindVertexArray(idVAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
-        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, nullptr);
         glBindVertexArray(0);
     }
+
+
+    /**
+     * Función para aplicar matriz de transformación a los vértices y normales
+     */
+    void Modelo::aplicarTransformacion(glm::mat4 transformacion) {
+
+        for (glm::vec3 &vertice : _vertices) {
+            vertice = glm::vec3(transformacion * glm::vec4(vertice, 1.0));
+        }
+
+        for (glm::vec3 &vector : _normales) {
+            vector = glm::normalize(glm::vec3(transformacion * glm::vec4(vector, 0.0)));
+        }
+
+        //NOTA: Yo no he implementado escalados no uniformes. De haberlo hecho, la matriz para las normales
+        //sería (tal y como vimos en teoría) esta:
+        //glm::mat3 matNormal = glm::transpose(glm::inverse(glm::mat3(transformacion)));
+
+        //Aplicamos en el VAO (para ello antes hay que borrar)
+        if (idVBO_posiciones != 0) {
+            glDeleteBuffers(1, &idVBO_posiciones);
+        }
+        if (idVBO_colores != 0) {
+            glDeleteBuffers(1, &idVBO_colores);
+        }
+        if (idIBO != 0) {
+            glDeleteBuffers(1, &idIBO);
+        }
+        if (idVAO != 0) {
+            glDeleteVertexArrays(1, &idVAO);
+        }
+
+        creaVAO(_vertices, _normales, _indices);
+    }
+
 } // PAG
