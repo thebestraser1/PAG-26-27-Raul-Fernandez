@@ -17,7 +17,8 @@ namespace PAG {
         V_Selecc_Color_Fondo,
         V_Selecc_Escala,
         V_Texto_Shaders,
-        V_Manejo_Camara
+        V_Manejo_Camara,
+        V_Trasformaciones_Modelos
     };
 
 

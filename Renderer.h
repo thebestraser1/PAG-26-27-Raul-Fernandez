@@ -32,7 +32,7 @@ namespace PAG {
 
         GLfloat _colorFondo[4] = {0.6f, 0.6f, 0.6f, 1.0f};
 
-        Modelo* _modelo = nullptr;
+        std::vector<Modelo*> _modelos;
 
         //Aspecto de ventana
         int anchoVentana = 1280;
@@ -57,8 +57,6 @@ namespace PAG {
 
         void inicializarOpenGL();
 
-        void creaModelo();
-
         void refrescar();
 
         void wakeUp(TipoVentana t, bool ventana_pidiendo ...) override;
@@ -77,12 +75,10 @@ namespace PAG {
 
         void hacerMovimientoRaton(double movimiento_relativo_x, double movimiento_relativo_y);
 
-        void addListener ( Listener *listener );
-
     private:
-        void controlarUniforms(GLuint idSP, const std::string nombre);
-        void warn_listeners_color_fondo();
-        void warn_listeners_camara();
+        void controlar_uniforms(GLuint idSP, std::string nombre);
+        bool comprobar_modelos_mismo_nombre(const std::string& nombreModelo);
+        void borrar_modelo_por_nombre(const std::string& nombreModelo);
     };
 } // PAG
 

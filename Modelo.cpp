@@ -10,9 +10,14 @@ namespace PAG {
     /**
      * Constructor desde el directorio indicado del modelo
      */
-    PAG::Modelo::Modelo(const char *rutaOBJ, const std::string &rutaShader) {
-        cargar_shader_program(rutaShader);
-        cargar_modelo(rutaOBJ);
+    PAG::Modelo::Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader) {
+        _nombreModelo = nombreModelo;
+        if (!cargar_shader_program(rutaShader)) {
+            throw std::runtime_error("No se pudo cargar el shader: " + rutaShader);
+        }
+        if (!cargar_modelo(rutaOBJ)) {
+            throw std::runtime_error(std::string("No se pudo cargar el modelo: ") + rutaOBJ);
+        }
     }
 
     Modelo::~Modelo() {
@@ -34,13 +39,15 @@ namespace PAG {
     /**
      * Cargar shaderProgram desde un directorio (lo usará el constructor)
      */
-    void PAG::Modelo::cargar_shader_program(std::string ruta) {
+    bool PAG::Modelo::cargar_shader_program(std::string ruta) {
         try {
             _shader_modelo = ShaderProgram();
             _shader_modelo.creaShaderProgram(ruta);
+            return true;
         } catch (std::exception &e) {
             std::cout << "\n--------------------\n" << "ERROR::SHADER:: " << e.what() <<
                     "\n--------------------\n" << std::endl;
+            return false;
         }
     }
 
@@ -48,7 +55,7 @@ namespace PAG {
     /**
      * Cargar modelo desde un directorio (lo usará el constructor)
      */
-    void PAG::Modelo::cargar_modelo(std::string ruta)
+    bool PAG::Modelo::cargar_modelo(std::string ruta)
     {
         //Cargamos ficheros de shaders (vértices y fragmento)
         Assimp::Importer importador;
@@ -57,11 +64,12 @@ namespace PAG {
         if(!escena || escena->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !escena->mRootNode)
         {
             std::cout << "ERROR::ASSIMP::" << importador.GetErrorString() << std::endl;
-            return;
+            return false;
         }
         _directorio = ruta.substr(0, ruta.find_last_of('/'));
 
         procesarMalla(*escena->mMeshes);
+        return true;
     }
 
 

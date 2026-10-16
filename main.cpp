@@ -232,14 +232,13 @@ int main() {
     PAG::Renderer::getInstancia().inicializarOpenGL();
 
 
-
-
     // Inicialización de escena
 
     //Establecemos las ventanas: una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
     auto *ventana_texto_shader = new PAG::VentanaCargaModeloYShader(10, 10);
-    auto *ventana_escala = new PAG::VentanaSelectorEscala(10, 260);
-    auto *ventana_camara = new PAG::VentanaCamara(10, 350);
+    auto *ventana_trasformaciones_modelos = new PAG::VentanaTrasformacionesModelos(10, 200);
+    auto *ventana_escala = new PAG::VentanaSelectorEscala(1000, 360);
+    auto *ventana_camara = new PAG::VentanaCamara(1000, 460);
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 500);
     auto *ventana_color = new PAG::VentanaSelectorColorFondo(900,10);
 
@@ -248,7 +247,8 @@ int main() {
         ventana_color,
         ventana_escala,
         ventana_texto_shader,
-        ventana_camara
+        ventana_camara,
+        ventana_trasformaciones_modelos
     };
 
     //Añadimos que el Renderer esté pendiente de los cambios en estas ventanas

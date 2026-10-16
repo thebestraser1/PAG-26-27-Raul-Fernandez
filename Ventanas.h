@@ -69,6 +69,7 @@ namespace PAG {
     private:
         ImGui::FileBrowser _file_browser;
         std::string _nombreModelo;
+        std::string _rutaModelo;
         std::string _nombreShader;
     public:
         VentanaCargaModeloYShader(float x, float y);
@@ -88,8 +89,18 @@ namespace PAG {
 
         VentanaCamara(float x, float y);
         void dibujar() override;
-        void warn_listeners(TipoMovimiento t_movimiento, GLfloat zoom) const;
+    };
 
+
+    /**
+     * Ventana de manejo de la cámara
+     */
+    class VentanaTrasformacionesModelos : public Ventanas{
+        std::string _nombreModeloSeleccionado;
+        int _indiceModeloSeleccionado = -1;   //Indice equivalente al vector de modelos de Renderer.cpp
+    public:
+        VentanaTrasformacionesModelos(float x, float y);
+        void dibujar() override;
     };
 } // PAG
 

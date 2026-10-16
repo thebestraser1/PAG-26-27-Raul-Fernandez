@@ -1,7 +1,6 @@
 #include "Renderer.h"
 
 
-
 namespace PAG {
     //Inicialización de la instancia única a nulo
     PAG::Renderer *PAG::Renderer::instancia = nullptr;
@@ -16,8 +15,13 @@ namespace PAG {
         delete _camara;
         _camara = nullptr;
 
-        delete _modelo;
-        _modelo = nullptr;
+        if (!_modelos.empty()) {
+            for (Modelo *modelo: _modelos) {
+                delete modelo;
+                modelo = nullptr;
+            }
+            _modelos.clear();
+        }
     }
 
 
@@ -77,24 +81,23 @@ namespace PAG {
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-        if (_modelo != nullptr) {
+        if (!_modelos.empty()) {
+            for (Modelo *modelo: _modelos) {
+                glUseProgram(modelo->getShaderModelo()->id_sp());
+                controlar_uniforms(modelo->getShaderModelo()->id_sp(), modelo->getShaderModelo()->nombre_shader());
 
-            glUseProgram(_modelo->getShaderModelo()->id_sp());
-            controlarUniforms(_modelo->getShaderModelo()->id_sp(), _modelo->getShaderModelo()->nombre_shader());
-
-            _modelo->Dibujar();
+                modelo->Dibujar();
+            }
         }
     }
 
     /**
      * Función encargada de otorgar los uniforms que necesite el shader program de cada práctica en concreto
      */
-    void Renderer::controlarUniforms(GLuint idSP, const std::string nombre) {
-
+    void Renderer::controlar_uniforms(GLuint idSP, const std::string nombre) {
         if (nombre == "pag03") {
             //No tiene uniforms
         } else if (nombre == "pag05") {
-
             //Uniforms de cámara
             std::string nombreUniform = "matrizVP";
             GLint posicion = glGetUniformLocation(idSP, nombreUniform.c_str());
@@ -170,14 +173,13 @@ namespace PAG {
      */
     void PAG::Renderer::hacerMovimientoRaton(double movimiento_relativo_x, double movimiento_relativo_y) {
         switch (*_camara->getTipoMovimientoActual()) {
-
             //------------------------------
             case TipoMovimiento::Zoom: {
-            //------------------------------
+                //------------------------------
 
                 //Cogemos el ángulo de visión
                 GLfloat anguloVision = _camara->getAnguloVision();
-                anguloVision = anguloVision + movimiento_relativo_y/2;
+                anguloVision = anguloVision + movimiento_relativo_y / 2;
 
                 //Controlo que el ángulo no se escape de los límites (sabiendo los límites que tiene la ventana que lleva esto)
                 float lim_sup = VentanaCamara::_lim_sup_zoom;
@@ -194,52 +196,52 @@ namespace PAG {
 
             //------------------------------
             case TipoMovimiento::Pan: {
-            //------------------------------
+                //------------------------------
 
                 //Directamente se mueve la cámara con el movimiento relativo de X
-                GLfloat variacion = movimiento_relativo_x/2;
+                GLfloat variacion = movimiento_relativo_x / 2;
                 _camara->mover(TipoMovimiento::Pan, &variacion);
                 break;
             }
 
             //------------------------------
             case TipoMovimiento::Tilt: {
-            //------------------------------
+                //------------------------------
 
                 //Directamente se mueve la cámara con el movimiento relativo de X
-                GLfloat variacion = movimiento_relativo_y/2;
+                GLfloat variacion = movimiento_relativo_y / 2;
                 _camara->mover(TipoMovimiento::Tilt, &variacion);
                 break;
             }
 
             //------------------------------
             case TipoMovimiento::Dolly: {
-            //------------------------------
+                //------------------------------
 
                 //Directamente se mueve la cámara con el movimiento relativo de X o Z
-                GLfloat variacion_x = -(movimiento_relativo_x/50);
-                GLfloat variacion_z = -(movimiento_relativo_y/50);
+                GLfloat variacion_x = -(movimiento_relativo_x / 50);
+                GLfloat variacion_z = -(movimiento_relativo_y / 50);
                 _camara->mover(TipoMovimiento::Dolly, &variacion_x, &variacion_z);
                 break;
             }
 
             //------------------------------
             case TipoMovimiento::Crane: {
-            //------------------------------
+                //------------------------------
 
                 //Directamente se mueve la cámara con el movimiento relativo de X o Z
-                GLfloat variacion_y = -(movimiento_relativo_y/50);
+                GLfloat variacion_y = -(movimiento_relativo_y / 50);
                 _camara->mover(TipoMovimiento::Crane, &variacion_y);
                 break;
             }
 
             //------------------------------
             case TipoMovimiento::Orbit: {
-            //------------------------------
+                //------------------------------
 
                 //Directamente se mueve la cámara con el movimiento relativo de X o Z
-                GLfloat variacion_y = movimiento_relativo_y/2;
-                GLfloat variacion_x = movimiento_relativo_x/2;
+                GLfloat variacion_y = movimiento_relativo_y / 2;
+                GLfloat variacion_x = movimiento_relativo_x / 2;
                 _camara->mover(TipoMovimiento::Orbit, &variacion_x, &variacion_y);
                 break;
             }
@@ -299,7 +301,7 @@ namespace PAG {
 
                     //Ventana necesita una dirección de memoria por referencia, no un valor (porque luego podrá modificar
                     //el tipo de movimiento de la cámara mediante el desplegable)
-                    TipoMovimiento** t_movimiento = va_arg(args, TipoMovimiento**);
+                    TipoMovimiento **t_movimiento = va_arg(args, TipoMovimiento**);
 
                     *angulo = _camara->getAnguloVision();
                     *t_movimiento = _camara->getTipoMovimientoActual();
@@ -307,14 +309,27 @@ namespace PAG {
                     va_end(args);
                     break;
                 }
+                case TipoVentana::V_Trasformaciones_Modelos: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    std::vector<const char*>* nombresModelos = va_arg(args, std::vector<const char*>*);
+
+                    for (Modelo* modelo : _modelos) {
+                        nombresModelos->push_back(modelo->_nombreModelo.c_str());
+                    }
+
+                    va_end(args);
+                    break;
+                }
                 default: ;
             }
 
-        /**
-         * ----------------------------------------------
-         *          VENTANAS ----> RENDERER
-         * ----------------------------------------------
-         */
+            /**
+             * ----------------------------------------------
+             *          VENTANAS ----> RENDERER
+             * ----------------------------------------------
+             */
         } else {
             switch (t) {
                 case TipoVentana::V_Selecc_Color_Fondo: {
@@ -339,20 +354,31 @@ namespace PAG {
                     va_start(args, ventana_pidiendo);
 
                     std::string nombreModelo(va_arg(args, char*));
+                    std::string rutaModelo(va_arg(args, char*));
                     std::string nombreShader(va_arg(args, char*));
 
-                    if (!nombreShader.empty() && !nombreModelo.empty()) {
-                        try {
-                            delete _modelo;
-                            _modelo = new Modelo(nombreModelo.c_str(), nombreShader);
-                        } catch (std::exception &e) {
-                            std::cout << "\n--------------------\n" << "EXCEPCIÓN: " << e.what() <<
+                    if (!nombreShader.empty() && !rutaModelo.empty()) {
+                        if (comprobar_modelos_mismo_nombre(nombreModelo)) {
+                            try {
+                                //Cargamos el modelo (si no hay uno que tenga ya el mismo nombre)
+                                Modelo *modelo = new Modelo(nombreModelo, rutaModelo.c_str(), nombreShader);
+
+                                //Una vez se ha cargado bien, lo añadimos al vector de modelos
+                                _modelos.push_back(modelo);
+                            } catch (std::exception &e) {
+                                std::cout << "--------------------\n" << "EXCEPCIÓN: " << e.what() <<
+                                        "\n--------------------\n" << std::endl;
+                            }
+                        } else {
+                            std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
+                                    "Ya hay un modelo con el nombre: " << nombreModelo <<
                                     "\n--------------------\n" << std::endl;
                         }
-                    }else {
-                        std::cout << "\n--------------------\n" << "EXCEPCIÓN: " << "No se ha insertado nombre de shader"
-                                                                                    "o nombre de modelo" <<
-                                    "\n--------------------\n" << std::endl;
+                    } else {
+                        std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
+                                "No se ha insertado nombre de shader"
+                                "o nombre de modelo" <<
+                                "\n--------------------\n" << std::endl;
                     }
 
                     va_end(args);
@@ -364,7 +390,6 @@ namespace PAG {
 
                     //Se actualizarían los parámetros de la cámara según el tipo
                     switch (*_camara->getTipoMovimientoActual()) {
-
                         case(TipoMovimiento::Zoom): {
                             GLfloat *angulo = va_arg(args, GLfloat*);
                             _camara->mover(TipoMovimiento::Zoom, angulo);
@@ -402,7 +427,59 @@ namespace PAG {
                     va_end(args);
                     break;
                 }
+                case TipoVentana::V_Trasformaciones_Modelos: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    /**
+                     *  La ventana pasa (TipoAccion, nombreModelo, y params necesarios)
+                     */
+
+                    PAG::TipoAccion* tipo_accion = va_arg(args, PAG::TipoAccion*);
+                    std::string * nombreModelo = va_arg(args, std::string*);
+
+                    //Se actualizarían los parámetros de la cámara según el tipo
+                    switch (*tipo_accion) {
+                        case(TipoAccion::Borrar): {
+                            borrar_modelo_por_nombre(*nombreModelo);
+                            break;
+                        }
+                    }
+
+                    va_end(args);
+                    break;
+                }
                 default: ;
+            }
+        }
+    }
+
+
+    /**
+     * Función para comprobar si ya hay un modelo con un nombre determinado
+     */
+    bool Renderer::comprobar_modelos_mismo_nombre(const std::string& nombreModelo) {
+        for (Modelo *modelo: _modelos) {
+            if (modelo->_nombreModelo == nombreModelo) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Función para borrar un modelo por nombre
+     */
+    void Renderer::borrar_modelo_por_nombre(const std::string& nombreModelo) {
+        for (int i=0; i<_modelos.size(); i++) {
+            if (_modelos[i]->_nombreModelo == nombreModelo) {
+
+                std::cout << "Se ha borrado " << _modelos[i]->_nombreModelo << std::endl;
+
+                delete _modelos[i];
+                _modelos[i] = nullptr;
+                _modelos.erase(_modelos.begin() + i);
+                return;
             }
         }
     }

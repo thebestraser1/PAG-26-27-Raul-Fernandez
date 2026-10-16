@@ -14,9 +14,16 @@
 #include "ShaderProgram.h"
 
 namespace PAG {
+
+    enum TipoAccion {
+        Borrar,
+    };
+
+
     class Modelo {
 
     private:
+
         GLuint idVAO = 0; // Identificador del vertex array object
         GLuint idVBO_posiciones = 0; // Identificador del vertex buffer object de posiciones
         GLuint idVBO_colores = 0; // Identificador del vertex buffer object de colores
@@ -27,18 +34,20 @@ namespace PAG {
         std::vector<unsigned int> indices;
 
         std::string _directorio;
-
         ShaderProgram _shader_modelo;
+
     public:
-        Modelo(const char *rutaOBJ, const std::string &rutaShader);
+        std::string _nombreModelo;
+
+        Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader);
         ~Modelo();
         ShaderProgram* getShaderModelo();
         void Dibujar();
 
     private:
-        void cargar_shader_program(std::string ruta);
+        bool cargar_shader_program(std::string ruta);
 
-        void cargar_modelo(std::string ruta);
+        bool cargar_modelo(std::string ruta);
         void procesarMalla(aiMesh *mesh);
         void creaVAO(std::vector<GLfloat> vertices, std::vector<GLfloat> color, std::vector<unsigned int> indices);
 

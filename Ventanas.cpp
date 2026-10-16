@@ -187,9 +187,12 @@ namespace PAG {
     VentanaCargaModeloYShader::VentanaCargaModeloYShader(float x, float y) {
         this->pos_x = x;
         this->pos_y = y;
+
+        std::string carpetaModelos = "modelos";
         
         //Buscador de modelos
         _file_browser = ImGui::FileBrowser();
+        _file_browser.SetPwd(std::filesystem::current_path() / carpetaModelos);
         _file_browser.SetTitle("Buscador de modelos .obj");
         _file_browser.SetTypeFilters({".obj"});
     }
@@ -215,9 +218,10 @@ namespace PAG {
                 _file_browser.Open();
             }
 
-            if (!_nombreModelo.empty()) {
+            if (!_rutaModelo.empty()) {
                 ImGui::Text("Ruta de fichero:");
-                ImGui::TextDisabled(_nombreModelo.substr(_nombreModelo.find_last_of("\\/") + 1).c_str());
+                _nombreModelo = _rutaModelo.substr(_rutaModelo.find_last_of("\\/") + 1);
+                ImGui::TextDisabled(_nombreModelo.c_str());
             }
 
             ImGui::Text("Nombre de fichero de shader:");
@@ -226,7 +230,7 @@ namespace PAG {
         }
 
         if (_botonCargaPresionado) {
-            std::cout << "Modelo a cargar: " << _nombreModelo << std::endl;
+            std::cout << "Modelo a cargar: " << _rutaModelo << std::endl;
             std::cout << "Shader a cargar: " << _nombreShader << std::endl;
             warn_listeners();
         }
@@ -238,7 +242,7 @@ namespace PAG {
 
         if(_file_browser.HasSelected())
         {
-            _nombreModelo = _file_browser.GetSelected().string();
+            _rutaModelo = _file_browser.GetSelected().string();
             _file_browser.ClearSelected();
             _file_browser.Close();
         }
@@ -250,7 +254,7 @@ namespace PAG {
      */
     void VentanaCargaModeloYShader::warn_listeners() const {
         if (_renderer_listener) {
-            _renderer_listener->wakeUp(TipoVentana::V_Texto_Shaders, false, _nombreModelo.c_str(), _nombreShader.c_str());
+            _renderer_listener->wakeUp(TipoVentana::V_Texto_Shaders, false, _nombreModelo.c_str(), _rutaModelo.c_str(), _nombreShader.c_str());
         }
     }
 
@@ -452,5 +456,80 @@ namespace PAG {
             // Si la ventana no está desplegada, Begin devuelve false
             ImGui::End();
         }
+    }
+
+
+
+    /** ------------------------------------------
+     *  VENTANA DE TRASFORMACIONES DE MODELOS
+     *  ------------------------------------------
+     */
+
+
+    /**
+     * Constructor de ventana de manejo de cámara
+     */
+    VentanaTrasformacionesModelos::VentanaTrasformacionesModelos(float x, float y) {
+        this->pos_x = x;
+        this->pos_y = y;
+    }
+
+    /**
+     * Dibujar la ventana de manejo de cámara
+     */
+    void VentanaTrasformacionesModelos::dibujar() {
+        //Posición a dibujar
+        ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
+
+        if (_renderer_listener) {
+
+            //Recuperamos los modelos que tenga el Renderer (solo sus nombres, ya que no van repes)
+            std::vector<const char*> nombreModelos;
+
+            _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, true, &nombreModelos);
+
+            //Buscamos para el nombre seleccionado qué índice en el vector tiene
+            for (int i=0; i<nombreModelos.size(); i++) {
+                if (nombreModelos[i] == _nombreModeloSeleccionado) {
+                    _indiceModeloSeleccionado = i;
+                }
+            }
+
+            if (ImGui::Begin("Transformaciones de modelos", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+                // La ventana está desplegada
+
+                ImGui::SetWindowFontScale(_escalaTexto); // Escalamos el texto si fuera necesario
+
+                if (!nombreModelos.empty()) {
+                    ImGui::Text("Modelo seleccionado:               ");
+
+                    //La ejecución entra aquí solo cuando se ha cambiado el tipo de movimiento
+                    if (ImGui::Combo("##Modelo seleccionado", &_indiceModeloSeleccionado, nombreModelos.data(), (int)nombreModelos.size())) {
+
+                        //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                        _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
+                    }
+
+                    PAG::TipoAccion operacion_a_realizar;
+
+                    if (ImGui::Button("Borrar Modelo")) {
+                        operacion_a_realizar = PAG::TipoAccion::Borrar;
+                        _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &operacion_a_realizar, &_nombreModeloSeleccionado);
+                    }
+                }else {
+                    ImGui::Text("          Carga algún modelo           ");
+                }
+
+
+
+
+            }
+
+            // Si la ventana no está desplegada, Begin devuelve false
+            ImGui::End();
+        }
+
+
+
     }
 }
