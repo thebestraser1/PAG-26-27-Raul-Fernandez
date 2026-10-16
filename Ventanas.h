@@ -9,6 +9,7 @@
 #include <sstream>
 #include <vector>
 #include "Renderer.h"
+#include "imfilebrowser.h"
 
 namespace PAG {
 
@@ -66,6 +67,7 @@ namespace PAG {
      */
     class VentanaCargaModeloYShader : public Ventanas{
     private:
+        ImGui::FileBrowser _file_browser;
         std::string _nombreModelo;
         std::string _nombreShader;
     public:

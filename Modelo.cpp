@@ -51,10 +51,8 @@ namespace PAG {
     void PAG::Modelo::cargar_modelo(std::string ruta)
     {
         //Cargamos ficheros de shaders (vértices y fragmento)
-        std::string carpetaProyecto = "modelos/";
-
         Assimp::Importer importador;
-        const aiScene *escena = importador.ReadFile(carpetaProyecto + ruta, aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_GenSmoothNormals);
+        const aiScene *escena = importador.ReadFile(ruta, aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_GenSmoothNormals);
 
         if(!escena || escena->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !escena->mRootNode)
         {

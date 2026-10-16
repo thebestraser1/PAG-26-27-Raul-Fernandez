@@ -341,7 +341,7 @@ namespace PAG {
                     std::string nombreModelo(va_arg(args, char*));
                     std::string nombreShader(va_arg(args, char*));
 
-                    if (!nombreShader.empty()) {
+                    if (!nombreShader.empty() && !nombreModelo.empty()) {
                         try {
                             delete _modelo;
                             _modelo = new Modelo(nombreModelo.c_str(), nombreShader);
@@ -349,8 +349,10 @@ namespace PAG {
                             std::cout << "\n--------------------\n" << "EXCEPCIÓN: " << e.what() <<
                                     "\n--------------------\n" << std::endl;
                         }
-
-
+                    }else {
+                        std::cout << "\n--------------------\n" << "EXCEPCIÓN: " << "No se ha insertado nombre de shader"
+                                                                                    "o nombre de modelo" <<
+                                    "\n--------------------\n" << std::endl;
                     }
 
                     va_end(args);

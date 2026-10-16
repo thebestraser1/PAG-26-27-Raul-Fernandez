@@ -35,8 +35,8 @@ namespace PAG {
         Modelo* _modelo = nullptr;
 
         //Aspecto de ventana
-        int anchoVentana = 1024;
-        int altoVentana = 576;
+        int anchoVentana = 1280;
+        int altoVentana = 720;
 
         //Camara
         Camara* _camara;

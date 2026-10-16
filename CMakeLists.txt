@@ -25,6 +25,7 @@ add_executable(${PROJECT_NAME} ${MY_FILES} ${GLAD_FILES} ${IMGUI_FILES}
         Modelo.h
         Modelo.cpp
         Modelo.h
+        imfilebrowser.h
 )
 
 #Definimos este directorio para buscar includes

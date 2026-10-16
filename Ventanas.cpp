@@ -187,6 +187,11 @@ namespace PAG {
     VentanaCargaModeloYShader::VentanaCargaModeloYShader(float x, float y) {
         this->pos_x = x;
         this->pos_y = y;
+        
+        //Buscador de modelos
+        _file_browser = ImGui::FileBrowser();
+        _file_browser.SetTitle("Buscador de modelos .obj");
+        _file_browser.SetTypeFilters({".obj"});
     }
 
     /**
@@ -196,24 +201,31 @@ namespace PAG {
         //Posición a dibujar
         ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
 
-        bool _buttonPressed = false;
 
-        if (ImGui::Begin("Selector de Shader", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        bool _botonCargaPresionado = false;
+
+        if (ImGui::Begin("Cargador de Modelo y Shader", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             // La ventana está desplegada
 
             ImVec2 posActual = ImGui::GetWindowPos();
 
             ImGui::SetWindowFontScale(_escalaTexto); // Escalamos el texto si fuera necesario
 
-            ImGui::Text("Nombre de fichero de modelo:");
-            ImGui::InputText("##TextoModelo", &_nombreModelo, ImGuiInputTextFlags_AutoSelectAll);
+            if (ImGui::Button("Buscar Modelo")) {
+                _file_browser.Open();
+            }
+
+            if (!_nombreModelo.empty()) {
+                ImGui::Text("Ruta de fichero:");
+                ImGui::TextDisabled(_nombreModelo.substr(_nombreModelo.find_last_of("\\/") + 1).c_str());
+            }
 
             ImGui::Text("Nombre de fichero de shader:");
             ImGui::InputText("##TextoShader", &_nombreShader, ImGuiInputTextFlags_AutoSelectAll);
-            _buttonPressed = ImGui::Button("Cargar");
+            _botonCargaPresionado = ImGui::Button("Cargar");
         }
 
-        if (_buttonPressed) {
+        if (_botonCargaPresionado) {
             std::cout << "Modelo a cargar: " << _nombreModelo << std::endl;
             std::cout << "Shader a cargar: " << _nombreShader << std::endl;
             warn_listeners();
@@ -221,6 +233,15 @@ namespace PAG {
 
         // Si la ventana no está desplegada, Begin devuelve false
         ImGui::End();
+
+        _file_browser.Display();
+
+        if(_file_browser.HasSelected())
+        {
+            _nombreModelo = _file_browser.GetSelected().string();
+            _file_browser.ClearSelected();
+            _file_browser.Close();
+        }
     }
 
 
