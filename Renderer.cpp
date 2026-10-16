@@ -362,7 +362,7 @@ namespace PAG {
                         if (comprobar_modelos_mismo_nombre(nombreModelo)) {
                             try {
                                 //Cargamos el modelo (si no hay uno que tenga ya el mismo nombre)
-                                Modelo *modelo = new Modelo(nombreModelo, rutaModelo.c_str(), nombreShader);
+                                Modelo *modelo = new Modelo(nombreModelo, rutaModelo.c_str(), nombreShader, {0,0,0});
 
                                 //Una vez se ha cargado bien, lo añadimos al vector de modelos
                                 _modelos.push_back(modelo);
@@ -445,7 +445,7 @@ namespace PAG {
                     }else {
                         //Es una transformación (basta con multiplicar la matriz)
                         glm::mat4* transformacion = va_arg(args, glm::mat4*);
-                        transformar_modelo_por_nombre(*nombreModelo, *transformacion);
+                        transformar_modelo_por_nombre(*nombreModelo, *tipo_accion, *transformacion);
                     }
                     break;
                 }
@@ -488,13 +488,13 @@ namespace PAG {
     /**
      * Función para transformar un modelo por nombre
      */
-    void Renderer::transformar_modelo_por_nombre(const std::string &nombreModelo, glm::mat4 transformacion) {
+    void Renderer::transformar_modelo_por_nombre(const std::string &nombreModelo, TipoAccion tipoTransformacion, const glm::mat4 &transformacion) {
         for (int i=0; i<_modelos.size(); i++) {
             if (_modelos[i]->_nombreModelo == nombreModelo) {
 
                 std::cout << "Se ha modificado " << _modelos[i]->_nombreModelo << std::endl;
 
-                _modelos[i]->aplicarTransformacion(transformacion);
+                _modelos[i]->aplicarTransformacion(tipoTransformacion, transformacion);
             }
         }
     }

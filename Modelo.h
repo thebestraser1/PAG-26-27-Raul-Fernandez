@@ -49,11 +49,11 @@ namespace PAG {
 
         glm::vec3 _posicion;
 
-        Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader);
+        Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader, glm::vec3 posicion);
         ~Modelo();
         ShaderProgram* getShaderModelo();
         void Dibujar();
-        void aplicarTransformacion(glm::mat4 transformacion);
+        void aplicarTransformacion(TipoAccion tipo_transformacion, const glm::mat4 &transformacion);
 
     private:
         bool cargar_shader_program(std::string ruta);

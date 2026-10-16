@@ -605,18 +605,14 @@ namespace PAG {
                                 break;
                             }
                             case (TipoAccion::RotacionX): {
-                                //Supongo una rotación sobre su propio eje
-                                glm::vec3 posicion = glm::vec3(trasl_x_relativa, trasl_y_relativa, trasl_z_relativa);
                                 glm::mat4 m = glm::rotate(glm::radians(rot_x), glm::vec3(1,0,0));
                                 break;
                             }
                             case (TipoAccion::RotacionY): {
-                                glm::vec3 posicion = glm::vec3(trasl_x_relativa, trasl_y_relativa, trasl_z_relativa);
                                 glm::mat4 m = glm::rotate(glm::radians(rot_y), glm::vec3(0,1,0));
                                 break;
                             }
                             case (TipoAccion::RotacionZ): {
-                                glm::vec3 posicion = glm::vec3(trasl_x_relativa, trasl_y_relativa, trasl_z_relativa);
                                 glm::mat4 m = glm::rotate(glm::radians(rot_z), glm::vec3(0,0,1));
                                 break;
                             }

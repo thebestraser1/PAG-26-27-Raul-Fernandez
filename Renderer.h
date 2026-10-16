@@ -79,7 +79,7 @@ namespace PAG {
         void controlar_uniforms(GLuint idSP, std::string nombre);
         bool comprobar_modelos_mismo_nombre(const std::string& nombreModelo);
         void borrar_modelo_por_nombre(const std::string& nombreModelo);
-        void transformar_modelo_por_nombre(const std::string &nombreModelo, glm::mat4 transformacion);
+        void transformar_modelo_por_nombre(const std::string &nombreModelo, TipoAccion tipoTransformacion, const glm::mat4 &transformacion);
     };
 } // PAG
 

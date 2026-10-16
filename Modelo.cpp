@@ -10,7 +10,8 @@ namespace PAG {
     /**
      * Constructor desde el directorio indicado del modelo
      */
-    PAG::Modelo::Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader) {
+    PAG::Modelo::Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader, glm::vec3 posicion)
+        : _posicion(posicion){
         _nombreModelo = nombreModelo;
         if (!cargar_shader_program(rutaShader)) {
             throw std::runtime_error("No se pudo cargar el shader: " + rutaShader);
@@ -79,7 +80,8 @@ namespace PAG {
         //Procesar los vértices y normales
         for(unsigned int i = 0; i < mesh->mNumVertices; i++)
         {
-            _vertices.emplace_back(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+            //Hay que tener en cuenta la posición inicial del modelo
+            _vertices.emplace_back(mesh->mVertices[i].x + _posicion[0], mesh->mVertices[i].y + _posicion[1], mesh->mVertices[i].z + _posicion[2]);
 
             _normales.emplace_back(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
         }
@@ -147,10 +149,16 @@ namespace PAG {
     /**
      * Función para aplicar matriz de transformación a los vértices y normales
      */
-    void Modelo::aplicarTransformacion(glm::mat4 transformacion) {
+    void Modelo::aplicarTransformacion(TipoAccion tipo_transformacion, const glm::mat4 &transformacion) {
 
-        for (glm::vec3 &vertice : _vertices) {
-            vertice = glm::vec3(transformacion * glm::vec4(vertice, 1.0));
+        //TRANSFORMACIÓN GENERAL DEL MODELO
+
+        // Hago esto para que (en caso de rotar o escalar) se haga sobre sí mismo (no afecta a la traslación)
+        glm::mat4 M = glm::translate(glm::mat4(1.0f), _posicion) * transformacion * glm::translate(glm::mat4(1.0f), -_posicion);
+
+        // Transformar vértices
+        for (glm::vec3& vertice : _vertices) {
+            vertice = glm::vec3(M * glm::vec4(vertice, 1.0f));
         }
 
         for (glm::vec3 &vector : _normales) {
@@ -160,6 +168,11 @@ namespace PAG {
         //NOTA: Yo no he implementado escalados no uniformes. De haberlo hecho, la matriz para las normales
         //sería (tal y como vimos en teoría) esta:
         //glm::mat3 matNormal = glm::transpose(glm::inverse(glm::mat3(transformacion)));
+
+        //Se actualiza la posición del modelo si es una traslación
+        if (tipo_transformacion == TipoAccion::Traslacion) {
+            _posicion = transformacion * glm::vec4(_posicion, 1.0);
+        }
 
         //Aplicamos en el VAO (para ello antes hay que borrar)
         if (idVBO_posiciones != 0) {
