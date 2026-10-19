@@ -49,7 +49,7 @@ namespace PAG {
 
         glm::vec3 _posicion;
 
-        Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader, glm::vec3 posicion);
+        Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader, glm::vec3 posicionInicial);
         ~Modelo();
         ShaderProgram* getShaderModelo();
         void Dibujar();
@@ -61,7 +61,6 @@ namespace PAG {
         void procesarMalla(aiMesh *mesh);
         void creaVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec3> color, std::vector<unsigned int> indices);
 
-    private:
 
 
 

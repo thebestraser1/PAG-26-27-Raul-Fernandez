@@ -353,7 +353,7 @@ namespace PAG {
 
                     break;
                 }
-                case TipoVentana::V_Texto_Shaders: {
+                case TipoVentana::V_Carga_Modelo_Shaders: {
                     //Pasará el nombre de los shaders
                     std::va_list args;
                     va_start(args, ventana_pidiendo);

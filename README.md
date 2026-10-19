@@ -12,6 +12,8 @@
 
 - [Práctica 5: La cámara virtual](#práctica-5)
 
+- [Práctica 6: Gestión de modelos](#práctica-6)
+
 ## Práctica 1
 
 ### Callback de cambio de color mediante "scroll" del ratón
@@ -2221,3 +2223,397 @@ classDiagram
     Renderer --> Camara
     Renderer --|> Listener : implementa wakeUp()
 ```
+
+## Práctica 6
+
+### Importación de modelos OBJ desde una ruta
+
+Para la importación de modelos OBJ (desde la ruta `/modelos` del proyecto), se ha optado por la librería `Assimp` y la 
+incorporación de una nueva clase `Modelo` que permita procesar estos ficheros.
+
+Esta clase almacena todas las estructuras necesarias para pintar el modelo, concretamente las siguientes:
+
+```c++
+        GLuint idVAO = 0; // Identificador del vertex array object
+        GLuint idVBO_posiciones = 0; // Identificador del vertex buffer object de posiciones
+        GLuint idVBO_colores = 0; // Identificador del vertex buffer object de colores
+        GLuint idIBO = 0; // Identificador del index buffer object
+
+        std::vector<glm::vec3> _vertices;
+        std::vector<glm::vec3> _normales;
+        std::vector<unsigned int> _indices;
+
+        std::string _directorio;
+        ShaderProgram _shader_modelo;
+```
+_NOTA: Se optó por tener 2 VBOs separados (por ahora) para tener una mejor gestión (a nivel de eliminación) de los mismos._
+
+Las responsabilidades de la clase `Modelo` son las siguientes:
+
+- Cargar el `ShaderProgram` que va a usar el modelo.
+- Cargar su fichero `.obj`.
+- Aplicar las transformaciones (traslación, rotación, escalado) a cada modelo.
+
+Las primeras 2 se verán aquí, mientras que la incorporación de transformaciones será objeto de una sección posterior
+(para analizarlo junto a la ventana que permite estas transformaciones).
+
+#### Cargar el ShaderProgram del modelo
+
+Para esto, se ha desacoplado la llamada de carga del ShaderProgram (de `Renderer`) a esta clase. Esto es así porque la 
+ventana que se tenía para cargar los shaders ahora permite **cargar modelos** y **cargar shaders**. Por tanto, en esencia
+lo que "notificará" la ventana a `Renderer` es la **creación de un modelo** (que, como he mostrado, encapsula esas utilidades).
+
+Así, la implementación es realmente sencilla:
+
+```c++
+    bool PAG::Modelo::cargar_shader_program(std::string ruta) {
+        try {
+            _shader_modelo = ShaderProgram();
+            _shader_modelo.creaShaderProgram(ruta);
+            return true;
+        } catch (std::exception &e) {
+            std::cout << "\n--------------------\n" << "ERROR::SHADER:: " << e.what() <<
+                    "\n--------------------\n" << std::endl;
+            return false;
+        }
+    }
+```
+
+_NOTA: Esta función, es una función privada de la clase modelo ya que se utilizará en el constructor_
+
+
+#### Cargar el fichero OBJ del modelo
+
+Este proceso se ha dividido en varias etapas (separadas cada una en su función). Primero, la librería `Assimp` accede a 
+la ruta de fichero que se le pase y rellena su **estructura** para el modelo que se busca representar. Si rellena
+satisfactoriamente sus estructuras, es porque la ruta existe y el fichero OBJ está correctamente conformado.
+
+Por tanto, al igual que en la carga del ShaderProgram, se lanzará una excepción si hay algún problema con la ruta o el 
+fichero:
+
+```c++
+    bool PAG::Modelo::cargar_modelo(std::string ruta)
+    {
+        //Cargamos ficheros de shaders (vértices y fragmento)
+        Assimp::Importer importador;
+        const aiScene *escena = importador.ReadFile(ruta, aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_GenSmoothNormals);
+
+        if(!escena || escena->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !escena->mRootNode)
+        {
+            std::cout << "ERROR::ASSIMP::" << importador.GetErrorString() << std::endl;
+            return false;
+        }
+        _directorio = ruta.substr(0, ruta.find_last_of('/'));
+
+        procesarMalla(*escena->mMeshes);
+        return true;
+    }
+```
+
+_NOTA: Este y los siguientes métodos serán privados ya que se integrarán en el constructor o mediante otros métodos públicos._
+
+De esta forma, el método de carga de modelo llama al siguiente paso, el procesado de la malla (con la estructura que nos
+ha proporcionado la librería `Assimp`). Este método se encarga de rellenar los vértices, índices y normales del modelo
+a partir de la estructura de la malla de `Assimp`. Su implementación es la siguiente:
+
+```c++
+    void PAG::Modelo::procesarMalla(aiMesh *mesh)
+    {
+
+        //Procesar los vértices y normales
+        for(unsigned int i = 0; i < mesh->mNumVertices; i++)
+        {
+            //Hay que tener en cuenta la posición inicial del modelo
+            _vertices.emplace_back(mesh->mVertices[i].x + _posicion[0], mesh->mVertices[i].y + _posicion[1], mesh->mVertices[i].z + _posicion[2]);
+
+            _normales.emplace_back(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+        }
+
+        //Procesamos los índices
+        for(unsigned int i = 0; i < mesh->mNumFaces; i++)
+        {
+            for(unsigned int j = 0; j < mesh->mFaces[i].mNumIndices; j++)
+            {
+                _indices.push_back(mesh->mFaces[i].mIndices[j]);
+            }
+        }
+
+        //OJO: usaré las normales como color del objeto...
+        creaVAO(_vertices, _normales, _indices);
+    }
+```
+
+Interesa este paso intermedio (almacenando los vértices, normales e índices como atributos del modelo) para poder aplicar
+transformaciones a estas estructuras (traslación, rotación y escalado).
+
+Posteriormente, deben introducirse estas estructuras en un VAO (estructura de OpenGL para la VRAM de la GPU). Esto, que 
+antes estaba integrado en la clase `Renderer` se ha desacoplado e incorporado en esta clase. El relleno de estos elementos
+se produce de la misma manera que ya se tenía (ahora con datos sobre el color):
+
+```c++
+    void PAG::Modelo::creaVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec3> color, std::vector<unsigned int> indices) {
+
+        //Generación y activación del VAO
+        glGenVertexArrays(1, &idVAO);
+        glBindVertexArray(idVAO);
+
+        //Datos de posiciones (location = 0)
+        glGenBuffers(1, &idVBO_posiciones);
+        glBindBuffer(GL_ARRAY_BUFFER, idVBO_posiciones);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
+        glEnableVertexAttribArray(0); //Colocamos posición de vértices como atributo 0
+
+        //Datos de color (location = 1)
+        glGenBuffers(1, &idVBO_colores);
+        glBindBuffer(GL_ARRAY_BUFFER, idVBO_colores);
+        glBufferData(GL_ARRAY_BUFFER, color.size() * sizeof(glm::vec3), color.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
+        glEnableVertexAttribArray(1); //Colocamos color de vértices como atributo 1
+
+        //Procesamiento de índices (IBOs)
+        glGenBuffers(1, &idIBO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+    }
+```
+_NOTA: los tamaños de las estructuras se han cambiado al usar el `glm:vec3` que ya integra 3 datos por cada instancia._
+
+Todo este proceso se lanza nada más crear el objeto de la clase `Modelo`. Recuérdese que es posible que se lancen excepciones
+en algunos métodos por lo que se ha de gestionar adecuadamente (no creando el modelo). Por tanto, el constructor tiene el siguiente aspecto:
+
+```c++
+    PAG::Modelo::Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader, glm::vec3 posicion)
+        : _posicion(posicion), _nombreModelo(nombreModelo){
+        
+        if (!cargar_shader_program(rutaShader)) {
+            throw std::runtime_error("No se pudo cargar el shader: " + rutaShader);
+        }
+        if (!cargar_modelo(rutaOBJ)) {
+            throw std::runtime_error(std::string("No se pudo cargar el modelo: ") + rutaOBJ);
+        }
+    }
+```
+
+Posteriormente, el modelo tendrá un método para ser dibujado cuando el `Renderer` "pinte un nuevo frame": `Dibujar()`. Este método
+llamará (como ya hacía `Renderer`) a los métodos de OpenGL que permiten el dibujado del modelo con el VAO y los
+índices del mismo.
+
+```c++
+    void Modelo::Dibujar() {
+        glBindVertexArray(idVAO);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, idIBO);
+        glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(0);
+    }
+```
+
+De esta forma, la clase `Renderer` llamará a este método (y obtendrá datos de los `ShaderProgram`) por cada modelo que +
+tenga en su vector de modelos cargados:
+
+```c++
+    void Renderer::refrescar() {
+        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Limpia el buffer actual
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        if (!_modelos.empty()) {
+            for (Modelo *modelo: _modelos) {
+                glUseProgram(modelo->getShaderModelo()->id_sp());
+                controlar_uniforms(modelo->getShaderModelo()->id_sp(), modelo->getShaderModelo()->nombre_shader());
+
+                modelo->Dibujar();
+            }
+        }
+    }
+```
+
+Posteriormente, es importante el destructor de la clase `Modelo`, que debe liberar las estructuras creadas cuando se elimina
+el modelo del `Renderer`:
+
+
+```c++
+    Modelo::~Modelo() {
+        //Liberamos recursos del modelo
+        if (idVBO_posiciones != 0) {
+            glDeleteBuffers(1, &idVBO_posiciones);
+        }
+        if (idVBO_colores != 0) {
+            glDeleteBuffers(1, &idVBO_colores);
+        }
+        if (idIBO != 0) {
+            glDeleteBuffers(1, &idIBO);
+        }
+        if (idVAO != 0) {
+            glDeleteVertexArrays(1, &idVAO);
+        }
+    }
+```
+_En este caso se liberan las estructuras de VRAM relativas a los VBO de posición y color del objeto, así como los índices 
+y el VAO correspondiente._
+
+### Selector de ficheros
+
+Para facilitar la importación de modelos, se ha integrado el proyecto [imgui-filebrowser](https://github.com/AirGuanZ/imgui-filebrowser/tree/master)
+en cuyo `README.me` se detalla cómo se implementa.
+
+Así, la ventana que se tenía para la carga de `ShaderPrograms`, ahora se dedicará a la selección de modelos y de su shader 
+asociado. Entonces, su declaración pasa a ser la siguiente:
+
+```c++
+    class VentanaCargaModeloYShader : public Ventanas{
+    private:
+        ImGui::FileBrowser _file_browser;
+        std::string _nombreModelo;
+        std::string _rutaModelo;
+        std::string _nombreShader;
+    public:
+        VentanaCargaModeloYShader(float x, float y);
+        void dibujar() override;
+
+        void warn_listeners() const;
+    };
+```
+
+El objeto `FileBrowser` para buscar ficheros, se inicializa en el constructor introduciendo algunos parámetros relativos
+a su apariencia, ruta de trabajo y tipos de ficheros que se buscan (en este caso .obj):
+
+```c++
+    VentanaCargaModeloYShader::VentanaCargaModeloYShader(float x, float y) {
+        this->pos_x = x;
+        this->pos_y = y;
+
+        std::string carpetaModelos = "modelos";
+        
+        //Buscador de modelos
+        _file_browser = ImGui::FileBrowser();
+        _file_browser.SetPwd(std::filesystem::current_path() / carpetaModelos);
+        _file_browser.SetTitle("Buscador de modelos .obj");
+        _file_browser.SetTypeFilters({".obj"});
+    }
+```
+
+
+Una vez se ha iniciado, se ha implementado un botón que abre esta ventana. Esto llama al método `Open()` que ya nos permite
+seleccionar el fichero.
+
+Según la implementación presente en el repositorio, tras terminarse el dibujado de la ventana, puede extraerse la ruta que 
+del fichero que haya elegido el usuario. Así, se rellenan las variables `_nombreModelo` y `_rutaModelo`.
+
+```c++
+    void VentanaCargaModeloYShader::dibujar() {
+        ...
+        
+        bool _botonCargaPresionado = false;
+
+        if (ImGui::Begin("Cargador de Modelo y Shader", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ...
+
+            if (ImGui::Button("Buscar Modelo")) {
+                _file_browser.Open();       //<----- Apertura de ventana
+            }
+
+            if (!_rutaModelo.empty()) {
+                ImGui::Text("Ruta de fichero:");
+                _nombreModelo = _rutaModelo.substr(_rutaModelo.find_last_of("\\/") + 1);
+                ImGui::TextDisabled(_nombreModelo.c_str());
+            }
+
+            ImGui::Text("Nombre de fichero de shader:");
+            ImGui::InputText("##TextoShader", &_nombreShader, ImGuiInputTextFlags_AutoSelectAll);
+            _botonCargaPresionado = ImGui::Button("Cargar");
+        }
+
+        if (_botonCargaPresionado) {
+            ...
+            warn_listeners();
+        }
+
+        // Si la ventana no está desplegada, Begin devuelve false
+        ImGui::End();
+
+        //Gestión de ruta devuelta por la selección del usuario en la ventana (extraído del repositorio)
+        _file_browser.Display();
+
+        if(_file_browser.HasSelected())
+        {
+            _rutaModelo = _file_browser.GetSelected().string();
+            _file_browser.ClearSelected();
+        }
+    }
+```
+
+Aquí, se llamará a la clase `Renderer` cuando se pulse el botón "Cargar". Se le enviará la ruta del modelo, su nombre y 
+la ruta del `ShaderProgram`:
+
+- Su **ruta** permitirá cargarlo.
+- Su **nombre** permitirá rellenar el menú de transformaciones de la ventana correspondiente.
+  - En este punto, es importante destacar que no se permiten nombres repetidos.
+- **Ruta del `ShaderProgram`** a cargar.
+
+```c++
+    void VentanaCargaModeloYShader::warn_listeners() const {
+        if (_renderer_listener) {
+            _renderer_listener->wakeUp(TipoVentana::V_Texto_Shaders, false, _nombreModelo.c_str(), _rutaModelo.c_str(), _nombreShader.c_str());
+        }
+    }
+```
+
+Así, la clase `Renderer` gestiona la notificación de esta manera:
+
+```c++
+    void Renderer::wakeUp(TipoVentana t, bool ventana_pidiendo, ...) {
+        if (ventana_pidiendo) {
+            ...
+        } else {
+            switch (t) {
+                ...
+                }
+            case TipoVentana::V_Carga_Modelo_Shaders: {
+                //Pasará el nombre de los shaders
+                std::va_list args;
+                va_start(args, ventana_pidiendo);
+
+                std::string nombreModelo(va_arg(args, char*));
+                std::string rutaModelo(va_arg(args, char*));
+                std::string nombreShader(va_arg(args, char*));
+
+                if (!nombreShader.empty() && !rutaModelo.empty()) {
+                    if (comprobar_modelos_mismo_nombre(nombreModelo)) {
+                        try {
+                            //Cargamos el modelo
+                            Modelo *modelo = new Modelo(nombreModelo, rutaModelo.c_str(), nombreShader, {0,0,0});
+
+                            //Una vez se ha cargado bien, lo añadimos al vector de modelos
+                            _modelos.push_back(modelo);
+                        } catch (std::exception &e) {
+                            std::cout << "--------------------\n" << "EXCEPCIÓN: " << e.what() <<
+                                    "\n--------------------\n" << std::endl;
+                        }
+                    } else {
+                        std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
+                                "Ya hay un modelo con el nombre: " << nombreModelo <<
+                                "\n--------------------\n" << std::endl;
+                    }
+                } else {
+                    std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
+                            "No se ha insertado nombre de shader"
+                            "o nombre de modelo" <<
+                            "\n--------------------\n" << std::endl;
+                }
+
+                va_end(args);
+                break;
+            }
+            ...
+        }
+    }
+```
+
+
+### Transformaciones de modelos (translación, rotación, escalado)
+
+### Posicionamiento aleatorio
+
+### Diagrama de clases UML

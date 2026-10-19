@@ -163,8 +163,6 @@ namespace PAG {
         if (ImGui::Begin("Selector de Escala", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             // La ventana está desplegada
 
-            ImVec2 posActual = ImGui::GetWindowPos();
-
             ImGui::SetWindowFontScale(_escalaTexto); // Escalamos el texto si fuera necesario
 
             ImGui::Text("Escala de fuente");
@@ -210,8 +208,6 @@ namespace PAG {
         if (ImGui::Begin("Cargador de Modelo y Shader", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             // La ventana está desplegada
 
-            ImVec2 posActual = ImGui::GetWindowPos();
-
             ImGui::SetWindowFontScale(_escalaTexto); // Escalamos el texto si fuera necesario
 
             if (ImGui::Button("Buscar Modelo")) {
@@ -244,7 +240,6 @@ namespace PAG {
         {
             _rutaModelo = _file_browser.GetSelected().string();
             _file_browser.ClearSelected();
-            _file_browser.Close();
         }
     }
 
@@ -254,7 +249,7 @@ namespace PAG {
      */
     void VentanaCargaModeloYShader::warn_listeners() const {
         if (_renderer_listener) {
-            _renderer_listener->wakeUp(TipoVentana::V_Texto_Shaders, false, _nombreModelo.c_str(), _rutaModelo.c_str(), _nombreShader.c_str());
+            _renderer_listener->wakeUp(TipoVentana::V_Carga_Modelo_Shaders, false, _nombreModelo.c_str(), _rutaModelo.c_str(), _nombreShader.c_str());
         }
     }
 

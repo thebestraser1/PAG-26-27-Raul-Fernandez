@@ -11,8 +11,8 @@ namespace PAG {
      * Constructor desde el directorio indicado del modelo
      */
     PAG::Modelo::Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader, glm::vec3 posicion)
-        : _posicion(posicion){
-        _nombreModelo = nombreModelo;
+        : _posicion(posicion), _nombreModelo(nombreModelo){
+
         if (!cargar_shader_program(rutaShader)) {
             throw std::runtime_error("No se pudo cargar el shader: " + rutaShader);
         }
@@ -73,7 +73,10 @@ namespace PAG {
         return true;
     }
 
-
+    /**
+     * Función para rellenar vértices, normales e índices a partir de la malla de Assimp
+     * @param mesh
+     */
     void PAG::Modelo::procesarMalla(aiMesh *mesh)
     {
 
@@ -161,6 +164,7 @@ namespace PAG {
             vertice = glm::vec3(M * glm::vec4(vertice, 1.0f));
         }
 
+        // Transformar normales (como el vector no tiene posición, no hace falta usar M)
         for (glm::vec3 &vector : _normales) {
             vector = glm::normalize(glm::vec3(transformacion * glm::vec4(vector, 0.0)));
         }
@@ -174,7 +178,7 @@ namespace PAG {
             _posicion = transformacion * glm::vec4(_posicion, 1.0);
         }
 
-        //Aplicamos en el VAO (para ello antes hay que borrar)
+        //Aplicamos en el VAO (para ello antes hay que borrar lo anterior)
         if (idVBO_posiciones != 0) {
             glDeleteBuffers(1, &idVBO_posiciones);
         }
