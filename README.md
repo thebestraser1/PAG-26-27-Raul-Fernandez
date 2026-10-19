@@ -2611,9 +2611,502 @@ Así, la clase `Renderer` gestiona la notificación de esta manera:
     }
 ```
 
+Así, se añade al vector un modelo que podrá eliminarse del vector mediante otra ventana (la de transformaciones, que 
+se verá en la siguiente sección).
+
 
 ### Transformaciones de modelos (translación, rotación, escalado)
 
+Para las transformaciones se ha optado por implementar todas en una ventana que permite seleccionar un modelo del vector
+de `Renderer`, aplicar transformaciones y borrar ese modelo de la escena (y, por tanto, del vector de `Renderer`).
+
+Primero, comenzaré con la interfaz (en forma de método público) implementada para realizar transformaciones sobre modelos.
+He aquí su implementación:
+
+```c++
+    void Modelo::aplicarTransformacion(TipoAccion tipo_transformacion, const glm::mat4 &transformacion) {
+
+        //TRANSFORMACIÓN GENERAL DEL MODELO
+
+        // Hago esto para que (en caso de rotar o escalar) se haga sobre sí mismo (no afecta a la traslación)
+        glm::mat4 M = glm::translate(glm::mat4(1.0f), _posicion) * transformacion * glm::translate(glm::mat4(1.0f), -_posicion);
+
+        // Transformar vértices
+        for (glm::vec3& vertice : _vertices) {
+            vertice = glm::vec3(M * glm::vec4(vertice, 1.0f));
+        }
+
+        // Transformar normales (como el vector no tiene posición, no hace falta usar M)
+        for (glm::vec3 &vector : _normales) {
+            vector = glm::normalize(glm::vec3(transformacion * glm::vec4(vector, 0.0)));
+        }
+
+        //NOTA: Yo no he implementado escalados no uniformes. De haberlo hecho, la matriz para las normales
+        //sería (tal y como vimos en teoría) esta:
+        //glm::mat3 matNormal = glm::transpose(glm::inverse(glm::mat3(transformacion)));
+
+        //Se actualiza la posición del modelo si es una traslación
+        if (tipo_transformacion == TipoAccion::Traslacion) {
+            _posicion = transformacion * glm::vec4(_posicion, 1.0);
+        }
+
+        //Aplicamos en el VAO (para ello antes hay que borrar lo anterior)
+        if (idVBO_posiciones != 0) {
+            glDeleteBuffers(1, &idVBO_posiciones);
+        }
+        if (idVBO_colores != 0) {
+            glDeleteBuffers(1, &idVBO_colores);
+        }
+        if (idIBO != 0) {
+            glDeleteBuffers(1, &idIBO);
+        }
+        if (idVAO != 0) {
+            glDeleteVertexArrays(1, &idVAO);
+        }
+
+        creaVAO(_vertices, _normales, _indices);
+    }
+```
+
+Se puede observar cómo la matriz `M` nos permite aplicar las transformaciones sobre el **centroide del modelo**. Para
+lograrlo, se traslada el modelo al origen de la escena, se transforma y se devuelve a su lugar. Esa transformación se 
+aplica a sus vértices.
+
+En el caso de las normales, basta con aplicar la transformación (sin importar la posición del modelo porque es un vector
+y los vectores no tienen posición) y normalizar el vector resultante.
+
+En caso de aplicar escalados no uniformes, deben volver a procesarse las normales con la transpuesta de la adjunta de la
+matriz de transformación (como se vió en teoría).
+
+Posteriormente, se actualiza el atributo de posición del modelo (para la próxima transformación) y se eliminan las estructuras
+de GPU en VRAM anteriores para crear otras nuevas (con los vectores de vértices, indices y colores (en este caso las normales)
+actualizados).
+
+Posteriormente, es importante observar la implementación de la ventana y los parámetros que esta necesita para saber qué
+modelos se encuentran en `Renderer` (a fin de poder seleccionarlos). Es por ello que considero conveniente presentar
+esta implementación a trozos. Primero veamos su declaración en el `.h`:
+
+
+```c++
+    class VentanaTrasformacionesModelos : public Ventanas{
+        std::string _nombreModeloSeleccionado;
+        int _indiceModeloSeleccionado = -1;   //Indice equivalente al vector de modelos de Renderer.cpp
+
+        //--------------------------
+        //Operaciones con el modelo
+        //--------------------------
+        PAG::TipoAccion _operacion_a_realizar = PAG::TipoAccion::Traslacion;
+
+        //Traslación
+        GLfloat trasl_x_relativa = 0.0;
+        GLfloat trasl_y_relativa = 0.0;
+        GLfloat trasl_z_relativa = 0.0;
+
+        //Rotación
+        GLfloat rot_x = 0.0;
+        GLfloat rot_y = 0.0;
+        GLfloat rot_z = 0.0;
+
+        //Escalado
+        GLfloat escala = 1.0;
+
+    public:
+        VentanaTrasformacionesModelos(float x, float y);
+        void dibujar() override;
+    };
+```
+
+La ventana escogerá un modelo (por su nombre unívoco) y guardará el tipo de transformación a realizar junto con los 
+parámetros relativos a dicha transformación. Así, cuando se presione "Transformar", esos parámetros se enviarán
+a `Renderer` (que buscará por nombre el modelo al que se le aplica la transformación para realizarla).
+
+Veamos la implementación del método `dibujar()`:
+
+```c++
+    void VentanaTrasformacionesModelos::dibujar() {
+        //Posición a dibujar
+        ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
+
+        if (_renderer_listener) {
+            //Recuperamos los modelos que tenga el Renderer (solo sus nombres, ya que no van repes)
+            std::vector<const char*> nombreModelos;
+            _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, true, &nombreModelos);
+
+            ...
+
+            //Sacamos el índice que ocupa el tipo de acción actual (como hice con la cámara)
+            int i_operacionSeleccionada = static_cast<int>(_operacion_a_realizar);
+            const char* transformaciones[] = {"Traslacion", "Rotacion en X", "Rotacion en Y", "Rotacion en Z", "Escalado"};  
+            
+            if (ImGui::Begin("Transformaciones de modelos", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+                
+                ...
+
+                if (!nombreModelos.empty()) {
+                    ImGui::Text("Modelo seleccionado:               ");
+
+                    //La ejecución entra aquí solo cuando se ha cambiado el tipo de movimiento
+                    if (ImGui::Combo("##Modelo seleccionado", &_indiceModeloSeleccionado, nombreModelos.data(), (int)nombreModelos.size())) {
+
+                        //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                        _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
+                    }
+
+                    if (_indiceModeloSeleccionado != -1) {
+                        ImGui::Text("Transformación:               ");
+
+                        if (ImGui::Combo("##Transformacion seleccionada", &i_operacionSeleccionada, transformaciones, IM_ARRAYSIZE(transformaciones))) {
+                            //Se selecciona una transformacion...
+                            _operacion_a_realizar = static_cast<TipoAccion>(i_operacionSeleccionada);
+                        }
+
+                        /**
+                         *  SLIDERS PARA TRANSFORMAR EL MODELO....
+                         */
+                        ...
+                    }
+                
+                    if (ImGui::Button("Borrar Modelo")) {
+                        PAG::TipoAccion borrado = PAG::TipoAccion::Borrar;
+                        _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &borrado, &_nombreModeloSeleccionado);
+                    }
+
+                    ImGui::SameLine();
+
+                    if (ImGui::Button("Transformar")) {
+
+                        glm::mat4 m1;
+
+                        switch (_operacion_a_realizar) {
+                            case (TipoAccion::Traslacion): {
+                                m1 = glm::translate(glm::vec3(trasl_x_relativa, trasl_y_relativa, trasl_z_relativa));
+                                break;
+                            }
+                            case (TipoAccion::RotacionX): {
+                                glm::mat4 m = glm::rotate(glm::radians(rot_x), glm::vec3(1,0,0));
+                                break;
+                            }
+                            case (TipoAccion::RotacionY): {
+                                glm::mat4 m = glm::rotate(glm::radians(rot_y), glm::vec3(0,1,0));
+                                break;
+                            }
+                            case (TipoAccion::RotacionZ): {
+                                glm::mat4 m = glm::rotate(glm::radians(rot_z), glm::vec3(0,0,1));
+                                break;
+                            }
+                            case (TipoAccion::Escalado): {
+                                //Considero escalado uniforme
+                                m1 = glm::scale(glm::vec3(escala, escala, escala));
+                                break;
+                            }
+                            default:;
+                        }
+
+                        _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &_operacion_a_realizar, &_nombreModeloSeleccionado, &m1);
+
+                        //Dejo las variables a 0 para que sea más fácil operar con ellas
+                        trasl_x_relativa = 0.0;
+                        trasl_y_relativa = 0.0;
+                        trasl_z_relativa = 0.0;
+
+                        rot_x = 0.0;
+                        rot_y = 0.0;
+                        rot_z = 0.0;
+
+                        escala = 1.0;
+
+                    }
+                }else {
+                    ImGui::Text("          Carga algún modelo           ");
+                    _indiceModeloSeleccionado = -1;
+                }
+
+            }
+
+            // Si la ventana no está desplegada, Begin devuelve false
+            ImGui::End();
+        
+            }
+        }
+    }
+```
+
+Se puede observar cómo se envía al `Renderer` la señal de eliminar un modelo o de transformarlo (adjuntando en este caso
+un tipo de transformación y la matriz asociada).
+
+En este código aparentemente intuitivo hay un problema. El `Combo` de las transformaciones es fácil de gestionar
+(ya que tenemos una cantidad fija de transformaciones predefinidas que nunca cambia). Es como el `Combo` que se veía
+con el tipo de transformaciones de cámara. Se tiene un índice que hace referencia al elemento (del enum) pulsado y 
+viceversa sin mayor problema (gracias al `static_cast`).
+
+Sin embargo, el primer `Combo` que permite elegir los modelos es más problemático con esto. Es posible añadir
+y eliminar modelos de esta lista. Por tanto el índice y el vector pueden no estar correlacionados entre refrescos.
+
+Añadir no es problemático, ya que si el índice estaba apuntando a un _item_ concreto, este sigue existiendo. El problema
+surge con la eliminación. Es posible que el índice se quede apuntando a un _item_ que ya no existe. Por tanto, hay
+que poner solución a esto con la siguiente implementación (antes de que la ventana se inicie):
+
+```c++
+           //Recuperamos los modelos que tenga el Renderer (solo sus nombres, ya que no van repes)
+            std::vector<const char*> nombreModelos;
+
+            _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, true, &nombreModelos);
+
+            //Buscamos si existe el nombre que se tenía
+            bool nombreSigueExistiendo = false;
+            
+            for (int i=0; i<nombreModelos.size(); i++) {
+                if (nombreModelos[i] == _nombreModeloSeleccionado) {
+                    nombreSigueExistiendo = true;
+                }
+            }
+
+            if (!nombreSigueExistiendo && _indiceModeloSeleccionado != -1 && !nombreModelos.empty()) {
+                //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
+                _indiceModeloSeleccionado = 0;
+                _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
+            }
+```
+
+Si el modelo deja de existir, la solución propuesta escoge el primer elemento que haya en el vector. En caso de no
+haber elementos en el vector, se salta este condicional y la ventana muestra "Carga algún modelo" (para no acceder a 
+índices inexistentes).
+
+Habiendo gestionado esto, ya solo queda ver cómo el `Renderer` transmite el mensaje de borrado o de transformación a los
+modelos:
+
+```c++
+    void Renderer::wakeUp(TipoVentana t, bool ventana_pidiendo, ...) {
+        if (ventana_pidiendo) {
+            ...
+        } else {
+            switch (t) {
+                ...
+                }
+            case TipoVentana::V_Trasformaciones_Modelos: {
+                std::va_list args;
+                va_start(args, ventana_pidiendo);
+
+                /**
+                 *  La ventana pasa (TipoAccion, nombreModelo, y params necesarios)
+                 */
+
+                PAG::TipoAccion* tipo_accion = va_arg(args, PAG::TipoAccion*);
+                std::string * nombreModelo = va_arg(args, std::string*);
+
+                //Se actualizarían los parámetros de la cámara según el tipo
+                if (*tipo_accion == TipoAccion::Borrar) {
+                    borrar_modelo_por_nombre(*nombreModelo);
+                }else {
+                    //Es una transformación (basta con multiplicar la matriz)
+                    glm::mat4* transformacion = va_arg(args, glm::mat4*);
+                    transformar_modelo_por_nombre(*nombreModelo, *tipo_accion, *transformacion);
+                }
+                break;
+            }
+        }
+    }
+```
+
+Los métodos auxiliares mostrados (de borrado o transformación por nombre) solo recorren el vector y aplican la operación 
+que definen. Quizá el más llamativo sea el de borrar modelos:
+
+
+```c++
+    void Renderer::borrar_modelo_por_nombre(const std::string& nombreModelo) {
+        for (int i=0; i<_modelos.size(); i++) {
+            if (_modelos[i]->_nombreModelo == nombreModelo) {
+
+                std::cout << "Se ha borrado " << _modelos[i]->_nombreModelo << std::endl;
+
+                delete _modelos[i];
+                _modelos[i] = nullptr;
+                _modelos.erase(_modelos.begin() + i);
+                return;
+            }
+        }
+    }
+```
+_Se borra el puntero y, posteriormente, se borra la "celda" del vector (para que en el selector de la ventana no aparezcan
+elementos vacíos)._
+
+
 ### Posicionamiento aleatorio
 
+Al importar una gran cantidad de modelos, todos aparecían en el mismo lugar de la escena (solapándose). Para gestionar esto
+se ha optado por establecer una posición aleatoria en un rango determinado.
+
+Para ello, basta con iniciar una semilla (en mi caso, en el constructor del `Renderer`) y producri esa aleatoriedad
+a la hora de crear cada uno de los modelos (cuando notifique la carga de un modelo la ventana correspondiente). Es por 
+ello por lo que la posición inicial es un parámetro a pasar al constructor del `Modelo`. Quedará así:
+
+```c++
+    void Renderer::wakeUp(TipoVentana t, bool ventana_pidiendo, ...) {
+        if (ventana_pidiendo) {
+            ...
+        } else {
+            switch (t) {
+                ...
+                }
+            case TipoVentana::V_Carga_Modelo_Shaders: {
+                //Pasará el nombre de los shaders
+                std::va_list args;
+                va_start(args, ventana_pidiendo);
+
+                std::string nombreModelo(va_arg(args, char*));
+                std::string rutaModelo(va_arg(args, char*));
+                std::string nombreShader(va_arg(args, char*));
+
+                if (!nombreShader.empty() && !rutaModelo.empty()) {
+                    if (comprobar_modelos_mismo_nombre(nombreModelo)) {
+                        try {
+                              //Cargamos el modelo en una posición aleatoria (si no hay uno que tenga ya el mismo nombre)
+                              // Distribución entre -2 y 2
+                              std::uniform_real_distribution<float> distribucion(-2.0f, 2.0f);
+
+                              // Generar coordenadas aleatorias
+                              float x = distribucion(_genRandomPos);
+                              float y = distribucion(_genRandomPos);
+                              float z = distribucion(_genRandomPos);
+
+                              Modelo *modelo = new Modelo(nombreModelo, rutaModelo.c_str(), nombreShader, {x,y,z});
+
+                            //Una vez se ha cargado bien, lo añadimos al vector de modelos
+                            _modelos.push_back(modelo);
+                        } catch (std::exception &e) {
+                            //Excepción
+                        }
+                    } else {
+                        //Excepción
+                    }
+                } else {
+                    //Excepción
+                }
+
+                va_end(args);
+                break;
+            }
+            ...
+        }
+    }
+```
+_NOTA: la librería usada para esto ha sido `<random>`._
+
+
 ### Diagrama de clases UML
+
+```mermaid
+classDiagram
+    namespace PAG {
+
+        class Renderer {
+            Implementa llamadas de OpenGL
+        }
+
+        class GUI { 
+            Usa la biblioteca ImGui
+        }
+
+        class Ventanas {
+            <<abstracta>>
+        }
+
+        class VentanaMensajes {
+
+        }
+
+        class VentanaSelectorColorFondo {
+
+        }
+
+        class VentanaSelectorEscala {
+
+        }
+
+        class VentanaCargaModeloYShader {
+
+        }
+        
+        class FileBrowser {
+            Selector visual de ficheros 
+        }
+
+        class VentanaTrasformacionesModelos {
+  
+        }
+
+        class VentanaCamara{
+
+        }
+
+        class Listener {
+            +virtual void wakeUp ( TipoVentana t, bool ventana_pidiendo ... ) = 0;
+        }
+        
+        class ShaderProgram{
+            Gestiona la carga de Shaders
+        }
+
+        class Camara{
+            Gestiona la matriz de visión y proyección
+        }
+        
+        class Modelo{
+          GLuint idVAO = 0; 
+          GLuint idVBO_posiciones = 0; 
+          GLuint idVBO_colores = 0; 
+          GLuint idIBO = 0; 
+
+          std::vector<glm::vec3> _vertices;
+          std::vector<glm::vec3> _normales;
+          std::vector<unsigned int> _indices;
+
+          std::string _directorio;
+          ShaderProgram _shader_modelo;
+
+          std::string _nombreModelo;
+
+          glm::vec3 _posicion;
+
+          Modelo(const string& nombre, const char *rutaOBJ, const string &r_Shader, glm::vec3 pos_ini);
+          ~Modelo();
+          ShaderProgram* getShaderModelo();
+          void Dibujar();
+          void aplicarTransformacion(TipoAccion tipo_transformacion, const glm::mat4 &transformacion);
+
+          bool cargar_shader_program(std::string ruta);
+          bool cargar_modelo(std::string ruta);
+          void procesarMalla(aiMesh *mesh);
+          void creaVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec3> color, std::vector<unsigned int> indices);
+        }
+    }
+
+    class main {
+        Módulo main.cpp que lleva GLFW
+    }
+
+    Ventanas --> "0..1" Listener : almacena
+
+    Ventanas <|-- VentanaMensajes
+    Ventanas <|-- VentanaSelectorColorFondo
+    Ventanas <|-- VentanaSelectorEscala
+    Ventanas <|-- VentanaCargaModeloYShader
+    Ventanas <|-- VentanaTrasformacionesModelos
+    Ventanas <|-- VentanaCamara
+    
+    VentanaCargaModeloYShader --> FileBrowser
+
+    GUI "1" --> "0..*" Ventanas : dibuja
+
+    main --> Renderer : usa getInstancia()
+    main --> GUI : usa getInstancia()
+    Renderer --> ShaderProgram
+    Renderer --> Camara
+    Renderer "1" --> "0..*" Modelo
+    Renderer --|> Listener : implementa wakeUp()
+```
+
+_NOTA: Se han eliminado las relaciones explícitas de las ventanas con el Listener para simplificar el diagrama (en las
+anteriores secciones era simplemente visual para entender el mecanismo del patrón observador). Además, se ha detallado
+solo la implementación de la clase `Modelo` para que el diagrama no se complique (ya que la de FileBrowser es grande).
+La implementación de la clase `FileBrowser` puede observarse en el repositorio anteriormente mencionado ([imgui-filebrowser](https://github.com/AirGuanZ/imgui-filebrowser/tree/master))._

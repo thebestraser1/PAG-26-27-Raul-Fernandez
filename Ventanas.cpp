@@ -484,20 +484,17 @@ namespace PAG {
             _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, true, &nombreModelos);
 
 
-            //Si no, buscamos para el nombre seleccionado qué índice en el vector tiene
-            bool algunNombreCoincide = false;
-            for (int i=0; i<nombreModelos.size(); i++) {
+            //Buscamos si existe el nombre que se tenía
+            bool nombreSigueExistiendo = false;
 
+            for (int i=0; i<nombreModelos.size(); i++) {
                 if (nombreModelos[i] == _nombreModeloSeleccionado) {
-                    _indiceModeloSeleccionado = i;
-                    algunNombreCoincide = true;
+                    nombreSigueExistiendo = true;
                 }
             }
 
-            if (!algunNombreCoincide && _indiceModeloSeleccionado != -1 && !nombreModelos.empty()) {
-                //Esto es porque si se tiene A, B y C (con indice=0) y se borra A, el nombre seleccionado es A y el
-                //indice apunta a B. Entonces se quedan "desactualizadas las variables" al borrar. Por tanto, al borrar
-                //escojo el primer elemento de la lista y problema resuelto
+            if (!nombreSigueExistiendo && _indiceModeloSeleccionado != -1 && !nombreModelos.empty()) {
+                //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
                 _indiceModeloSeleccionado = 0;
                 _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
             }
