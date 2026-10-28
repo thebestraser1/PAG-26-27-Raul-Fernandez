@@ -2631,16 +2631,13 @@ He aquí su implementación:
         // Se acumulan las transformaciones en la matriz de modelado del modelo (hago lo de la posición para que las
         // rotaciones se hagan sobre sí mismas
         matrizModelado = matrizModelado * glm::translate(glm::mat4(1.0f), _posicion) * transformacion * glm::translate(glm::mat4(1.0f), -_posicion);
-
-        //Se actualiza la posición del modelo si es una traslación
-        if (tipo_transformacion == TipoAccion::Traslacion) {
-            _posicion = transformacion * glm::vec4(_posicion, 1.0);
-        }
 ```
 
 Se puede observar cómo la matriz de modelado nos permite aplicar las transformaciones sobre el **centroide del modelo**. Para
 lograrlo, se traslada el modelo al origen de la escena, se transforma y se devuelve a su lugar. Esa transformación se 
-aplica a sus vértices. Después, se actualiza el atributo de posición del modelo (para la próxima transformación).
+aplica a sus vértices. No hace falta actualizar el atributo de posición del modelo ya que todas las traslaciones, rotaciones
+y escalados se quedan ya almacenados en la matriz de modelado. Por tanto, simplemente debemos asegurarnos de que a la 
+transformación se le "reste" la posición original desde la que parte el modelo.
 
 Posteriormente, es importante observar la implementación de la ventana y los parámetros que esta necesita para saber qué
 modelos se encuentran en `Renderer` (a fin de poder seleccionarlos). Es por ello que considero conveniente presentar

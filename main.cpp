@@ -235,12 +235,12 @@ int main() {
     // Inicialización de escena
 
     //Establecemos las ventanas: una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
-    auto *ventana_texto_shader = new PAG::VentanaCargaModeloYShader(10, 10, false);
-    auto *ventana_trasformaciones_modelos = new PAG::VentanaTrasformacionesModelos(10, 200, false);
-    auto *ventana_escala = new PAG::VentanaSelectorEscala(1000, 360, false);
-    auto *ventana_camara = new PAG::VentanaCamara(1000, 460, false);
-    auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 500, false);
-    auto *ventana_color = new PAG::VentanaSelectorColorFondo(900,10, false);
+    auto *ventana_texto_shader = new PAG::VentanaCargaModeloYShader(10, 130, false);
+    auto *ventana_trasformaciones_modelos = new PAG::VentanaTrasformacionesModelos(10, 290, false);
+    auto *ventana_escala = new PAG::VentanaSelectorEscala(10, 40, true);
+    auto *ventana_camara = new PAG::VentanaCamara(10, 100, true);
+    auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 10, true);
+    auto *ventana_color = new PAG::VentanaSelectorColorFondo(10,70, true);
 
     std::vector<PAG::Ventanas*> ventanas = {
         ventana_mensajes,

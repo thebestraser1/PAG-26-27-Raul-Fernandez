@@ -163,13 +163,8 @@ namespace PAG {
         //TRANSFORMACIÓN GENERAL DEL MODELO
 
         // Se acumulan las transformaciones en la matriz de modelado del modelo (hago lo de la posición para que las
-        // rotaciones se hagan sobre sí mismas
+        // rotaciones se hagan sobre sí mismas respecto a la posición inicial del modelo
         matrizModelado = matrizModelado * glm::translate(glm::mat4(1.0f), _posicion) * transformacion * glm::translate(glm::mat4(1.0f), -_posicion);
-
-        //Se actualiza la posición del modelo si es una traslación
-        if (tipo_transformacion == TipoAccion::Traslacion) {
-            _posicion = transformacion * glm::vec4(_posicion, 1.0);
-        }
     }
 
 } // PAG
