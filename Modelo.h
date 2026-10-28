@@ -14,11 +14,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Material.h"
 #include "ShaderProgram.h"
 
 namespace PAG {
 
-    enum TipoAccion {
+    enum TipoAccionModelo {
         Traslacion,
         RotacionX,
         RotacionY,
@@ -45,6 +46,7 @@ namespace PAG {
 
         std::string _directorio;
         ShaderProgram _shader_modelo;
+        Material* _material = nullptr;
 
     public:
         std::string _nombreModelo;
@@ -56,7 +58,7 @@ namespace PAG {
         ShaderProgram* getShaderModelo();
         glm::mat4 getMatrizModelado() const;
         void Dibujar();
-        void aplicarTransformacion(TipoAccion tipo_transformacion, const glm::mat4 &transformacion);
+        void aplicarTransformacion(TipoAccionModelo tipo_transformacion, const glm::mat4 &transformacion);
 
     private:
         bool cargar_shader_program(std::string ruta);

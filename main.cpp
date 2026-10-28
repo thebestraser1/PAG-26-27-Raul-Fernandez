@@ -241,6 +241,7 @@ int main() {
     auto *ventana_camara = new PAG::VentanaCamara(10, 100, true);
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 10, true);
     auto *ventana_color = new PAG::VentanaSelectorColorFondo(10,70, true);
+    auto *ventana_materiales = new PAG::VentanaGestionMateriales(10,370, false);
 
     std::vector<PAG::Ventanas*> ventanas = {
         ventana_mensajes,
@@ -248,7 +249,8 @@ int main() {
         ventana_escala,
         ventana_texto_shader,
         ventana_camara,
-        ventana_trasformaciones_modelos
+        ventana_trasformaciones_modelos,
+        ventana_materiales
     };
 
     //Añadimos que el Renderer esté pendiente de los cambios en estas ventanas

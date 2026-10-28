@@ -26,6 +26,14 @@ namespace PAG {
             }
             _modelos.clear();
         }
+
+        if (!_materiales.empty()) {
+            for (Material *material: _materiales) {
+                delete material;
+                material = nullptr;
+            }
+            _materiales.clear();
+        }
     }
 
 
@@ -334,6 +342,21 @@ namespace PAG {
                     va_end(args);
                     break;
                 }
+
+                case TipoVentana::V_Gestion_Materiales: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    std::vector<const char*>* nombresMateriales = va_arg(args, std::vector<const char*>*);
+
+                    nombresMateriales->clear();
+                    for (Material* material : _materiales) {
+                        nombresMateriales->push_back(material->nombre.c_str());
+                    }
+
+                    va_end(args);
+                    break;
+                }
                 default: ;
             }
 
@@ -374,7 +397,7 @@ namespace PAG {
                             try {
                                 //Cargamos el modelo en una posición aleatoria (si no hay uno que tenga ya el mismo nombre)
                                 // Distribución entre -2 y 2
-                                std::uniform_real_distribution<float> distribucion(-2.0f, 2.0f);
+                                std::uniform_real_distribution<float> distribucion(-1.0f, 1.0f);
 
                                 // Generar coordenadas aleatorias
                                 float x = distribucion(_genRandomPos);
@@ -455,17 +478,48 @@ namespace PAG {
                      *  La ventana pasa (TipoAccion, nombreModelo, y params necesarios)
                      */
 
-                    PAG::TipoAccion* tipo_accion = va_arg(args, PAG::TipoAccion*);
+                    PAG::TipoAccionModelo* tipo_accion = va_arg(args, PAG::TipoAccionModelo*);
                     std::string * nombreModelo = va_arg(args, std::string*);
 
                     //Se actualizarían los parámetros de la cámara según el tipo
-                    if (*tipo_accion == TipoAccion::Borrar) {
+                    if (*tipo_accion == TipoAccionModelo::Borrar) {
                         borrar_modelo_por_nombre(*nombreModelo);
                     }else {
                         //Es una transformación (basta con multiplicar la matriz)
                         glm::mat4* transformacion = va_arg(args, glm::mat4*);
                         transformar_modelo_por_nombre(*nombreModelo, *tipo_accion, *transformacion);
                     }
+                    break;
+                }
+                case TipoVentana::V_Gestion_Materiales: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    PAG::TipoAccionMaterial* tipo_accion = va_arg(args, PAG::TipoAccionMaterial*);
+
+                    if (*tipo_accion == TipoAccionMaterial::Anadir) {
+
+                        //Atributos de material
+                        std::string nombreMaterial(va_arg(args, char*));
+                        glm::vec3* colorAmbiental = va_arg(args, glm::vec3*);
+                        glm::vec3* colorDifuso = va_arg(args, glm::vec3*);
+                        glm::vec3* colorEspecular = va_arg(args, glm::vec3*);
+                        GLfloat* brillo = va_arg(args, GLfloat*);
+
+
+                        //Añadimos el material (si el nombre no existe)
+                        if (comprobar_materiales_mismo_nombre(nombreMaterial)) {
+                            _materiales.push_back(new Material(nombreMaterial, *colorAmbiental, *colorDifuso, *colorEspecular, *brillo));
+                        }else {
+                            std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
+                                    "Ya hay un material con el nombre: " << nombreMaterial <<
+                                    "\n--------------------\n" << std::endl;
+                        }
+
+                    }
+
+
+                    va_end(args);
                     break;
                 }
                 default: ;
@@ -480,6 +534,18 @@ namespace PAG {
     bool Renderer::comprobar_modelos_mismo_nombre(const std::string& nombreModelo) {
         for (Modelo *modelo: _modelos) {
             if (modelo->_nombreModelo == nombreModelo) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Función para comprobar si ya hay un modelo con un nombre determinado
+     */
+    bool Renderer::comprobar_materiales_mismo_nombre(const std::string& nombreModelo) {
+        for (Material *material: _materiales) {
+            if (material->nombre == nombreModelo) {
                 return false;
             }
         }
@@ -507,7 +573,7 @@ namespace PAG {
     /**
      * Función para transformar un modelo por nombre
      */
-    void Renderer::transformar_modelo_por_nombre(const std::string &nombreModelo, TipoAccion tipoTransformacion, const glm::mat4 &transformacion) {
+    void Renderer::transformar_modelo_por_nombre(const std::string &nombreModelo, TipoAccionModelo tipoTransformacion, const glm::mat4 &transformacion) {
         for (int i=0; i<_modelos.size(); i++) {
             if (_modelos[i]->_nombreModelo == nombreModelo) {
 

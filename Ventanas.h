@@ -94,7 +94,7 @@ namespace PAG {
 
 
     /**
-     * Ventana de manejo de la cámara
+     * Ventana de manejo de transformaciones de modelos
      */
     class VentanaTrasformacionesModelos : public Ventanas{
         std::string _nombreModeloSeleccionado;
@@ -103,7 +103,7 @@ namespace PAG {
         //--------------------------
         //Operaciones con el modelo
         //--------------------------
-        PAG::TipoAccion _operacion_a_realizar = PAG::TipoAccion::Traslacion;
+        PAG::TipoAccionModelo _operacion_a_realizar = PAG::TipoAccionModelo::Traslacion;
 
         //Traslación
         GLfloat trasl_x_relativa = 0.0;
@@ -121,6 +121,33 @@ namespace PAG {
     public:
         VentanaTrasformacionesModelos(float x, float y, bool minimizada);
         void dibujar() override;
+    };
+
+
+
+    /**
+     * Ventana de gestión de materiales (tiene operaciones CRUD)
+     */
+    class VentanaGestionMateriales : public Ventanas{
+
+        TipoAccionMaterial _accion_actual = TipoAccionMaterial::Anadir;
+
+        //Atributos al añadir material nuevo
+        std::string _nombre_material;
+
+        glm::vec3 _colorAmbiental_anadir = glm::vec3(0.0f,0.0f, 0.0f);
+        glm::vec3 _colorDifuso_anadir = glm::vec3(0.0f,0.0f, 0.0f);
+        glm::vec3 _colorEspecular_anadir = glm::vec3(0.0f,0.0f, 0.0f);
+
+        GLfloat _brillo_anadir = 1.0f;
+
+        //Atributos para modificar material
+        std::string _nombreMaterialSeleccionado;
+        int _indiceMaterialSeleccionado = -1;   //Indice equivalente al vector de materiales de Renderer.cpp
+
+        public:
+            VentanaGestionMateriales(float x, float y, bool minimizada);
+            void dibujar() override;
     };
 } // PAG
 

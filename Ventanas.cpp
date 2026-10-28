@@ -534,7 +534,7 @@ namespace PAG {
                         if (ImGui::Combo("##Transformacion seleccionada", &i_operacionSeleccionada, transformaciones,
                                          IM_ARRAYSIZE(transformaciones))) {
                             //Se selecciona una transformacion...
-                            _operacion_a_realizar = static_cast<TipoAccion>(i_operacionSeleccionada);
+                            _operacion_a_realizar = static_cast<TipoAccionModelo>(i_operacionSeleccionada);
                         }
 
                         /**
@@ -542,7 +542,7 @@ namespace PAG {
                          */
 
                         switch (_operacion_a_realizar) {
-                            case TipoAccion::Traslacion: {
+                            case TipoAccionModelo::Traslacion: {
                                 ImGui::Text("Traslacion");
                                 ImGui::Separator();
 
@@ -552,7 +552,7 @@ namespace PAG {
 
                                 break;
                             }
-                            case TipoAccion::RotacionX: {
+                            case TipoAccionModelo::RotacionX: {
                                 ImGui::Text("Rotacion en X");
                                 ImGui::Separator();
 
@@ -561,7 +561,7 @@ namespace PAG {
                                 break;
                             }
 
-                            case TipoAccion::RotacionY: {
+                            case TipoAccionModelo::RotacionY: {
                                 ImGui::Text("Rotacion en Y");
                                 ImGui::Separator();
 
@@ -570,7 +570,7 @@ namespace PAG {
                                 break;
                             }
 
-                            case TipoAccion::RotacionZ: {
+                            case TipoAccionModelo::RotacionZ: {
                                 ImGui::Text("Rotacion en Z");
                                 ImGui::Separator();
 
@@ -579,7 +579,7 @@ namespace PAG {
                                 break;
                             }
 
-                            case TipoAccion::Escalado: {
+                            case TipoAccionModelo::Escalado: {
                                 ImGui::Text("Escalado uniforme");
                                 ImGui::Separator();
 
@@ -593,7 +593,7 @@ namespace PAG {
 
 
                     if (ImGui::Button("Borrar Modelo")) {
-                        PAG::TipoAccion borrado = PAG::TipoAccion::Borrar;
+                        PAG::TipoAccionModelo borrado = PAG::TipoAccionModelo::Borrar;
                         _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &borrado,
                                                    &_nombreModeloSeleccionado);
                     }
@@ -604,23 +604,23 @@ namespace PAG {
                         glm::mat4 m1;
 
                         switch (_operacion_a_realizar) {
-                            case (TipoAccion::Traslacion): {
+                            case (TipoAccionModelo::Traslacion): {
                                 m1 = glm::translate(glm::vec3(trasl_x_relativa, trasl_y_relativa, trasl_z_relativa));
                                 break;
                             }
-                            case (TipoAccion::RotacionX): {
+                            case (TipoAccionModelo::RotacionX): {
                                 m1 = glm::rotate(glm::radians(rot_x), glm::vec3(1, 0, 0));
                                 break;
                             }
-                            case (TipoAccion::RotacionY): {
+                            case (TipoAccionModelo::RotacionY): {
                                 m1 = glm::rotate(glm::radians(rot_y), glm::vec3(0, 1, 0));
                                 break;
                             }
-                            case (TipoAccion::RotacionZ): {
+                            case (TipoAccionModelo::RotacionZ): {
                                 m1 = glm::rotate(glm::radians(rot_z), glm::vec3(0, 0, 1));
                                 break;
                             }
-                            case (TipoAccion::Escalado): {
+                            case (TipoAccionModelo::Escalado): {
                                 //Considero escalado uniforme
                                 m1 = glm::scale(glm::vec3(escala, escala, escala));
                                 break;
@@ -651,5 +651,117 @@ namespace PAG {
             // Si la ventana no está desplegada, Begin devuelve false
             ImGui::End();
         }
+    }
+
+
+
+
+    /** -----------------------------
+     *  VENTANA DE GESTIÓN DE MATERIALES
+     *  -----------------------------
+     */
+
+    /**
+     * Constructor de ventana
+     */
+    VentanaGestionMateriales::VentanaGestionMateriales(float x, float y, bool minimizada) {
+        this->pos_x = x;
+        this->pos_y = y;
+        this->minimizada = minimizada;
+    }
+
+    /**
+     * Dibujar la ventana
+     */
+    void VentanaGestionMateriales::dibujar() {
+        //Posicion a dibujar y ventana minimizada
+        ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
+        ImGui::SetNextWindowCollapsed(minimizada, ImGuiCond_Once);
+
+        if (ImGui::Begin("Gestion de materiales", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            if (ImGui::BeginTabBar("Mis_Pestanas"))
+            {
+                // Pestaña para añadir
+                if (ImGui::BeginTabItem("Añadir"))
+                {
+                    ImGui::Text("Nombre del material");
+                    ImGui::InputText("##TextoShader", &_nombre_material, ImGuiInputTextFlags_AutoSelectAll);
+                    ImGui::Text("Ambiental (Ka)");
+                    ImGui::ColorEdit3("##Ambiental (Ka)", &_colorAmbiental_anadir.x);   //El x es el primero del vector
+                    ImGui::Text("Difusa (Kd)");
+                    ImGui::ColorEdit3("##Difusa (Kd)", &_colorDifuso_anadir.x);
+                    ImGui::Text("Especular (Ks)");
+                    ImGui::ColorEdit3("##Especular (Ks)", &_colorEspecular_anadir.x);
+                    ImGui::Text("Brillo");
+                    ImGui::SliderFloat("##Brillo (shininess)", &_brillo_anadir,1.0f,20.0f,"%.1f");
+
+                    if (ImGui::Button("Añadir") && !_nombre_material.empty()) {
+                        _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, false, &_accion_actual,
+                                                   _nombre_material.c_str(), &_colorAmbiental_anadir, &_colorDifuso_anadir,
+                                                   &_colorEspecular_anadir, &_brillo_anadir);
+
+                        //Devolvemos las variables a 0
+                        _nombre_material = "";
+
+                        _colorAmbiental_anadir = {0,0,0};
+                        _colorDifuso_anadir = {0,0,0};
+                        _colorEspecular_anadir = {0,0,0};
+
+                        _brillo_anadir = 1.0f;
+                    }
+
+                    ImGui::EndTabItem();
+                }
+
+                //Pestaña para modificar o borrar
+                if (ImGui::BeginTabItem("Modificar"))
+                {
+
+                    //Recuperamos los materiales que tenga el Renderer (de forma similar a como hice con los modelos)
+                    std::vector<const char *> nombreMateriales;
+
+                    _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, &nombreMateriales);
+
+
+                    //Buscamos si existe el nombre que se tenía
+                    bool nombreSigueExistiendo = false;
+
+                    for (int i = 0; i < nombreMateriales.size(); i++) {
+                        if (nombreMateriales[i] == _nombreMaterialSeleccionado) {
+                            nombreSigueExistiendo = true;
+                        }
+                    }
+
+                    if (!nombreSigueExistiendo && _indiceMaterialSeleccionado != -1 && !nombreMateriales.empty()) {
+                        //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
+                        _indiceMaterialSeleccionado = 0;
+                        _nombreMaterialSeleccionado = nombreMateriales[_indiceMaterialSeleccionado];
+                    }
+
+                    if (ImGui::Combo("##Modelo seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
+                                     (int) nombreMateriales.size())) {
+
+                        //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                        _nombreMaterialSeleccionado = nombreMateriales[_indiceMaterialSeleccionado];
+                    }
+
+
+                    ImGui::EndTabItem();
+                }
+
+                //Pestaña para asignar el material a un modelo
+                if (ImGui::BeginTabItem("Asignar"))
+                {
+
+
+                    ImGui::EndTabItem();
+                }
+
+                ImGui::EndTabBar();
+            }
+        }
+
+
+        ImGui::End();
     }
 }

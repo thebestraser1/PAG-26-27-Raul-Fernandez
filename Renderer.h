@@ -10,6 +10,7 @@
 #include "Camara.h"
 #include "Modelo.h"
 #include "Listener.h"
+#include "Material.h"
 #include "Ventanas.h"
 
 
@@ -37,6 +38,7 @@ namespace PAG {
 
         //Modelos
         std::vector<Modelo*> _modelos;
+        std::vector<Material*> _materiales;
         std::mt19937 _genRandomPos;              //Generador aleatorios de posiciones
 
         //Aspecto de ventana
@@ -83,8 +85,9 @@ namespace PAG {
     private:
         void controlar_uniforms(Modelo *modelo_usado) const;
         bool comprobar_modelos_mismo_nombre(const std::string& nombreModelo);
+        bool comprobar_materiales_mismo_nombre(const std::string &nombreModelo);
         void borrar_modelo_por_nombre(const std::string& nombreModelo);
-        void transformar_modelo_por_nombre(const std::string &nombreModelo, TipoAccion tipoTransformacion, const glm::mat4 &transformacion);
+        void transformar_modelo_por_nombre(const std::string &nombreModelo, TipoAccionModelo tipoTransformacion, const glm::mat4 &transformacion);
     };
 } // PAG
 

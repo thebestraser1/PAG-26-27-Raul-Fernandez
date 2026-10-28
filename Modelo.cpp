@@ -158,7 +158,7 @@ namespace PAG {
     /**
      * Función para aplicar matriz de transformación a los vértices y normales
      */
-    void Modelo::aplicarTransformacion(TipoAccion tipo_transformacion, const glm::mat4 &transformacion) {
+    void Modelo::aplicarTransformacion(TipoAccionModelo tipo_transformacion, const glm::mat4 &transformacion) {
 
         //TRANSFORMACIÓN GENERAL DEL MODELO
 

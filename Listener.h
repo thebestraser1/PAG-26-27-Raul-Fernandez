@@ -18,7 +18,8 @@ namespace PAG {
         V_Selecc_Escala,
         V_Carga_Modelo_Shaders,
         V_Manejo_Camara,
-        V_Trasformaciones_Modelos
+        V_Trasformaciones_Modelos,
+        V_Gestion_Materiales
     };
 
 
