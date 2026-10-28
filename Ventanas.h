@@ -133,7 +133,7 @@ namespace PAG {
         TipoAccionMaterial _accion_actual = TipoAccionMaterial::Anadir_material;
 
         //Atributos al añadir material nuevo
-        std::string _nombre_material;
+        std::string _nombre_material_anadir;
 
         glm::vec3 _colorAmbiental_anadir = glm::vec3(0.0f,0.0f, 0.0f);
         glm::vec3 _colorDifuso_anadir = glm::vec3(0.0f,0.0f, 0.0f);

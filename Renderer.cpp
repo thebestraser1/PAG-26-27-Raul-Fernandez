@@ -516,9 +516,15 @@ namespace PAG {
                             }
                             break;
                         }
-                        case TipoAccionMaterial::Borrar_material:
-                            {}
+                        case TipoAccionMaterial::Borrar_material: {
+
+                            std::string nombreMaterial(va_arg(args, char*));
+
+                            borrar_material_por_nombre(nombreMaterial);
+
                             break;
+                        }
+
                         case TipoAccionMaterial::Asignar_material:
                             {}
                             break;
@@ -592,15 +598,18 @@ namespace PAG {
 
 
     /**
-     * Función para obtener un material por nombre
+     * Función para borrar un material por nombre
      */
-    Material* Renderer::obtener_material_por_nombre(const std::string &nombreMaterial) {
-        for (Material* material : _materiales) {
-            if (material->nombre == nombreMaterial) {
+    void Renderer::borrar_material_por_nombre(const std::string &nombreMaterial) {
+        for (int i=0; i<_materiales.size(); i++) {
+            if (_materiales[i]->nombre == nombreMaterial) {
+                delete _materiales[i];
+                _materiales[i] = nullptr;
+                _materiales.erase(_materiales.begin() + i);
 
-                return material;
+                std::cout << "Se ha borrado el material " << nombreMaterial << std::endl;
+                return;
             }
         }
-        return nullptr;
     }
 } // PAG

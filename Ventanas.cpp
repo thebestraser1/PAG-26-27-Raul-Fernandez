@@ -687,7 +687,7 @@ namespace PAG {
                     _accion_actual = TipoAccionMaterial::Anadir_material;
 
                     ImGui::Text("Nombre del material");
-                    ImGui::InputText("##TextoShader", &_nombre_material, ImGuiInputTextFlags_AutoSelectAll);
+                    ImGui::InputText("##TextoShader", &_nombre_material_anadir, ImGuiInputTextFlags_AutoSelectAll);
                     ImGui::Text("Ambiental (Ka)");
                     ImGui::ColorEdit3("##Ambiental (Ka)", &_colorAmbiental_anadir.x);   //El x es el primero del vector
                     ImGui::Text("Difusa (Kd)");
@@ -697,13 +697,13 @@ namespace PAG {
                     ImGui::Text("Brillo");
                     ImGui::SliderFloat("##Brillo (shininess)", &_brillo_anadir,1.0f,20.0f,"%.1f");
 
-                    if (ImGui::Button("Añadir") && !_nombre_material.empty()) {
+                    if (ImGui::Button("Añadir") && !_nombre_material_anadir.empty()) {
                         _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, false, &_accion_actual,
-                                                   _nombre_material.c_str(), &_colorAmbiental_anadir, &_colorDifuso_anadir,
+                                                   _nombre_material_anadir.c_str(), &_colorAmbiental_anadir, &_colorDifuso_anadir,
                                                    &_colorEspecular_anadir, &_brillo_anadir);
 
                         //Devolvemos las variables a 0
-                        _nombre_material = "";
+                        _nombre_material_anadir = "";
 
                         _colorAmbiental_anadir = {0,0,0};
                         _colorDifuso_anadir = {0,0,0};
@@ -711,7 +711,7 @@ namespace PAG {
 
                         _brillo_anadir = 1.0f;
 
-                        std::cout << "Se ha añadido un nuevo material: " << _nombre_material << std::endl;
+                        std::cout << "Se ha añadido un nuevo material: " << _nombre_material_anadir << std::endl;
                     }
 
                     ImGui::EndTabItem();
@@ -748,35 +748,38 @@ namespace PAG {
                         _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
                     }
 
-                    if (ImGui::Combo("##Modelo seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
+                    if (!materiales.empty()) {
+
+                        if (ImGui::Combo("##Modelo seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
                                      (int) materiales.size())) {
 
-                        //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
-                        _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
+                            //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                            _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
+                        }
+
+                        if (_indiceMaterialSeleccionado != -1 ) {
+                            ImGui::Text("Ambiental (Ka)");
+                            ImGui::ColorEdit3("##Ambiental (Ka)", &materiales[_indiceMaterialSeleccionado]->ka.x);   //El x es el primero del vector
+                            ImGui::Text("Difusa (Kd)");
+                            ImGui::ColorEdit3("##Difusa (Kd)", &materiales[_indiceMaterialSeleccionado]->kd.x);
+                            ImGui::Text("Especular (Ks)");
+                            ImGui::ColorEdit3("##Especular (Ks)", &materiales[_indiceMaterialSeleccionado]->ks.x);
+                            ImGui::Text("Brillo");
+                            ImGui::SliderFloat("##Brillo (shininess)", &materiales[_indiceMaterialSeleccionado]->shininess,1.0f,20.0f,"%.1f");
+
+                            if (ImGui::Button("Borrar material")) {
+                                TipoAccionMaterial accion_borrar = TipoAccionMaterial::Borrar_material;
+                                _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, false, &accion_borrar,
+                                                           materiales[_indiceMaterialSeleccionado]->nombre.c_str());
+                            }
+                        }else{
+                            _indiceMaterialSeleccionado = 0;    //La primera iteración, que seleccione al menos el primero
+                        }
+
+                    }else {
+                        ImGui::Text("     Añade algún material     ");
                     }
 
-                    if (_indiceMaterialSeleccionado != -1 && !materiales.empty()) {
-                        ImGui::Text("Ambiental (Ka)");
-                        ImGui::ColorEdit3("##Ambiental (Ka)", &materiales[_indiceMaterialSeleccionado]->ka.x);   //El x es el primero del vector
-                        ImGui::Text("Difusa (Kd)");
-                        ImGui::ColorEdit3("##Difusa (Kd)", &materiales[_indiceMaterialSeleccionado]->kd.x);
-                        ImGui::Text("Especular (Ks)");
-                        ImGui::ColorEdit3("##Especular (Ks)", &materiales[_indiceMaterialSeleccionado]->ks.x);
-                        ImGui::Text("Brillo");
-                        ImGui::SliderFloat("##Brillo (shininess)", &materiales[_indiceMaterialSeleccionado]->shininess,1.0f,20.0f,"%.1f");
-                    }
-
-                    if (ImGui::Button("Borrar material")) {
-                        TipoAccionMaterial accion_borrar = TipoAccionMaterial::Borrar_material;
-                        _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, false, &accion_borrar,
-                                                   &materiales[_indiceMaterialSeleccionado]->nombre,
-                                                   &materiales[_indiceMaterialSeleccionado]->ka,
-                                                   &materiales[_indiceMaterialSeleccionado]->kd,
-                                                   &materiales[_indiceMaterialSeleccionado]->ks,
-                                                   &materiales[_indiceMaterialSeleccionado]->shininess);
-
-                        std::cout << "Se ha borrado el material " << _nombre_material << std::endl;
-                    }
 
 
 

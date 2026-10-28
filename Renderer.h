@@ -88,7 +88,7 @@ namespace PAG {
         bool comprobar_materiales_mismo_nombre(const std::string &nombreModelo);
         void borrar_modelo_por_nombre(const std::string& nombreModelo);
         void transformar_modelo_por_nombre(const std::string &nombreModelo, TipoAccionModelo tipoTransformacion, const glm::mat4 &transformacion);
-        Material* obtener_material_por_nombre(const std::string &nombreMaterial);
+        void borrar_material_por_nombre(const std::string &nombreMaterial);
     };
 } // PAG
 
