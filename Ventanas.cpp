@@ -26,19 +26,21 @@ namespace PAG {
     /**
      * Constructor de ventana de salida de mensajes
      */
-    PAG::VentanaMensajes::VentanaMensajes(std::stringstream &textoInicial, float x, float y) : _textoSalida(
+    PAG::VentanaMensajes::VentanaMensajes(std::stringstream &textoInicial, float x, float y,
+                                          bool minimizada) : _textoSalida(
         textoInicial) {
         this->pos_x = x;
         this->pos_y = y;
+        this->minimizada = minimizada;
     }
 
     /**
      * Dibujar la ventana de salida de mensajes de consola
      */
     void VentanaMensajes::dibujar() {
-        //Posición a dibujar
+        //Posicion a dibujar y ventana minimizada
         ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
-
+        ImGui::SetNextWindowCollapsed(minimizada, ImGuiCond_Once);
         {
             if (ImGui::Begin("Mensajes")) {
                 // La ventana está desplegada (aquí no he puesto redimensión automática)
@@ -63,18 +65,19 @@ namespace PAG {
     /**
      * Constructor de ventana de selección de color
      */
-    VentanaSelectorColorFondo::VentanaSelectorColorFondo(float x,float y)
-    {
+    VentanaSelectorColorFondo::VentanaSelectorColorFondo(float x, float y, bool minimizada) {
         this->pos_x = x;
         this->pos_y = y;
+        this->minimizada = minimizada;
     }
 
     /**
      * Dibujar la ventana selección de color
      */
     void VentanaSelectorColorFondo::dibujar() {
-        //Posición a dibujar
+        //Posicion a dibujar y ventana minimizada
         ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
+        ImGui::SetNextWindowCollapsed(minimizada, ImGuiCond_Once);
         ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_Once);
 
         if (ImGui::Begin("Selector de Color", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
@@ -83,7 +86,7 @@ namespace PAG {
             ImGui::SetWindowFontScale(_escalaTexto); // Escalamos el texto si fuera necesario
 
             //Se coge la variable de color del renderer
-            GLfloat colorFondoSeleccionado[4] = {0,0,0,0};
+            GLfloat colorFondoSeleccionado[4] = {0, 0, 0, 0};
 
             if (_renderer_listener) {
                 _renderer_listener->wakeUp(TipoVentana::V_Selecc_Color_Fondo, true, colorFondoSeleccionado);
@@ -92,7 +95,7 @@ namespace PAG {
                 bool cambio_color = false;
 
                 ImGui::Text("Selecciona un color:");
-                float w = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.y) * 0.40f;
+
                 if (ImGui::ColorPicker3("##Color de paleta", (float *) colorFondoSeleccionado,
                                         ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview |
                                         ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha)) {
@@ -107,37 +110,35 @@ namespace PAG {
                 if (ImGui::ColorEdit4("HSV como RGB##1", (float *) colorFondoSeleccionado,
                                       ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_Float)) {
                     cambio_color = true;
-                                      }
+                }
                 if (ImGui::ColorEdit4("HSV como HSV##1", (float *) colorFondoSeleccionado,
                                       ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_InputHSV |
                                       ImGuiColorEditFlags_Float)) {
                     cambio_color = true;
-                                      }
+                }
                 if (ImGui::ColorEdit4("Hexadecimal", (float *) colorFondoSeleccionado,
                                       ImGuiColorEditFlags_DisplayHex | ImGuiColorEditFlags_NoSmallPreview)) {
                     cambio_color = true;
-                                      }
+                }
 
                 if (cambio_color) {
                     warn_listeners(colorFondoSeleccionado); //Avisamos a observadores si el color cambió
                 }
             }
-
-            // Si la ventana no está desplegada, Begin devuelve false
-            ImGui::End();
         }
+        // Si la ventana no está desplegada, Begin devuelve false
+        ImGui::End();
     }
 
 
     /**
      * Avisar a los observadores de un cambio en la ventana de selección de color
      */
-    void VentanaSelectorColorFondo::warn_listeners(GLfloat* colorFondoSeleccionado) {
+    void VentanaSelectorColorFondo::warn_listeners(GLfloat *colorFondoSeleccionado) {
         if (_renderer_listener) {
             _renderer_listener->wakeUp(TipoVentana::V_Selecc_Color_Fondo, false, colorFondoSeleccionado);
         }
     }
-
 
 
     /** -----------------------------
@@ -148,18 +149,19 @@ namespace PAG {
     /**
      * Constructor de ventana de selección de escala
      */
-    VentanaSelectorEscala::VentanaSelectorEscala(float x, float y) {
+    VentanaSelectorEscala::VentanaSelectorEscala(float x, float y, bool minimizada) {
         this->pos_x = x;
         this->pos_y = y;
+        this->minimizada = minimizada;
     }
 
     /**
      * Dibujar la ventana selección de Escala
      */
     void VentanaSelectorEscala::dibujar() {
-        //Posición a dibujar
+        //Posicion a dibujar y ventana minimizada
         ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
-
+        ImGui::SetNextWindowCollapsed(minimizada, ImGuiCond_Once);
         if (ImGui::Begin("Selector de Escala", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             // La ventana está desplegada
 
@@ -182,12 +184,13 @@ namespace PAG {
     /**
      * Constructor de ventana de carga de shader
      */
-    VentanaCargaModeloYShader::VentanaCargaModeloYShader(float x, float y) {
+    VentanaCargaModeloYShader::VentanaCargaModeloYShader(float x, float y, bool minimizada) {
         this->pos_x = x;
         this->pos_y = y;
+        this->minimizada = minimizada;
 
         std::string carpetaModelos = "modelos";
-        
+
         //Buscador de modelos
         _file_browser = ImGui::FileBrowser();
         _file_browser.SetPwd(std::filesystem::current_path() / carpetaModelos);
@@ -199,9 +202,9 @@ namespace PAG {
      * Dibujar la ventana de carga de shader
      */
     void VentanaCargaModeloYShader::dibujar() {
-        //Posición a dibujar
+        //Posicion a dibujar y ventana minimizada
         ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
-
+        ImGui::SetNextWindowCollapsed(minimizada, ImGuiCond_Once);
 
         bool _botonCargaPresionado = false;
 
@@ -236,8 +239,7 @@ namespace PAG {
 
         _file_browser.Display();
 
-        if(_file_browser.HasSelected())
-        {
+        if (_file_browser.HasSelected()) {
             _rutaModelo = _file_browser.GetSelected().string();
             _file_browser.ClearSelected();
         }
@@ -249,7 +251,8 @@ namespace PAG {
      */
     void VentanaCargaModeloYShader::warn_listeners() const {
         if (_renderer_listener) {
-            _renderer_listener->wakeUp(TipoVentana::V_Carga_Modelo_Shaders, false, _nombreModelo.c_str(), _rutaModelo.c_str(), _nombreShader.c_str());
+            _renderer_listener->wakeUp(TipoVentana::V_Carga_Modelo_Shaders, false, _nombreModelo.c_str(),
+                                       _rutaModelo.c_str(), _nombreShader.c_str());
         }
     }
 
@@ -265,29 +268,29 @@ namespace PAG {
     /**
      * Constructor de ventana de manejo de cámara
      */
-    VentanaCamara::VentanaCamara(float x, float y) {
+    VentanaCamara::VentanaCamara(float x, float y, bool minimizada) {
         this->pos_x = x;
         this->pos_y = y;
+        this->minimizada = minimizada;
     }
 
     /**
      * Dibujar la ventana de manejo de cámara
      */
     void VentanaCamara::dibujar() {
-        //Posición a dibujar
+        //Posicion a dibujar y ventana minimizada
         ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
-
+        ImGui::SetNextWindowCollapsed(minimizada, ImGuiCond_Once);
         //Modificadores fijos
-        const GLfloat variacion_Pan = 2.0;  //Angulo de variación
-        const GLfloat variacion_Tilt = 2.0;  //Angulo de variación
-        const GLfloat traslacion_X = 0.1;  //Variación de traslación (X)
-        const GLfloat traslacion_Y = 0.1;  //Variación de traslación (Y)
-        const GLfloat traslacion_Z = 0.1;  //Variación de traslación (Z)
+        const GLfloat variacion_Pan = 2.0; //Angulo de variación
+        const GLfloat variacion_Tilt = 2.0; //Angulo de variación
+        const GLfloat traslacion_X = 0.1; //Variación de traslación (X)
+        const GLfloat traslacion_Y = 0.1; //Variación de traslación (Y)
+        const GLfloat traslacion_Z = 0.1; //Variación de traslación (Z)
         const GLfloat variacion_Orbit = 2.0; //Angulo de variacion
 
 
         if (_renderer_listener) {
-
             //Recuperamos las variables necesarias para las ventanas desde el Rende
             //rer (actualizadas)
             TipoMovimiento *tipo_movimiento_camara = nullptr;
@@ -304,14 +307,13 @@ namespace PAG {
 
                 //Este vector funciona porque he puesto el mismo orden que en el enum de Camara.h
                 //Es para que muestre el nombre de los enumerados
-                const char* movimientos[] = { "Zoom", "Pan", "Tilt", "Dolly", "Crane", "Orbit"};
+                const char *movimientos[] = {"Zoom", "Pan", "Tilt", "Dolly", "Crane", "Orbit"};
 
                 //Sacamos el índice que ocupa el tipo de movimiento actual en el enumerado gracias a static_cast
                 int movimientoActual = static_cast<int>(*tipo_movimiento_camara);
 
                 //La ejecución entra aquí solo cuando se ha cambiado el tipo de movimiento
                 if (ImGui::Combo("##Movimiento", &movimientoActual, movimientos, IM_ARRAYSIZE(movimientos))) {
-
                     //Se puede hacer la operación inversa a lo anterior (sacar un tipo de movimiento desde un índice (int))
                     *tipo_movimiento_camara = static_cast<TipoMovimiento>(movimientoActual);
                 }
@@ -320,7 +322,8 @@ namespace PAG {
                     case TipoMovimiento::Zoom: {
                         ImGui::Text("Ángulo");
                         bool ha_cambiado_angulo = false;
-                        ha_cambiado_angulo = ImGui::SliderFloat("##SliderZoom", &angulo_Zoom, _lim_inf_zoom, _lim_sup_zoom, "%2.2fº");
+                        ha_cambiado_angulo = ImGui::SliderFloat("##SliderZoom", &angulo_Zoom, _lim_inf_zoom,
+                                                                _lim_sup_zoom, "%2.2fº");
 
                         if (ha_cambiado_angulo) {
                             _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &angulo_Zoom);
@@ -365,14 +368,16 @@ namespace PAG {
                         if (ImGui::Button("^ Adelante ^", ImVec2(208, 0))) {
                             GLfloat variacion_X_adelante = 0;
                             GLfloat variacion_Z_adelante = -traslacion_Z;
-                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_adelante, &variacion_Z_adelante);
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_adelante,
+                                                       &variacion_Z_adelante);
                         }
 
 
                         if (ImGui::Button("<- Izquierda", ImVec2(100, 0))) {
                             GLfloat variacion_X_izquierda = -traslacion_X;
                             GLfloat variacion_Z_izquierda = 0;
-                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_izquierda, &variacion_Z_izquierda);
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_izquierda,
+                                                       &variacion_Z_izquierda);
                         }
 
                         ImGui::SameLine();
@@ -380,13 +385,15 @@ namespace PAG {
                         if (ImGui::Button("Derecha ->", ImVec2(100, 0))) {
                             GLfloat variacion_X_derecha = traslacion_X;
                             GLfloat variacion_Z_derecha = 0;
-                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_derecha, &variacion_Z_derecha);
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_derecha,
+                                                       &variacion_Z_derecha);
                         }
 
                         if (ImGui::Button("v Atrás v", ImVec2(208, 0))) {
                             GLfloat variacion_X_atras = 0;
                             GLfloat variacion_Z_atras = traslacion_Z;
-                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_atras, &variacion_Z_atras);
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_X_atras,
+                                                       &variacion_Z_atras);
                         }
 
                         break;
@@ -395,7 +402,6 @@ namespace PAG {
                     case TipoMovimiento::Crane: {
                         ImGui::Text("Dirección");
                         if (ImGui::Button("^ Arriba ^", ImVec2(100, 0))) {
-
                             GLfloat variacion_Y_arriba = traslacion_Y;
                             _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Y_arriba);
                         }
@@ -403,7 +409,6 @@ namespace PAG {
                         ImGui::SameLine();
 
                         if (ImGui::Button("v Abajo v", ImVec2(100, 0))) {
-
                             GLfloat variacion_Y_abajo = -traslacion_Y;
                             _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Y_abajo);
                         }
@@ -414,7 +419,8 @@ namespace PAG {
                         if (ImGui::Button("^ Norte ^", ImVec2(100, 0))) {
                             GLfloat variacion_Norte_longitud = 0;
                             GLfloat variacion_Norte_latitud = variacion_Orbit;
-                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Norte_longitud, &variacion_Norte_latitud);
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Norte_longitud,
+                                                       &variacion_Norte_latitud);
                         }
 
                         ImGui::SameLine();
@@ -422,14 +428,16 @@ namespace PAG {
                         if (ImGui::Button("v Sur v", ImVec2(100, 0))) {
                             GLfloat variacion_Sur_longitud = 0;
                             GLfloat variacion_Sur_latitud = -variacion_Orbit;
-                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Sur_longitud, &variacion_Sur_latitud);
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Sur_longitud,
+                                                       &variacion_Sur_latitud);
                         }
 
                         ImGui::Text("Longitud");
                         if (ImGui::Button("^ Oeste ^", ImVec2(100, 0))) {
                             GLfloat variacion_Oeste_longitud = -variacion_Orbit;
                             GLfloat variacion_Oeste_latitud = 0;
-                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Oeste_longitud, &variacion_Oeste_latitud);
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Oeste_longitud,
+                                                       &variacion_Oeste_latitud);
                         }
 
                         ImGui::SameLine();
@@ -437,14 +445,14 @@ namespace PAG {
                         if (ImGui::Button("v Este v", ImVec2(100, 0))) {
                             GLfloat variacion_Este_longitud = variacion_Orbit;
                             GLfloat variacion_Este_latitud = 0;
-                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Este_longitud, &variacion_Este_latitud);
+                            _renderer_listener->wakeUp(TipoVentana::V_Manejo_Camara, false, &variacion_Este_longitud,
+                                                       &variacion_Este_latitud);
                         }
                         break;
                     }
 
                     default: ;
                 }
-
             }
 
 
@@ -452,7 +460,6 @@ namespace PAG {
             ImGui::End();
         }
     }
-
 
 
     /** ------------------------------------------
@@ -464,22 +471,22 @@ namespace PAG {
     /**
      * Constructor de ventana de manejo de cámara
      */
-    VentanaTrasformacionesModelos::VentanaTrasformacionesModelos(float x, float y) {
+    VentanaTrasformacionesModelos::VentanaTrasformacionesModelos(float x, float y, bool minimizada) {
         this->pos_x = x;
         this->pos_y = y;
+        this->minimizada = minimizada;
     }
 
     /**
      * Dibujar la ventana de manejo de cámara
      */
     void VentanaTrasformacionesModelos::dibujar() {
-        //Posición a dibujar
+        //Posicion a dibujar y ventana minimizada
         ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
-
+        ImGui::SetNextWindowCollapsed(minimizada, ImGuiCond_Once);
         if (_renderer_listener) {
-
             //Recuperamos los modelos que tenga el Renderer (solo sus nombres, ya que no van repes)
-            std::vector<const char*> nombreModelos;
+            std::vector<const char *> nombreModelos;
 
             _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, true, &nombreModelos);
 
@@ -487,7 +494,7 @@ namespace PAG {
             //Buscamos si existe el nombre que se tenía
             bool nombreSigueExistiendo = false;
 
-            for (int i=0; i<nombreModelos.size(); i++) {
+            for (int i = 0; i < nombreModelos.size(); i++) {
                 if (nombreModelos[i] == _nombreModeloSeleccionado) {
                     nombreSigueExistiendo = true;
                 }
@@ -502,7 +509,9 @@ namespace PAG {
 
             //Sacamos el índice que ocupa el tipo de acción actual (como hice con la cámara)
             int i_operacionSeleccionada = static_cast<int>(_operacion_a_realizar);
-            const char* transformaciones[] = {"Traslacion", "Rotacion en X", "Rotacion en Y", "Rotacion en Z", "Escalado"};   //No meto aquí borrado (por motivos obvios)
+            const char *transformaciones[] = {
+                "Traslacion", "Rotacion en X", "Rotacion en Y", "Rotacion en Z", "Escalado"
+            }; //No meto aquí borrado (por motivos obvios)
 
             if (ImGui::Begin("Transformaciones de modelos", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
                 // La ventana está desplegada
@@ -513,8 +522,8 @@ namespace PAG {
                     ImGui::Text("Modelo seleccionado:               ");
 
                     //La ejecución entra aquí solo cuando se ha cambiado el tipo de movimiento
-                    if (ImGui::Combo("##Modelo seleccionado", &_indiceModeloSeleccionado, nombreModelos.data(), (int)nombreModelos.size())) {
-
+                    if (ImGui::Combo("##Modelo seleccionado", &_indiceModeloSeleccionado, nombreModelos.data(),
+                                     (int) nombreModelos.size())) {
                         //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
                         _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
                     }
@@ -522,7 +531,8 @@ namespace PAG {
                     if (_indiceModeloSeleccionado != -1) {
                         ImGui::Text("Transformación:               ");
 
-                        if (ImGui::Combo("##Transformacion seleccionada", &i_operacionSeleccionada, transformaciones, IM_ARRAYSIZE(transformaciones))) {
+                        if (ImGui::Combo("##Transformacion seleccionada", &i_operacionSeleccionada, transformaciones,
+                                         IM_ARRAYSIZE(transformaciones))) {
                             //Se selecciona una transformacion...
                             _operacion_a_realizar = static_cast<TipoAccion>(i_operacionSeleccionada);
                         }
@@ -577,20 +587,20 @@ namespace PAG {
 
                                 break;
                             }
-                            default:;
+                            default: ;
                         }
                     }
 
 
                     if (ImGui::Button("Borrar Modelo")) {
                         PAG::TipoAccion borrado = PAG::TipoAccion::Borrar;
-                        _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &borrado, &_nombreModeloSeleccionado);
+                        _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &borrado,
+                                                   &_nombreModeloSeleccionado);
                     }
 
                     ImGui::SameLine();
 
                     if (ImGui::Button("Transformar")) {
-
                         glm::mat4 m1;
 
                         switch (_operacion_a_realizar) {
@@ -599,15 +609,15 @@ namespace PAG {
                                 break;
                             }
                             case (TipoAccion::RotacionX): {
-                                m1 = glm::rotate(glm::radians(rot_x), glm::vec3(1,0,0));
+                                m1 = glm::rotate(glm::radians(rot_x), glm::vec3(1, 0, 0));
                                 break;
                             }
                             case (TipoAccion::RotacionY): {
-                                m1 = glm::rotate(glm::radians(rot_y), glm::vec3(0,1,0));
+                                m1 = glm::rotate(glm::radians(rot_y), glm::vec3(0, 1, 0));
                                 break;
                             }
                             case (TipoAccion::RotacionZ): {
-                                m1 = glm::rotate(glm::radians(rot_z), glm::vec3(0,0,1));
+                                m1 = glm::rotate(glm::radians(rot_z), glm::vec3(0, 0, 1));
                                 break;
                             }
                             case (TipoAccion::Escalado): {
@@ -615,10 +625,11 @@ namespace PAG {
                                 m1 = glm::scale(glm::vec3(escala, escala, escala));
                                 break;
                             }
-                            default:;
+                            default: ;
                         }
 
-                        _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &_operacion_a_realizar, &_nombreModeloSeleccionado, &m1);
+                        _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false,
+                                                   &_operacion_a_realizar, &_nombreModeloSeleccionado, &m1);
 
                         //Dejo las variables a 0 para que sea más fácil operar con ellas
                         trasl_x_relativa = 0.0;
@@ -630,18 +641,15 @@ namespace PAG {
                         rot_z = 0.0;
 
                         escala = 1.0;
-
                     }
-                }else {
+                } else {
                     ImGui::Text("          Carga algún modelo           ");
                     _indiceModeloSeleccionado = -1;
                 }
-
             }
 
             // Si la ventana no está desplegada, Begin devuelve false
             ImGui::End();
         }
-
     }
 }

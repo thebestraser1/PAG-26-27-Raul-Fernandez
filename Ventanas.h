@@ -18,8 +18,9 @@ namespace PAG {
      */
     class Ventanas{
     protected:
-        float pos_x = 10;                       //Posiciones x,y de las ventanas
+        float pos_x = 10;                             //Posiciones x,y de las ventanas
         float pos_y = 10;
+        bool minimizada = true;                          //Ventana aparece minimizada??
         static float _escalaTexto;                    //Compartida por todas las ventanas (para mantener consistencia)
         Listener* _renderer_listener = nullptr;       //Observadores que se suscriben a los cambios producidos en las ventanas
     public:
@@ -36,7 +37,7 @@ namespace PAG {
     private:
         std::stringstream &_textoSalida;     //Importante por referencia para que se vaya actualizando (viene de main.cpp)
     public:
-        VentanaMensajes(std::stringstream &textoInicial, float x, float y);
+        VentanaMensajes(std::stringstream &textoInicial, float x, float y, bool minimizada);
         void dibujar() override;
     };
 
@@ -46,7 +47,7 @@ namespace PAG {
      */
     class VentanaSelectorColorFondo : public Ventanas{
     public:
-        VentanaSelectorColorFondo(float x, float y);
+        VentanaSelectorColorFondo(float x, float y, bool minimizada);
         void dibujar() override;
         void warn_listeners(GLfloat* colorFondoSeleccionado);
     };
@@ -57,7 +58,7 @@ namespace PAG {
      */
     class VentanaSelectorEscala : public Ventanas{
     public:
-        VentanaSelectorEscala(float x, float y);
+        VentanaSelectorEscala(float x, float y, bool minimizada);
         void dibujar() override;
     };
 
@@ -72,7 +73,7 @@ namespace PAG {
         std::string _rutaModelo;
         std::string _nombreShader;
     public:
-        VentanaCargaModeloYShader(float x, float y);
+        VentanaCargaModeloYShader(float x, float y, bool minimizada);
         void dibujar() override;
 
         void warn_listeners() const;
@@ -87,7 +88,7 @@ namespace PAG {
         static const float _lim_inf_zoom;
         static const float _lim_sup_zoom;
 
-        VentanaCamara(float x, float y);
+        VentanaCamara(float x, float y, bool minimizada);
         void dibujar() override;
     };
 
@@ -118,7 +119,7 @@ namespace PAG {
         GLfloat escala = 1.0;
 
     public:
-        VentanaTrasformacionesModelos(float x, float y);
+        VentanaTrasformacionesModelos(float x, float y, bool minimizada);
         void dibujar() override;
     };
 } // PAG
