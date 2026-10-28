@@ -2326,7 +2326,7 @@ a partir de la estructura de la malla de `Assimp`. Su implementación es la sigu
             //Hay que tener en cuenta la posición inicial del modelo
             _vertices.emplace_back(mesh->mVertices[i].x + _posicion[0], mesh->mVertices[i].y + _posicion[1], mesh->mVertices[i].z + _posicion[2]);
 
-            _normales.emplace_back(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+            _colorVertice.emplace_back(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
         }
 
         //Procesamos los índices
@@ -2343,10 +2343,10 @@ a partir de la estructura de la malla de `Assimp`. Su implementación es la sigu
     }
 ```
 
-Interesa este paso intermedio (almacenando los vértices, normales e índices como atributos del modelo) para poder aplicar
-transformaciones a estas estructuras (traslación, rotación y escalado).
+Obsérvese que se está asignando como color las normales del modelo. Esto es una cosa propia de esta práctica para poder observar
+el modelo de forma distinguible. 
 
-Posteriormente, deben introducirse estas estructuras en un VAO (estructura de OpenGL para la VRAM de la GPU). Esto, que 
+Posteriormente, deben introducirse estas estructuras (vértices y colores) en un VAO (estructura de OpenGL para la VRAM de la GPU). Esto, que 
 antes estaba integrado en la clase `Renderer` se ha desacoplado e incorporado en esta clase. El relleno de estos elementos
 se produce de la misma manera que ya se tenía (ahora con datos sobre el color):
 
@@ -2421,7 +2421,7 @@ tenga en su vector de modelos cargados:
         if (!_modelos.empty()) {
             for (Modelo *modelo: _modelos) {
                 glUseProgram(modelo->getShaderModelo()->id_sp());
-                controlar_uniforms(modelo->getShaderModelo()->id_sp(), modelo->getShaderModelo()->nombre_shader());
+                controlar_uniforms(modelo);
 
                 modelo->Dibujar();
             }
@@ -2628,22 +2628,9 @@ He aquí su implementación:
 
         //TRANSFORMACIÓN GENERAL DEL MODELO
 
-        // Hago esto para que (en caso de rotar o escalar) se haga sobre sí mismo (no afecta a la traslación)
-        glm::mat4 M = glm::translate(glm::mat4(1.0f), _posicion) * transformacion * glm::translate(glm::mat4(1.0f), -_posicion);
-
-        // Transformar vértices
-        for (glm::vec3& vertice : _vertices) {
-            vertice = glm::vec3(M * glm::vec4(vertice, 1.0f));
-        }
-
-        // Transformar normales (como el vector no tiene posición, no hace falta usar M)
-        for (glm::vec3 &vector : _normales) {
-            vector = glm::normalize(glm::vec3(transformacion * glm::vec4(vector, 0.0)));
-        }
-
-        //NOTA: Yo no he implementado escalados no uniformes. De haberlo hecho, la matriz para las normales
-        //sería (tal y como vimos en teoría) esta:
-        //glm::mat3 matNormal = glm::transpose(glm::inverse(glm::mat3(transformacion)));
+        // Se acumulan las transformaciones en la matriz de modelado del modelo (hago lo de la posición para que las
+        // rotaciones se hagan sobre sí mismas
+        matrizModelado = matrizModelado * glm::translate(glm::mat4(1.0f), _posicion) * transformacion * glm::translate(glm::mat4(1.0f), -_posicion);
 
         //Se actualiza la posición del modelo si es una traslación
         if (tipo_transformacion == TipoAccion::Traslacion) {
@@ -2668,15 +2655,9 @@ He aquí su implementación:
     }
 ```
 
-Se puede observar cómo la matriz `M` nos permite aplicar las transformaciones sobre el **centroide del modelo**. Para
+Se puede observar cómo la matriz de modelado nos permite aplicar las transformaciones sobre el **centroide del modelo**. Para
 lograrlo, se traslada el modelo al origen de la escena, se transforma y se devuelve a su lugar. Esa transformación se 
 aplica a sus vértices.
-
-En el caso de las normales, basta con aplicar la transformación (sin importar la posición del modelo porque es un vector
-y los vectores no tienen posición) y normalizar el vector resultante.
-
-En caso de aplicar escalados no uniformes, deben volver a procesarse las normales con la transpuesta de la adjunta de la
-matriz de transformación (como se vió en teoría).
 
 Posteriormente, se actualiza el atributo de posición del modelo (para la próxima transformación) y se eliminan las estructuras
 de GPU en VRAM anteriores para crear otras nuevas (con los vectores de vértices, indices y colores (en este caso las normales)
@@ -3058,7 +3039,7 @@ classDiagram
           GLuint idIBO = 0; 
 
           std::vector<glm::vec3> _vertices;
-          std::vector<glm::vec3> _normales;
+          std::vector<glm::vec3> _colorVertice;
           std::vector<unsigned int> _indices;
 
           std::string _directorio;

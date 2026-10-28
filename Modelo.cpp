@@ -86,7 +86,8 @@ namespace PAG {
             //Hay que tener en cuenta la posición inicial del modelo
             _vertices.emplace_back(mesh->mVertices[i].x + _posicion[0], mesh->mVertices[i].y + _posicion[1], mesh->mVertices[i].z + _posicion[2]);
 
-            _normales.emplace_back(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+            //Asignaré para esta práctica como color las normales del modelo
+            _colorVertice.emplace_back(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
         }
 
         //Procesamos los índices
@@ -99,7 +100,7 @@ namespace PAG {
         }
 
         //OJO: usaré las normales como color del objeto...
-        creaVAO(_vertices, _normales, _indices);
+        creaVAO(_vertices, _colorVertice, _indices);
     }
 
 
@@ -138,6 +139,11 @@ namespace PAG {
     }
 
 
+    glm::mat4 Modelo::getMatrizModelado() const {
+        return matrizModelado;
+    }
+
+
     /**
      * Función para dibujar el VAO del modelo (cuando el Renderer lo necesite)
      */
@@ -156,22 +162,9 @@ namespace PAG {
 
         //TRANSFORMACIÓN GENERAL DEL MODELO
 
-        // Hago esto para que (en caso de rotar o escalar) se haga sobre sí mismo (no afecta a la traslación)
-        glm::mat4 M = glm::translate(glm::mat4(1.0f), _posicion) * transformacion * glm::translate(glm::mat4(1.0f), -_posicion);
-
-        // Transformar vértices
-        for (glm::vec3& vertice : _vertices) {
-            vertice = glm::vec3(M * glm::vec4(vertice, 1.0f));
-        }
-
-        // Transformar normales (como el vector no tiene posición, no hace falta usar M)
-        for (glm::vec3 &vector : _normales) {
-            vector = glm::normalize(glm::vec3(transformacion * glm::vec4(vector, 0.0)));
-        }
-
-        //NOTA: Yo no he implementado escalados no uniformes. De haberlo hecho, la matriz para las normales
-        //sería (tal y como vimos en teoría) esta:
-        //glm::mat3 matNormal = glm::transpose(glm::inverse(glm::mat3(transformacion)));
+        // Se acumulan las transformaciones en la matriz de modelado del modelo (hago lo de la posición para que las
+        // rotaciones se hagan sobre sí mismas
+        matrizModelado = matrizModelado * glm::translate(glm::mat4(1.0f), _posicion) * transformacion * glm::translate(glm::mat4(1.0f), -_posicion);
 
         //Se actualiza la posición del modelo si es una traslación
         if (tipo_transformacion == TipoAccion::Traslacion) {
@@ -192,7 +185,7 @@ namespace PAG {
             glDeleteVertexArrays(1, &idVAO);
         }
 
-        creaVAO(_vertices, _normales, _indices);
+        creaVAO(_vertices, _colorVertice, _indices);
     }
 
 } // PAG

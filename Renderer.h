@@ -81,7 +81,7 @@ namespace PAG {
         void hacerMovimientoRaton(double movimiento_relativo_x, double movimiento_relativo_y);
 
     private:
-        void controlar_uniforms(GLuint idSP, std::string nombre);
+        void controlar_uniforms(Modelo *modelo_usado) const;
         bool comprobar_modelos_mismo_nombre(const std::string& nombreModelo);
         void borrar_modelo_por_nombre(const std::string& nombreModelo);
         void transformar_modelo_por_nombre(const std::string &nombreModelo, TipoAccion tipoTransformacion, const glm::mat4 &transformacion);

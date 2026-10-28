@@ -38,8 +38,10 @@ namespace PAG {
         GLuint idIBO = 0; // Identificador del index buffer object
 
         std::vector<glm::vec3> _vertices;
-        std::vector<glm::vec3> _normales;
+        std::vector<glm::vec3> _colorVertice;
         std::vector<unsigned int> _indices;
+
+        glm::mat4 matrizModelado = glm::mat4(1.0f);     //Identidad
 
         std::string _directorio;
         ShaderProgram _shader_modelo;
@@ -52,6 +54,7 @@ namespace PAG {
         Modelo(const std::string& nombreModelo, const char *rutaOBJ, const std::string &rutaShader, glm::vec3 posicionInicial);
         ~Modelo();
         ShaderProgram* getShaderModelo();
+        glm::mat4 getMatrizModelado() const;
         void Dibujar();
         void aplicarTransformacion(TipoAccion tipo_transformacion, const glm::mat4 &transformacion);
 

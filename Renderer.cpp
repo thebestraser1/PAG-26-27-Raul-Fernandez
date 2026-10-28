@@ -88,7 +88,7 @@ namespace PAG {
         if (!_modelos.empty()) {
             for (Modelo *modelo: _modelos) {
                 glUseProgram(modelo->getShaderModelo()->id_sp());
-                controlar_uniforms(modelo->getShaderModelo()->id_sp(), modelo->getShaderModelo()->nombre_shader());
+                controlar_uniforms(modelo);
 
                 modelo->Dibujar();
             }
@@ -98,19 +98,26 @@ namespace PAG {
     /**
      * Función encargada de otorgar los uniforms que necesite el shader program de cada práctica en concreto
      */
-    void Renderer::controlar_uniforms(GLuint idSP, const std::string nombre) {
-        if (nombre == "pag03") {
+    void Renderer::controlar_uniforms(Modelo* modelo_usado) const {
+        if (modelo_usado->getShaderModelo()->nombre_shader() == "pag03") {
             //No tiene uniforms
-        } else if (nombre == "pag05") {
+
+        } else if (modelo_usado->getShaderModelo()->nombre_shader() == "pag05") {
             //Uniforms de cámara
-            std::string nombreUniform = "matrizVP";
-            GLint posicion = glGetUniformLocation(idSP, nombreUniform.c_str());
+            std::string nombreUniform = "matrizMVP";
+            GLint posicion = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), nombreUniform.c_str());
 
             if (posicion != -1) {
                 // El uniform existe y se ha podido localizar correctamente
+
+                // En este caso, componemos la matriz de modelado, visión y proyección
                 glm::mat4 matrizVP_camara = _camara->getMatVP();
-                glUniformMatrix4fv(posicion, 1, GL_FALSE, &matrizVP_camara[0][0]);
+                glm::mat4 matrizM_modelo = modelo_usado->getMatrizModelado();
+
+                glm::mat4 matrizMVP = matrizVP_camara * matrizM_modelo;
+                glUniformMatrix4fv(posicion, 1, GL_FALSE, &matrizMVP[0][0]);
             }
+
         } else {
             //Shader desconocido: no se envían uniforms
         }
