@@ -20,12 +20,12 @@
 namespace PAG {
 
     enum TipoAccionModelo {
-        Traslacion,
-        RotacionX,
-        RotacionY,
-        RotacionZ,
-        Escalado,
-        Borrar,
+        Traslacion_modelo,
+        RotacionX_modelo,
+        RotacionY_modelo,
+        RotacionZ_modelo,
+        Escalado_modelo,
+        Borrar_modelo,
     };
 
 

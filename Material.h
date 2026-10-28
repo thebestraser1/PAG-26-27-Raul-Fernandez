@@ -7,9 +7,9 @@
 namespace PAG {
 
     enum TipoAccionMaterial {
-        Anadir,
-        Modificar,
-        Asignar
+        Anadir_material,
+        Borrar_material,
+        Asignar_material
     };
 
     class Material {

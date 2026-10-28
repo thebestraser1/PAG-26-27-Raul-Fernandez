@@ -103,7 +103,7 @@ namespace PAG {
         //--------------------------
         //Operaciones con el modelo
         //--------------------------
-        PAG::TipoAccionModelo _operacion_a_realizar = PAG::TipoAccionModelo::Traslacion;
+        PAG::TipoAccionModelo _operacion_a_realizar = PAG::TipoAccionModelo::Traslacion_modelo;
 
         //Traslación
         GLfloat trasl_x_relativa = 0.0;
@@ -130,7 +130,7 @@ namespace PAG {
      */
     class VentanaGestionMateriales : public Ventanas{
 
-        TipoAccionMaterial _accion_actual = TipoAccionMaterial::Anadir;
+        TipoAccionMaterial _accion_actual = TipoAccionMaterial::Anadir_material;
 
         //Atributos al añadir material nuevo
         std::string _nombre_material;

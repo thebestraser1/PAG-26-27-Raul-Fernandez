@@ -542,7 +542,7 @@ namespace PAG {
                          */
 
                         switch (_operacion_a_realizar) {
-                            case TipoAccionModelo::Traslacion: {
+                            case TipoAccionModelo::Traslacion_modelo: {
                                 ImGui::Text("Traslacion");
                                 ImGui::Separator();
 
@@ -552,7 +552,7 @@ namespace PAG {
 
                                 break;
                             }
-                            case TipoAccionModelo::RotacionX: {
+                            case TipoAccionModelo::RotacionX_modelo: {
                                 ImGui::Text("Rotacion en X");
                                 ImGui::Separator();
 
@@ -561,7 +561,7 @@ namespace PAG {
                                 break;
                             }
 
-                            case TipoAccionModelo::RotacionY: {
+                            case TipoAccionModelo::RotacionY_modelo: {
                                 ImGui::Text("Rotacion en Y");
                                 ImGui::Separator();
 
@@ -570,7 +570,7 @@ namespace PAG {
                                 break;
                             }
 
-                            case TipoAccionModelo::RotacionZ: {
+                            case TipoAccionModelo::RotacionZ_modelo: {
                                 ImGui::Text("Rotacion en Z");
                                 ImGui::Separator();
 
@@ -579,7 +579,7 @@ namespace PAG {
                                 break;
                             }
 
-                            case TipoAccionModelo::Escalado: {
+                            case TipoAccionModelo::Escalado_modelo: {
                                 ImGui::Text("Escalado uniforme");
                                 ImGui::Separator();
 
@@ -593,7 +593,7 @@ namespace PAG {
 
 
                     if (ImGui::Button("Borrar Modelo")) {
-                        PAG::TipoAccionModelo borrado = PAG::TipoAccionModelo::Borrar;
+                        PAG::TipoAccionModelo borrado = PAG::TipoAccionModelo::Borrar_modelo;
                         _renderer_listener->wakeUp(TipoVentana::V_Trasformaciones_Modelos, false, &borrado,
                                                    &_nombreModeloSeleccionado);
                     }
@@ -604,23 +604,23 @@ namespace PAG {
                         glm::mat4 m1;
 
                         switch (_operacion_a_realizar) {
-                            case (TipoAccionModelo::Traslacion): {
+                            case (TipoAccionModelo::Traslacion_modelo): {
                                 m1 = glm::translate(glm::vec3(trasl_x_relativa, trasl_y_relativa, trasl_z_relativa));
                                 break;
                             }
-                            case (TipoAccionModelo::RotacionX): {
+                            case (TipoAccionModelo::RotacionX_modelo): {
                                 m1 = glm::rotate(glm::radians(rot_x), glm::vec3(1, 0, 0));
                                 break;
                             }
-                            case (TipoAccionModelo::RotacionY): {
+                            case (TipoAccionModelo::RotacionY_modelo): {
                                 m1 = glm::rotate(glm::radians(rot_y), glm::vec3(0, 1, 0));
                                 break;
                             }
-                            case (TipoAccionModelo::RotacionZ): {
+                            case (TipoAccionModelo::RotacionZ_modelo): {
                                 m1 = glm::rotate(glm::radians(rot_z), glm::vec3(0, 0, 1));
                                 break;
                             }
-                            case (TipoAccionModelo::Escalado): {
+                            case (TipoAccionModelo::Escalado_modelo): {
                                 //Considero escalado uniforme
                                 m1 = glm::scale(glm::vec3(escala, escala, escala));
                                 break;
@@ -684,6 +684,8 @@ namespace PAG {
                 // Pestaña para añadir
                 if (ImGui::BeginTabItem("Añadir"))
                 {
+                    _accion_actual = TipoAccionMaterial::Anadir_material;
+
                     ImGui::Text("Nombre del material");
                     ImGui::InputText("##TextoShader", &_nombre_material, ImGuiInputTextFlags_AutoSelectAll);
                     ImGui::Text("Ambiental (Ka)");
@@ -708,6 +710,8 @@ namespace PAG {
                         _colorEspecular_anadir = {0,0,0};
 
                         _brillo_anadir = 1.0f;
+
+                        std::cout << "Se ha añadido un nuevo material: " << _nombre_material << std::endl;
                     }
 
                     ImGui::EndTabItem();
@@ -717,33 +721,64 @@ namespace PAG {
                 if (ImGui::BeginTabItem("Modificar"))
                 {
 
-                    //Recuperamos los materiales que tenga el Renderer (de forma similar a como hice con los modelos)
+                    //Recuperamos los materiales que tenga el Renderer (por puntero para que las actualizaciones
+                    //se hagan en tiempo real en la ventana)
+                    std::vector<Material*> materiales;
                     std::vector<const char *> nombreMateriales;
 
-                    _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, &nombreMateriales);
+                    _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, &materiales);
 
 
                     //Buscamos si existe el nombre que se tenía
                     bool nombreSigueExistiendo = false;
 
-                    for (int i = 0; i < nombreMateriales.size(); i++) {
-                        if (nombreMateriales[i] == _nombreMaterialSeleccionado) {
+                    for (Material* material : materiales) {
+
+                        if (material->nombre == _nombreMaterialSeleccionado) {
                             nombreSigueExistiendo = true;
                         }
+
+                        //De paso (en este bucle) relleno los nombres que tendrá el combo
+                        nombreMateriales.push_back(material->nombre.c_str());
                     }
 
-                    if (!nombreSigueExistiendo && _indiceMaterialSeleccionado != -1 && !nombreMateriales.empty()) {
+                    if (!nombreSigueExistiendo && _indiceMaterialSeleccionado != -1 && !materiales.empty()) {
                         //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
                         _indiceMaterialSeleccionado = 0;
-                        _nombreMaterialSeleccionado = nombreMateriales[_indiceMaterialSeleccionado];
+                        _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
                     }
 
                     if (ImGui::Combo("##Modelo seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
-                                     (int) nombreMateriales.size())) {
+                                     (int) materiales.size())) {
 
                         //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
-                        _nombreMaterialSeleccionado = nombreMateriales[_indiceMaterialSeleccionado];
+                        _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
                     }
+
+                    if (_indiceMaterialSeleccionado != -1 && !materiales.empty()) {
+                        ImGui::Text("Ambiental (Ka)");
+                        ImGui::ColorEdit3("##Ambiental (Ka)", &materiales[_indiceMaterialSeleccionado]->ka.x);   //El x es el primero del vector
+                        ImGui::Text("Difusa (Kd)");
+                        ImGui::ColorEdit3("##Difusa (Kd)", &materiales[_indiceMaterialSeleccionado]->kd.x);
+                        ImGui::Text("Especular (Ks)");
+                        ImGui::ColorEdit3("##Especular (Ks)", &materiales[_indiceMaterialSeleccionado]->ks.x);
+                        ImGui::Text("Brillo");
+                        ImGui::SliderFloat("##Brillo (shininess)", &materiales[_indiceMaterialSeleccionado]->shininess,1.0f,20.0f,"%.1f");
+                    }
+
+                    if (ImGui::Button("Borrar material")) {
+                        TipoAccionMaterial accion_borrar = TipoAccionMaterial::Borrar_material;
+                        _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, false, &accion_borrar,
+                                                   &materiales[_indiceMaterialSeleccionado]->nombre,
+                                                   &materiales[_indiceMaterialSeleccionado]->ka,
+                                                   &materiales[_indiceMaterialSeleccionado]->kd,
+                                                   &materiales[_indiceMaterialSeleccionado]->ks,
+                                                   &materiales[_indiceMaterialSeleccionado]->shininess);
+
+                        std::cout << "Se ha borrado el material " << _nombre_material << std::endl;
+                    }
+
+
 
 
                     ImGui::EndTabItem();
@@ -752,6 +787,7 @@ namespace PAG {
                 //Pestaña para asignar el material a un modelo
                 if (ImGui::BeginTabItem("Asignar"))
                 {
+                    _accion_actual = TipoAccionMaterial::Asignar_material;
 
 
                     ImGui::EndTabItem();

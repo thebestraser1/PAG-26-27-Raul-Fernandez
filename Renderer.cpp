@@ -347,11 +347,10 @@ namespace PAG {
                     std::va_list args;
                     va_start(args, ventana_pidiendo);
 
-                    std::vector<const char*>* nombresMateriales = va_arg(args, std::vector<const char*>*);
+                    std::vector<Material*>* materiales = va_arg(args, std::vector<Material*>*);
 
-                    nombresMateriales->clear();
                     for (Material* material : _materiales) {
-                        nombresMateriales->push_back(material->nombre.c_str());
+                        materiales->push_back(material);
                     }
 
                     va_end(args);
@@ -482,7 +481,7 @@ namespace PAG {
                     std::string * nombreModelo = va_arg(args, std::string*);
 
                     //Se actualizarían los parámetros de la cámara según el tipo
-                    if (*tipo_accion == TipoAccionModelo::Borrar) {
+                    if (*tipo_accion == TipoAccionModelo::Borrar_modelo) {
                         borrar_modelo_por_nombre(*nombreModelo);
                     }else {
                         //Es una transformación (basta con multiplicar la matriz)
@@ -497,25 +496,32 @@ namespace PAG {
 
                     PAG::TipoAccionMaterial* tipo_accion = va_arg(args, PAG::TipoAccionMaterial*);
 
-                    if (*tipo_accion == TipoAccionMaterial::Anadir) {
+                    switch (*tipo_accion) {
+                        case (TipoAccionMaterial::Anadir_material): {
+                            //Atributos de material
+                            std::string nombreMaterial(va_arg(args, char*));
+                            glm::vec3* colorAmbiental = va_arg(args, glm::vec3*);
+                            glm::vec3* colorDifuso = va_arg(args, glm::vec3*);
+                            glm::vec3* colorEspecular = va_arg(args, glm::vec3*);
+                            GLfloat* brillo = va_arg(args, GLfloat*);
 
-                        //Atributos de material
-                        std::string nombreMaterial(va_arg(args, char*));
-                        glm::vec3* colorAmbiental = va_arg(args, glm::vec3*);
-                        glm::vec3* colorDifuso = va_arg(args, glm::vec3*);
-                        glm::vec3* colorEspecular = va_arg(args, glm::vec3*);
-                        GLfloat* brillo = va_arg(args, GLfloat*);
 
-
-                        //Añadimos el material (si el nombre no existe)
-                        if (comprobar_materiales_mismo_nombre(nombreMaterial)) {
-                            _materiales.push_back(new Material(nombreMaterial, *colorAmbiental, *colorDifuso, *colorEspecular, *brillo));
-                        }else {
-                            std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
-                                    "Ya hay un material con el nombre: " << nombreMaterial <<
-                                    "\n--------------------\n" << std::endl;
+                            //Añadimos el material (si el nombre no existe)
+                            if (comprobar_materiales_mismo_nombre(nombreMaterial)) {
+                                _materiales.push_back(new Material(nombreMaterial, *colorAmbiental, *colorDifuso, *colorEspecular, *brillo));
+                            }else {
+                                std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
+                                        "Ya hay un material con el nombre: " << nombreMaterial <<
+                                        "\n--------------------\n" << std::endl;
+                            }
+                            break;
                         }
-
+                        case TipoAccionMaterial::Borrar_material:
+                            {}
+                            break;
+                        case TipoAccionMaterial::Asignar_material:
+                            {}
+                            break;
                     }
 
 
@@ -582,5 +588,19 @@ namespace PAG {
                 _modelos[i]->aplicarTransformacion(tipoTransformacion, transformacion);
             }
         }
+    }
+
+
+    /**
+     * Función para obtener un material por nombre
+     */
+    Material* Renderer::obtener_material_por_nombre(const std::string &nombreMaterial) {
+        for (Material* material : _materiales) {
+            if (material->nombre == nombreMaterial) {
+
+                return material;
+            }
+        }
+        return nullptr;
     }
 } // PAG
