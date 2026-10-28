@@ -347,10 +347,19 @@ namespace PAG {
                     std::va_list args;
                     va_start(args, ventana_pidiendo);
 
-                    std::vector<Material*>* materiales = va_arg(args, std::vector<Material*>*);
+                    bool* esta_pidiendo_materiales = va_arg(args, bool*);
 
-                    for (Material* material : _materiales) {
-                        materiales->push_back(material);
+                    if (esta_pidiendo_materiales) {
+                        std::vector<Material*>* materiales = va_arg(args, std::vector<Material*>*);
+                        for (Material* material : _materiales) {
+                            materiales->push_back(material);
+                        }
+                    }else {
+                        std::vector<const char*>* nombresModelos = va_arg(args, std::vector<const char*>*);
+                        nombresModelos->clear();
+                        for (Modelo* modelo : _modelos) {
+                            nombresModelos->push_back(modelo->_nombreModelo.c_str());
+                        }
                     }
 
                     va_end(args);
@@ -525,9 +534,11 @@ namespace PAG {
                             break;
                         }
 
-                        case TipoAccionMaterial::Asignar_material:
-                            {}
+                        case TipoAccionMaterial::Asignar_material: {
+
                             break;
+                        }
+
                     }
 
 

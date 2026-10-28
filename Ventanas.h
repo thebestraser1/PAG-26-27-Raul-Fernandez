@@ -145,6 +145,10 @@ namespace PAG {
         std::string _nombreMaterialSeleccionado;
         int _indiceMaterialSeleccionado = -1;   //Indice equivalente al vector de materiales de Renderer.cpp
 
+        //Atributos para asignar a un modelo
+        std::string _nombreModeloSeleccionado;
+        int _indiceModeloSeleccionado = -1;   //Indice equivalente al vector de materiales de Renderer.cpp
+
         public:
             VentanaGestionMateriales(float x, float y, bool minimizada);
             void dibujar() override;

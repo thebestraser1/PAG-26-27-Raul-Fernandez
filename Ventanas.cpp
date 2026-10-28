@@ -725,8 +725,9 @@ namespace PAG {
                     //se hagan en tiempo real en la ventana)
                     std::vector<Material*> materiales;
                     std::vector<const char *> nombreMateriales;
+                    bool estoy_pidiendo_materiales = true;
 
-                    _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, &materiales);
+                    _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, estoy_pidiendo_materiales, &materiales);
 
 
                     //Buscamos si existe el nombre que se tenía
@@ -750,7 +751,7 @@ namespace PAG {
 
                     if (!materiales.empty()) {
 
-                        if (ImGui::Combo("##Modelo seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
+                        if (ImGui::Combo("##Material seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
                                      (int) materiales.size())) {
 
                             //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
@@ -781,9 +782,6 @@ namespace PAG {
                     }
 
 
-
-
-
                     ImGui::EndTabItem();
                 }
 
@@ -791,6 +789,69 @@ namespace PAG {
                 if (ImGui::BeginTabItem("Asignar"))
                 {
                     _accion_actual = TipoAccionMaterial::Asignar_material;
+
+
+                    //Duplico fragmento de código para el combo de materiales
+                    //-------------------------------------------------------
+
+                    //Recuperamos los materiales que tenga el Renderer (por puntero para que las actualizaciones
+                    //se hagan en tiempo real en la ventana)
+                    std::vector<Material*> materiales;
+                    std::vector<const char *> nombreMateriales;
+                    bool estoy_pidiendo_materiales = true;
+
+                    _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, estoy_pidiendo_materiales, &materiales);
+
+                    for (Material* material : materiales) {
+                        nombreMateriales.push_back(material->nombre.c_str());
+                    }
+
+                    if (!materiales.empty()) {
+                        if (ImGui::Combo("##Material seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
+                                     (int) materiales.size())) {
+
+                            //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                            _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
+                        }
+                    }else {
+                        ImGui::Text("   No existe ningún material   ");
+                    }
+
+                    //Duplico fragmento de código para la lista de modelos
+                    //-------------------------------------------------------
+
+                    std::vector<const char *> nombreModelos;
+                    estoy_pidiendo_materiales = false;
+
+                    _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, estoy_pidiendo_materiales, &nombreModelos);
+
+                    //Se mira si sigue existiendo nombre del modelo (podría ser borrado desde otra ventana)
+                    bool nombreSigueExistiendo = false;
+
+                    for (int i = 0; i < nombreModelos.size(); i++) {
+                        if (nombreModelos[i] == _nombreModeloSeleccionado) {
+                            nombreSigueExistiendo = true;
+                        }
+                    }
+
+                    if (!nombreSigueExistiendo && _indiceModeloSeleccionado != -1 && !nombreModelos.empty()) {
+                        //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
+                        _indiceModeloSeleccionado = 0;
+                        _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
+                    }
+
+                    if (!nombreModelos.empty()) {
+                        ImGui::Text("Modelo seleccionado:               ");
+
+                        //La ejecución entra aquí solo cuando se ha cambiado el tipo de movimiento
+                        if (ImGui::Combo("##Modelo seleccionado", &_indiceModeloSeleccionado, nombreModelos.data(),
+                                         (int) nombreModelos.size())) {
+                            //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                            _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
+                        }
+                    }else {
+                        ImGui::Text("   No existe ningún modelo   ");
+                    }
 
 
                     ImGui::EndTabItem();
