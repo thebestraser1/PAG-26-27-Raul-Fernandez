@@ -599,15 +599,15 @@ namespace PAG {
                                 break;
                             }
                             case (TipoAccion::RotacionX): {
-                                glm::mat4 m = glm::rotate(glm::radians(rot_x), glm::vec3(1,0,0));
+                                m1 = glm::rotate(glm::radians(rot_x), glm::vec3(1,0,0));
                                 break;
                             }
                             case (TipoAccion::RotacionY): {
-                                glm::mat4 m = glm::rotate(glm::radians(rot_y), glm::vec3(0,1,0));
+                                m1 = glm::rotate(glm::radians(rot_y), glm::vec3(0,1,0));
                                 break;
                             }
                             case (TipoAccion::RotacionZ): {
-                                glm::mat4 m = glm::rotate(glm::radians(rot_z), glm::vec3(0,0,1));
+                                m1 = glm::rotate(glm::radians(rot_z), glm::vec3(0,0,1));
                                 break;
                             }
                             case (TipoAccion::Escalado): {
