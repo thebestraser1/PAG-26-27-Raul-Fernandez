@@ -2636,32 +2636,11 @@ He aquí su implementación:
         if (tipo_transformacion == TipoAccion::Traslacion) {
             _posicion = transformacion * glm::vec4(_posicion, 1.0);
         }
-
-        //Aplicamos en el VAO (para ello antes hay que borrar lo anterior)
-        if (idVBO_posiciones != 0) {
-            glDeleteBuffers(1, &idVBO_posiciones);
-        }
-        if (idVBO_colores != 0) {
-            glDeleteBuffers(1, &idVBO_colores);
-        }
-        if (idIBO != 0) {
-            glDeleteBuffers(1, &idIBO);
-        }
-        if (idVAO != 0) {
-            glDeleteVertexArrays(1, &idVAO);
-        }
-
-        creaVAO(_vertices, _normales, _indices);
-    }
 ```
 
 Se puede observar cómo la matriz de modelado nos permite aplicar las transformaciones sobre el **centroide del modelo**. Para
 lograrlo, se traslada el modelo al origen de la escena, se transforma y se devuelve a su lugar. Esa transformación se 
-aplica a sus vértices.
-
-Posteriormente, se actualiza el atributo de posición del modelo (para la próxima transformación) y se eliminan las estructuras
-de GPU en VRAM anteriores para crear otras nuevas (con los vectores de vértices, indices y colores (en este caso las normales)
-actualizados).
+aplica a sus vértices. Después, se actualiza el atributo de posición del modelo (para la próxima transformación).
 
 Posteriormente, es importante observar la implementación de la ventana y los parámetros que esta necesita para saber qué
 modelos se encuentran en `Renderer` (a fin de poder seleccionarlos). Es por ello que considero conveniente presentar

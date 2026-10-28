@@ -170,22 +170,6 @@ namespace PAG {
         if (tipo_transformacion == TipoAccion::Traslacion) {
             _posicion = transformacion * glm::vec4(_posicion, 1.0);
         }
-
-        //Aplicamos en el VAO (para ello antes hay que borrar lo anterior)
-        if (idVBO_posiciones != 0) {
-            glDeleteBuffers(1, &idVBO_posiciones);
-        }
-        if (idVBO_colores != 0) {
-            glDeleteBuffers(1, &idVBO_colores);
-        }
-        if (idIBO != 0) {
-            glDeleteBuffers(1, &idIBO);
-        }
-        if (idVAO != 0) {
-            glDeleteVertexArrays(1, &idVAO);
-        }
-
-        creaVAO(_vertices, _colorVertice, _indices);
     }
 
 } // PAG
