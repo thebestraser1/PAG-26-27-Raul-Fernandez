@@ -116,98 +116,97 @@ namespace PAG {
 
 
         //---------------------------------------------
-        //                   PAG 05
+        //               PAG 05 y PAG 07
         //---------------------------------------------
-        } else if (modelo_usado->getShaderModelo()->nombre_shader() == "pag05") {
-            //Uniform de matriz de modelado visión y proyección
-            std::string nombreUniform = "matrizMVP";
-            GLint posicion = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), nombreUniform.c_str());
-
-            if (posicion != -1) {
-                // El uniform existe y se ha podido localizar correctamente
-
-                // En este caso, componemos la matriz de modelado, visión y proyección
-                glm::mat4 matrizVP_camara = _camara->getMatVP();
-                glm::mat4 matrizM_modelo = modelo_usado->getMatrizModelado();
-
-                glm::mat4 matrizMVP = matrizVP_camara * matrizM_modelo;
-                glUniformMatrix4fv(posicion, 1, GL_FALSE, &matrizMVP[0][0]);
-            }
-
-
-        //---------------------------------------------
-        //                   PAG 07
-        //---------------------------------------------
-        }else if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07"){
+        } else if (modelo_usado->getShaderModelo()->nombre_shader() == "pag05"
+                   || modelo_usado->getShaderModelo()->nombre_shader() == "pag07") {
 
             //Uniforms del vertex_shader
-            std::string nombreUniform = "matrizMVP";
-            GLint posicion = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), nombreUniform.c_str());
 
-            if (posicion != -1) {
+            // En este caso, extraemos las matrices de modelado, visión y proyección
+            glm::mat4 matrizM_modelo = modelo_usado->getMatrizModelado();
+            glm::mat4 matrizV_camara = _camara->getMatV();
+            glm::mat4 matrizP_camara = _camara->getMatP();
+
+            std::string nombreUniformMVP = "matrizMVP";
+            GLint matriz_MVP_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), nombreUniformMVP.c_str());
+
+            if (matriz_MVP_asignar != -1) {
                 // El uniform existe y se ha podido localizar correctamente
 
-                // En este caso, componemos la matriz de modelado, visión y proyección
-                glm::mat4 matrizVP_camara = _camara->getMatVP();
-                glm::mat4 matrizM_modelo = modelo_usado->getMatrizModelado();
+                glm::mat4 matrizMVP = matrizP_camara * matrizV_camara * matrizM_modelo;
 
-                glm::mat4 matrizMVP = matrizVP_camara * matrizM_modelo;
-                glUniformMatrix4fv(posicion, 1, GL_FALSE, &matrizMVP[0][0]);
+                glUniformMatrix4fv(matriz_MVP_asignar, 1, GL_FALSE, &matrizMVP[0][0]);
             }
 
 
-            //TODO condicional malla o difusa
+            std::string nombreUniformModelView = "mModelView";
+            GLint matriz_ModelView_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), nombreUniformModelView.c_str());
 
-            //if material...
-            Material* materialModelo = modelo_usado->obtenerMaterial();
-            bool hayQueBorrar = false;
+            if (matriz_ModelView_asignar != -1) {
+                // El uniform existe y se ha podido localizar correctamente
 
-            if (materialModelo == nullptr) {
-                hayQueBorrar = true;
-                materialModelo = new Material("default", {0,0,0}, {0,0,0}, {0,0,0}, 1);
-            }
+                glm::mat4 matrizMV = matrizV_camara * matrizM_modelo;
 
-            std::cout << "USANDO MATERIAL: " << materialModelo->kd.x <<std::endl;
-
-            GLint Ka_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ka");
-            GLint Kd_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Kd");
-            GLint Ks_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ks");
-            GLint brillo_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "brillo");
-
-            if (Ka_asignar != -1 ) {
-                glUniform3fv(Ka_asignar, 1, &materialModelo->ka[0]);
-            }
-
-            if (Kd_asignar != -1 ) {
-                glUniform3fv(Kd_asignar, 1, &materialModelo->kd[0]);
-            }
-
-            if (Ks_asignar != -1) {
-                glUniform3fv(Ks_asignar, 1, &materialModelo->ks[0]);
-            }
-
-            if (brillo_asignar != -1) {
-                glUniform1f(brillo_asignar, materialModelo->brillo);
+                glUniformMatrix4fv(matriz_ModelView_asignar, 1, GL_FALSE, &matrizMV[0][0]);
             }
 
 
-            //Uniforms del vertex shader (subrutinas) --> Voy a hacer el proceso completo (aunque no haga falta) para
-            //tener el modelo mental
+            //---------------------------------------------
+            //               PAG 07 (materiales)
+            //---------------------------------------------
+            if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07") {
+                //TODO condicional malla o difusa
 
-            //Este es el índice que ocupa la subrutina en el vector que usará glUniformSubroutinesuiv
-            GLint subrutinaMalla_O_Difuso  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaODifuso" );
+                //if material...
+                Material* materialModelo = modelo_usado->obtenerMaterial();
+                bool hayQueBorrar = false;
 
-            //Este es el índice de la función elegida para la subrutina (que se pondrá en el hueco del vector de antes)
-            GLuint id_Malla_O_Difuso = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMaterial");
+                if (materialModelo == nullptr) {
+                    hayQueBorrar = true;
+                    materialModelo = new Material("default", {0,0,0}, {0,0,0}, {0,0,0}, 1);
+                }
 
-            //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
-            GLuint indices[1];
-            indices[subrutinaMalla_O_Difuso]  = id_Malla_O_Difuso;
-            glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
+                GLint Ka_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ka");
+                GLint Kd_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Kd");
+                GLint Ks_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ks");
+                GLint brillo_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "brillo");
 
-            if (hayQueBorrar) {
-                delete materialModelo;
-                materialModelo = nullptr;
+                if (Ka_asignar != -1 ) {
+                    glUniform3fv(Ka_asignar, 1, &materialModelo->ka[0]);
+                }
+
+                if (Kd_asignar != -1 ) {
+                    glUniform3fv(Kd_asignar, 1, &materialModelo->kd[0]);
+                }
+
+                if (Ks_asignar != -1) {
+                    glUniform3fv(Ks_asignar, 1, &materialModelo->ks[0]);
+                }
+
+                if (brillo_asignar != -1) {
+                    glUniform1f(brillo_asignar, materialModelo->brillo);
+                }
+
+
+                //Uniforms del vertex shader (subrutinas) --> Voy a hacer el proceso completo (aunque no haga falta) para
+                //tener el modelo mental
+
+                //Este es el índice que ocupa la subrutina en el vector que usará glUniformSubroutinesuiv
+                GLint subrutinaMalla_O_Difuso  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaODifuso" );
+
+                //Este es el índice de la función elegida para la subrutina (que se pondrá en el hueco del vector de antes)
+                GLuint id_Malla_O_Difuso = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMaterial");
+
+                //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
+                GLuint indices[1];
+                indices[subrutinaMalla_O_Difuso]  = id_Malla_O_Difuso;
+                glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
+
+                if (hayQueBorrar) {
+                    delete materialModelo;
+                    materialModelo = nullptr;
+                }
             }
 
         } else {

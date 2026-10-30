@@ -1,7 +1,11 @@
 #version 410
 
-/* Entradas */
-in vec3 normal;
+/* Entradas (aún no se usan para iluminación, pues no se tiene) */
+in salidaVS
+{
+ vec3 posicionV;
+ vec3 normalV;
+} entrada;
 
 /* Uniforms de material */
 uniform vec3 Ka;

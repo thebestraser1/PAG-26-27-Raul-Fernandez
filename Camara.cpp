@@ -13,18 +13,20 @@ namespace PAG {
         aspect = anchoVentana / altoVentana;
     }
 
+
+
     /**
-     * Función para obtener la matriz de transformación obtenida tras multiplicar la de visión y proyección
+     * Función para obtener la matriz de visión de la cámara
      */
-    glm::mat4 PAG::Camara::getMatVP () {
+    glm::mat4 PAG::Camara::getMatV () const {
+        return glm::lookAt(position, lookAt, up);
+    }
 
-        glm::mat4 v, p;
-
-        v = glm::lookAt(position, lookAt, up);
-        p = glm::perspective(fovY, aspect, zNear, zFar);
-
-        glm::mat4 devolver = p*v;
-        return devolver;
+    /**
+     * Función para obtener la matriz de proyección de la cámara
+     */
+    glm::mat4 PAG::Camara::getMatP () const {
+        return glm::perspective(fovY, aspect, zNear, zFar);
     }
 
 

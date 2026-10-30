@@ -54,7 +54,8 @@ namespace PAG {
     public:
         Camara(float anchoVentana, float altoVentana);
 
-        glm::mat4 getMatVP ();
+        glm::mat4 getMatV () const;
+        glm::mat4 getMatP () const;
 
         void redimensionar(float ancho, float alto);
 
