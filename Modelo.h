@@ -35,11 +35,11 @@ namespace PAG {
 
         GLuint idVAO = 0; // Identificador del vertex array object
         GLuint idVBO_posiciones = 0; // Identificador del vertex buffer object de posiciones
-        GLuint idVBO_colores = 0; // Identificador del vertex buffer object de colores
+        GLuint idVBO_normales = 0; // Identificador del vertex buffer object de colores
         GLuint idIBO = 0; // Identificador del index buffer object
 
         std::vector<glm::vec3> _vertices;
-        std::vector<glm::vec3> _colorVertice;
+        std::vector<glm::vec3> _normales;
         std::vector<unsigned int> _indices;
 
         glm::mat4 matrizModelado = glm::mat4(1.0f);     //Identidad
@@ -59,12 +59,14 @@ namespace PAG {
         glm::mat4 getMatrizModelado() const;
         void Dibujar();
         void aplicarTransformacion(TipoAccionModelo tipo_transformacion, const glm::mat4 &transformacion);
+        void asignarMaterial(Material* material);
+        Material* obtenerMaterial() const;
 
     private:
         bool cargar_shader_program(std::string ruta);
         bool cargar_modelo(std::string ruta);
         void procesarMalla(aiMesh *mesh);
-        void creaVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec3> color, std::vector<unsigned int> indices);
+        void creaVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec3> normales, std::vector<unsigned int> indices);
 
 
 

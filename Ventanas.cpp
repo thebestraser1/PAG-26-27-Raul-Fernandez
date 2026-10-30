@@ -681,7 +681,10 @@ namespace PAG {
         if (ImGui::Begin("Gestion de materiales", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             if (ImGui::BeginTabBar("Mis_Pestanas"))
             {
+
+                //--------------------
                 // Pestaña para añadir
+                //--------------------
                 if (ImGui::BeginTabItem("Añadir"))
                 {
                     _accion_actual = TipoAccionMaterial::Anadir_material;
@@ -689,11 +692,11 @@ namespace PAG {
                     ImGui::Text("Nombre del material");
                     ImGui::InputText("##TextoShader", &_nombre_material_anadir, ImGuiInputTextFlags_AutoSelectAll);
                     ImGui::Text("Ambiental (Ka)");
-                    ImGui::ColorEdit3("##Ambiental (Ka)", &_colorAmbiental_anadir.x);   //El x es el primero del vector
+                    ImGui::ColorEdit3("##Ambiental (Ka)", &_colorAmbiental_anadir[0]);   //El x es el primero del vector
                     ImGui::Text("Difusa (Kd)");
-                    ImGui::ColorEdit3("##Difusa (Kd)", &_colorDifuso_anadir.x);
+                    ImGui::ColorEdit3("##Difusa (Kd)", &_colorDifuso_anadir[0]);
                     ImGui::Text("Especular (Ks)");
-                    ImGui::ColorEdit3("##Especular (Ks)", &_colorEspecular_anadir.x);
+                    ImGui::ColorEdit3("##Especular (Ks)", &_colorEspecular_anadir[0]);
                     ImGui::Text("Brillo");
                     ImGui::SliderFloat("##Brillo (shininess)", &_brillo_anadir,1.0f,20.0f,"%.1f");
 
@@ -710,14 +713,15 @@ namespace PAG {
                         _colorEspecular_anadir = {0,0,0};
 
                         _brillo_anadir = 1.0f;
-
-                        std::cout << "Se ha añadido un nuevo material: " << _nombre_material_anadir << std::endl;
                     }
 
                     ImGui::EndTabItem();
                 }
 
+
+                //-------------------------------
                 //Pestaña para modificar o borrar
+                //-------------------------------
                 if (ImGui::BeginTabItem("Modificar"))
                 {
 
@@ -760,13 +764,13 @@ namespace PAG {
 
                         if (_indiceMaterialSeleccionado != -1 ) {
                             ImGui::Text("Ambiental (Ka)");
-                            ImGui::ColorEdit3("##Ambiental (Ka)", &materiales[_indiceMaterialSeleccionado]->ka.x);   //El x es el primero del vector
+                            ImGui::ColorEdit3("##Ambiental (Ka)", &materiales[_indiceMaterialSeleccionado]->ka[0]);   //El x es el primero del vector
                             ImGui::Text("Difusa (Kd)");
-                            ImGui::ColorEdit3("##Difusa (Kd)", &materiales[_indiceMaterialSeleccionado]->kd.x);
+                            ImGui::ColorEdit3("##Difusa (Kd)", &materiales[_indiceMaterialSeleccionado]->kd[0]);
                             ImGui::Text("Especular (Ks)");
-                            ImGui::ColorEdit3("##Especular (Ks)", &materiales[_indiceMaterialSeleccionado]->ks.x);
+                            ImGui::ColorEdit3("##Especular (Ks)", &materiales[_indiceMaterialSeleccionado]->ks[0]);
                             ImGui::Text("Brillo");
-                            ImGui::SliderFloat("##Brillo (shininess)", &materiales[_indiceMaterialSeleccionado]->shininess,1.0f,20.0f,"%.1f");
+                            ImGui::SliderFloat("##Brillo (shininess)", &materiales[_indiceMaterialSeleccionado]->brillo,1.0f,20.0f,"%.1f");
 
                             if (ImGui::Button("Borrar material")) {
                                 TipoAccionMaterial accion_borrar = TipoAccionMaterial::Borrar_material;
@@ -785,7 +789,10 @@ namespace PAG {
                     ImGui::EndTabItem();
                 }
 
+
+                //---------------------------------------------
                 //Pestaña para asignar el material a un modelo
+                //---------------------------------------------
                 if (ImGui::BeginTabItem("Asignar"))
                 {
                     _accion_actual = TipoAccionMaterial::Asignar_material;
@@ -851,6 +858,11 @@ namespace PAG {
                         }
                     }else {
                         ImGui::Text("   No existe ningún modelo   ");
+                    }
+
+                    if (ImGui::Button("Asignar material") && !nombreMateriales.empty() && !nombreModelos.empty()) {
+                        _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, false, &_accion_actual,
+                                                   _nombreMaterialSeleccionado.c_str(), _nombreModeloSeleccionado.c_str());
                     }
 
 

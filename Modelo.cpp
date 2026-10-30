@@ -26,8 +26,8 @@ namespace PAG {
         if (idVBO_posiciones != 0) {
             glDeleteBuffers(1, &idVBO_posiciones);
         }
-        if (idVBO_colores != 0) {
-            glDeleteBuffers(1, &idVBO_colores);
+        if (idVBO_normales != 0) {
+            glDeleteBuffers(1, &idVBO_normales);
         }
         if (idIBO != 0) {
             glDeleteBuffers(1, &idIBO);
@@ -87,7 +87,7 @@ namespace PAG {
             _vertices.emplace_back(mesh->mVertices[i].x + _posicion[0], mesh->mVertices[i].y + _posicion[1], mesh->mVertices[i].z + _posicion[2]);
 
             //Asignaré para esta práctica como color las normales del modelo
-            _colorVertice.emplace_back(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+            _normales.emplace_back(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
         }
 
         //Procesamos los índices
@@ -99,15 +99,14 @@ namespace PAG {
             }
         }
 
-        //OJO: usaré las normales como color del objeto...
-        creaVAO(_vertices, _colorVertice, _indices);
+        creaVAO(_vertices, _normales, _indices);
     }
 
 
     /**
      * Función para crear el VAO para el modelo a renderizar. Lo hace con VBO NO ENTRELAZADO
      */
-    void PAG::Modelo::creaVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec3> color, std::vector<unsigned int> indices) {
+    void PAG::Modelo::creaVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec3> normales, std::vector<unsigned int> indices) {
 
         //Generación y activación del VAO
         glGenVertexArrays(1, &idVAO);
@@ -121,9 +120,9 @@ namespace PAG {
         glEnableVertexAttribArray(0); //Colocamos posición de vértices como atributo 0
 
         //Datos de color (location = 1)
-        glGenBuffers(1, &idVBO_colores);
-        glBindBuffer(GL_ARRAY_BUFFER, idVBO_colores);
-        glBufferData(GL_ARRAY_BUFFER, color.size() * sizeof(glm::vec3), color.data(), GL_STATIC_DRAW);
+        glGenBuffers(1, &idVBO_normales);
+        glBindBuffer(GL_ARRAY_BUFFER, idVBO_normales);
+        glBufferData(GL_ARRAY_BUFFER, normales.size() * sizeof(glm::vec3), normales.data(), GL_STATIC_DRAW);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), nullptr);
         glEnableVertexAttribArray(1); //Colocamos color de vértices como atributo 1
 
@@ -165,6 +164,22 @@ namespace PAG {
         // Se acumulan las transformaciones en la matriz de modelado del modelo (hago lo de la posición para que las
         // rotaciones se hagan sobre sí mismas respecto a la posición inicial del modelo
         matrizModelado = matrizModelado * glm::translate(glm::mat4(1.0f), _posicion) * transformacion * glm::translate(glm::mat4(1.0f), -_posicion);
+    }
+
+
+    /**
+     * Función para asignar un material al modelo
+     */
+    void Modelo::asignarMaterial(Material* material) {
+        _material = material;
+    }
+
+
+    /**
+     * Función para obtener el material del modelo
+     */
+    Material* Modelo::obtenerMaterial() const {
+        return _material;
     }
 
 } // PAG

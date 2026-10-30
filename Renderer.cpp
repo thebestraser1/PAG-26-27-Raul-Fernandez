@@ -107,11 +107,19 @@ namespace PAG {
      * Función encargada de otorgar los uniforms que necesite el shader program de cada práctica en concreto
      */
     void Renderer::controlar_uniforms(Modelo* modelo_usado) const {
+
+        //---------------------------------------------
+        //                   PAG 03
+        //---------------------------------------------
         if (modelo_usado->getShaderModelo()->nombre_shader() == "pag03") {
             //No tiene uniforms
 
+
+        //---------------------------------------------
+        //                   PAG 05
+        //---------------------------------------------
         } else if (modelo_usado->getShaderModelo()->nombre_shader() == "pag05") {
-            //Uniforms de cámara
+            //Uniform de matriz de modelado visión y proyección
             std::string nombreUniform = "matrizMVP";
             GLint posicion = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), nombreUniform.c_str());
 
@@ -124,6 +132,82 @@ namespace PAG {
 
                 glm::mat4 matrizMVP = matrizVP_camara * matrizM_modelo;
                 glUniformMatrix4fv(posicion, 1, GL_FALSE, &matrizMVP[0][0]);
+            }
+
+
+        //---------------------------------------------
+        //                   PAG 07
+        //---------------------------------------------
+        }else if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07"){
+
+            //Uniforms del vertex_shader
+            std::string nombreUniform = "matrizMVP";
+            GLint posicion = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), nombreUniform.c_str());
+
+            if (posicion != -1) {
+                // El uniform existe y se ha podido localizar correctamente
+
+                // En este caso, componemos la matriz de modelado, visión y proyección
+                glm::mat4 matrizVP_camara = _camara->getMatVP();
+                glm::mat4 matrizM_modelo = modelo_usado->getMatrizModelado();
+
+                glm::mat4 matrizMVP = matrizVP_camara * matrizM_modelo;
+                glUniformMatrix4fv(posicion, 1, GL_FALSE, &matrizMVP[0][0]);
+            }
+
+
+            //TODO condicional malla o difusa
+
+            //if material...
+            Material* materialModelo = modelo_usado->obtenerMaterial();
+            bool hayQueBorrar = false;
+
+            if (materialModelo == nullptr) {
+                hayQueBorrar = true;
+                materialModelo = new Material("default", {0,0,0}, {0,0,0}, {0,0,0}, 1);
+            }
+
+            std::cout << "USANDO MATERIAL: " << materialModelo->kd.x <<std::endl;
+
+            GLint Ka_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ka");
+            GLint Kd_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Kd");
+            GLint Ks_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ks");
+            GLint brillo_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "brillo");
+
+            if (Ka_asignar != -1 ) {
+                glUniform3fv(Ka_asignar, 1, &materialModelo->ka[0]);
+            }
+
+            if (Kd_asignar != -1 ) {
+                glUniform3fv(Kd_asignar, 1, &materialModelo->kd[0]);
+            }
+
+            if (Ks_asignar != -1) {
+                glUniform3fv(Ks_asignar, 1, &materialModelo->ks[0]);
+            }
+
+            if (brillo_asignar != -1) {
+                glUniform1f(brillo_asignar, materialModelo->brillo);
+            }
+
+
+            //Uniforms del vertex shader (subrutinas) --> Voy a hacer el proceso completo (aunque no haga falta) para
+            //tener el modelo mental
+
+            //Este es el índice que ocupa la subrutina en el vector que usará glUniformSubroutinesuiv
+            GLint subrutinaMalla_O_Difuso  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaODifuso" );
+
+            //Este es el índice de la función elegida para la subrutina (que se pondrá en el hueco del vector de antes)
+            GLuint id_Malla_O_Difuso = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMaterial");
+
+            //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
+            GLuint indices[1];
+            indices[subrutinaMalla_O_Difuso]  = id_Malla_O_Difuso;
+            glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
+
+            if (hayQueBorrar) {
+                delete materialModelo;
+                materialModelo = nullptr;
             }
 
         } else {
@@ -495,7 +579,7 @@ namespace PAG {
                     }else {
                         //Es una transformación (basta con multiplicar la matriz)
                         glm::mat4* transformacion = va_arg(args, glm::mat4*);
-                        transformar_modelo_por_nombre(*nombreModelo, *tipo_accion, *transformacion);
+                        obtener_modelo_por_nombre(*nombreModelo)->aplicarTransformacion(*tipo_accion, *transformacion);
                     }
                     break;
                 }
@@ -518,6 +602,7 @@ namespace PAG {
                             //Añadimos el material (si el nombre no existe)
                             if (comprobar_materiales_mismo_nombre(nombreMaterial)) {
                                 _materiales.push_back(new Material(nombreMaterial, *colorAmbiental, *colorDifuso, *colorEspecular, *brillo));
+                                std::cout << "Se ha añadido un nuevo material: " << nombreMaterial << std::endl;
                             }else {
                                 std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
                                         "Ya hay un material con el nombre: " << nombreMaterial <<
@@ -535,6 +620,21 @@ namespace PAG {
                         }
 
                         case TipoAccionMaterial::Asignar_material: {
+
+                            std::string nombreMaterial_asignar(va_arg(args, char*));
+                            std::string nombreModelo_asignar(va_arg(args, char*));
+
+                            Material* material_asignar = obtener_material_por_nombre(nombreMaterial_asignar);
+                            Modelo* modelo_asignar = obtener_modelo_por_nombre(nombreModelo_asignar);
+
+                            if (material_asignar != nullptr && modelo_asignar != nullptr) {
+                                modelo_asignar->asignarMaterial(material_asignar);
+                            }else {
+                                std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
+                                        "El nombre del material o del modelo no existen para su asignación. Estos son: "
+                                        << nombreMaterial_asignar << " <--> " << nombreModelo_asignar <<
+                                        "\n--------------------\n" << std::endl;
+                            }
 
                             break;
                         }
@@ -594,17 +694,16 @@ namespace PAG {
 
 
     /**
-     * Función para transformar un modelo por nombre
+     * Función para obtener un modelo por nombre
      */
-    void Renderer::transformar_modelo_por_nombre(const std::string &nombreModelo, TipoAccionModelo tipoTransformacion, const glm::mat4 &transformacion) {
+    Modelo *Renderer::obtener_modelo_por_nombre(const std::string &nombreModelo) {
         for (int i=0; i<_modelos.size(); i++) {
             if (_modelos[i]->_nombreModelo == nombreModelo) {
-
-                std::cout << "Se ha modificado " << _modelos[i]->_nombreModelo << std::endl;
-
-                _modelos[i]->aplicarTransformacion(tipoTransformacion, transformacion);
+                return _modelos[i];
             }
         }
+
+        return nullptr;
     }
 
 
@@ -622,5 +721,18 @@ namespace PAG {
                 return;
             }
         }
+    }
+
+    /**
+     * Función para obtener un material por nombre
+     */
+    Material *Renderer::obtener_material_por_nombre(const std::string &nombreMaterial) {
+        for (int i=0; i<_materiales.size(); i++) {
+            if (_materiales[i]->nombre == nombreMaterial) {
+                return _materiales[i];
+            }
+        }
+
+        return nullptr;
     }
 } // PAG

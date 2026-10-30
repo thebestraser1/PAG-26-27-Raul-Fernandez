@@ -21,14 +21,14 @@ namespace PAG {
         glm::vec3 kd;
         glm::vec3 ks;
 
-        GLfloat shininess;
+        GLfloat brillo;
 
-        Material(const std::string& nombre, const glm::vec3 &ka, const glm::vec3 &kd, const glm::vec3 &ks, GLfloat shininess)
+        Material(const std::string& nombre, const glm::vec3 &ka, const glm::vec3 &kd, const glm::vec3 &ks, GLfloat brillo)
             : nombre(nombre),
               ka(ka),
               kd(kd),
               ks(ks),
-              shininess(shininess) {
+              brillo(brillo) {
         }
 
         ~Material() = default;
