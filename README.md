@@ -14,6 +14,8 @@
 
 - [Práctica 6: Gestión de modelos](#práctica-6)
 
+- [Práctica 7: Subrutinas GLSL y materiales](#práctica-7)
+
 ## Práctica 1
 
 ### Callback de cambio de color mediante "scroll" del ratón
@@ -3067,3 +3069,793 @@ _NOTA: Se han eliminado las relaciones explícitas de las ventanas con el Listen
 anteriores secciones era simplemente visual para entender el mecanismo del patrón observador). Además, se ha detallado
 solo la implementación de la clase `Modelo` para que el diagrama no se complique (ya que la de FileBrowser es grande).
 La implementación de la clase `FileBrowser` puede observarse en el repositorio anteriormente mencionado ([imgui-filebrowser](https://github.com/AirGuanZ/imgui-filebrowser/tree/master))._
+
+
+## Práctica 7
+
+### Adición de materiales a los modelos
+
+En esta práctica se ha añadido la clase básica `Material`, con todos los atributos que influirán en la posterior iluminación
+de un modelo. La clase es básica. Luce así:
+
+
+```c++
+    class Material {
+
+    public:
+        std::string nombre;
+
+        glm::vec3 ka;
+        glm::vec3 kd;
+        glm::vec3 ks;
+
+        GLfloat brillo;
+
+        Material(const std::string& nombre, const glm::vec3 &ka, const glm::vec3 &kd, const glm::vec3 &ks, GLfloat brillo)
+            : nombre(nombre),
+              ka(ka),
+              kd(kd),
+              ks(ks),
+              brillo(brillo) {
+        }
+
+        ~Material() = default;
+    };
+```
+
+Esta clase (con atributos públicos para una mayor manejabilidad por el resto de ficheros) ha permitido asignar materiales
+a cada uno de los objetos. La gestión de los materiales en realidad la lleva a cabo el `Renderer`, que almacena un vector
+de punteros a materiales. Estos punteros (con el uso de una ventana que posteriormente se presentará) se asignan a cada 
+modelo según se quiera.
+
+Se ha elegido esta opción para independizar la gestión de materiales de los modelos. Así, el usuario puede crear más de 
+un material e ir asignando cómodamente estos a los modelos (pudiendo asignar un mismo material a muchos modelos de forma
+más cómoda).
+
+```c++
+    class Renderer : public Listener {
+    private:
+        ...
+
+       //Modelos
+       std::vector<Modelo*> _modelos;
+       std::vector<Material*> _materiales;
+        
+        ...
+    }
+```
+
+```c++
+    class Modelo {
+    private:
+
+        ...
+        
+        Material* _material = nullptr;
+        
+        ...
+    }
+```
+
+
+### Ventana para gestionar materiales
+
+Se ha añadido una ventana que tienen 3 objetivos a la hora gestionar los materiales:
+
+- Añadir materiales nuevos.
+- Modificar o borrar materiales existentes.
+- Asignar materiales a modelos.
+
+Estos 3 objetivos se han introducido en pestañas de ImGui (se hace con `BeginTabBar` y `BeginTabItem`).
+Además, se ha creado un enumerado llamado `TipoAccionMaterial` que permitirá discernir la acción que se está desarrollando
+(según la pestaña). Analicemos cada una de las ventanas y el efecto que provocan en `Renderer`.
+
+Esta ventana tiene una gran variedad de atributos por cada pestaña. Por ello, conviene revisarlos según la siguiente
+implementación:
+
+```c++
+    class VentanaGestionMateriales : public Ventanas{
+
+        TipoAccionMaterial _accion_actual = TipoAccionMaterial::Anadir_material;
+
+        //Atributos al añadir material nuevo
+        std::string _nombre_material_anadir;
+
+        glm::vec3 _colorAmbiental_anadir = glm::vec3(0.0f,0.0f, 0.0f);
+        glm::vec3 _colorDifuso_anadir = glm::vec3(0.0f,0.0f, 0.0f);
+        glm::vec3 _colorEspecular_anadir = glm::vec3(0.0f,0.0f, 0.0f);
+
+        GLfloat _brillo_anadir = 1.0f;
+
+        //Atributos para modificar material
+        std::string _nombreMaterialSeleccionado;
+        int _indiceMaterialSeleccionado = -1;   //Indice equivalente al vector de materiales de Renderer.cpp
+
+        //Atributos para asignar a un modelo
+        std::string _nombreModeloSeleccionado;
+        int _indiceModeloSeleccionado = -1;   //Indice equivalente al vector de modelos de Renderer.cpp
+
+        public:
+            VentanaGestionMateriales(float x, float y, bool minimizada);
+            void dibujar() override;
+    };
+```
+
+
+#### Añadir materiales nuevos
+
+Para añadir un material, se otorgan los controles que permiten modificar las variables de la clase `Material` presentada
+anteriormente:
+
+```c++
+      ...
+
+       _accion_actual = TipoAccionMaterial::Anadir_material;
+
+      ImGui::Text("Nombre del material");
+      ImGui::InputText("##TextoShader", &_nombre_material_anadir, ImGuiInputTextFlags_AutoSelectAll);
+      ImGui::Text("Ambiental (Ka)");
+      ImGui::ColorEdit3("##Ambiental (Ka)", &_colorAmbiental_anadir[0]);   //Primera dirección de memoria del vector
+      ImGui::Text("Difusa (Kd)");
+      ImGui::ColorEdit3("##Difusa (Kd)", &_colorDifuso_anadir[0]);
+      ImGui::Text("Especular (Ks)");
+      ImGui::ColorEdit3("##Especular (Ks)", &_colorEspecular_anadir[0]);
+      ImGui::Text("Brillo");
+      ImGui::SliderFloat("##Brillo (shininess)", &_brillo_anadir,1.0f,20.0f,"%.1f");
+
+      if (ImGui::Button("Añadir") && !_nombre_material_anadir.empty()) {
+          _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, false, &_accion_actual,
+                                     _nombre_material_anadir.c_str(), &_colorAmbiental_anadir, &_colorDifuso_anadir,
+                                     &_colorEspecular_anadir, &_brillo_anadir);
+
+          //Devolvemos las variables a 0 (así da la impresión de que mi acción ha tenido efecto)
+          _nombre_material_anadir = "";
+
+          _colorAmbiental_anadir = {0,0,0};
+          _colorDifuso_anadir = {0,0,0};
+          _colorEspecular_anadir = {0,0,0};
+
+          _brillo_anadir = 1.0f;
+      }
+
+      ... 
+```
+
+Esto, provoca una llamada en `Renderer` que permite añadir el material al vector siempre y cuando no se tenga ya el 
+mismo nombre (que será clave para identificar y asignar el material):
+
+```c++
+     void Renderer::wakeUp(TipoVentana t, bool ventana_pidiendo, ...) {
+
+         if (ventana_pidiendo) {
+                ...
+         } else {
+             switch (t) {
+                 case TipoVentana::V_Gestion_Materiales: {
+                     std::va_list args;
+                     va_start(args, ventana_pidiendo);
+
+                     PAG::TipoAccionMaterial* tipo_accion = va_arg(args, PAG::TipoAccionMaterial*);
+
+                     switch (*tipo_accion) {
+                         case (TipoAccionMaterial::Anadir_material): {
+                             //Atributos de material
+                             std::string nombreMaterial(va_arg(args, char*));
+                             glm::vec3* colorAmbiental = va_arg(args, glm::vec3*);
+                             glm::vec3* colorDifuso = va_arg(args, glm::vec3*);
+                             glm::vec3* colorEspecular = va_arg(args, glm::vec3*);
+                             GLfloat* brillo = va_arg(args, GLfloat*);
+
+
+                             //Añadimos el material (si el nombre no existe)
+                             if (comprobar_materiales_mismo_nombre(nombreMaterial)) {
+                                 _materiales.push_back(new Material(nombreMaterial, *colorAmbiental, *colorDifuso, *colorEspecular, *brillo));
+                                 std::cout << "Se ha añadido un nuevo material: " << nombreMaterial << std::endl;
+                             }else {
+                                 std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
+                                         "Ya hay un material con el nombre: " << nombreMaterial <<
+                                         "\n--------------------\n" << std::endl;
+                             }
+                             break;
+                         }
+                     }
+                 }
+             }
+         }
+     }
+```
+
+
+#### Modificar y borrar materiales
+
+La siguiente pestaña tiene unos controles similares a los que nos permiten añadir un material. Sin embargo, tiene
+la diferencia de que ahora en lugar de un `TextInput` para el nombre del material, se tiene un `Combo` que nos permite
+seleccionar el material por nombre. Además, se ha integrado un botón para poder borrar el material desde aquí si se 
+desea.
+
+```c++
+
+          ...
+
+          //Recuperamos los materiales que tenga el Renderer (por puntero para que las actualizaciones
+          //se hagan en tiempo real en la ventana)
+          std::vector<Material*> materiales;
+          std::vector<const char *> nombreMateriales;
+          bool estoy_pidiendo_materiales = true;
+
+          _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, estoy_pidiendo_materiales, &materiales);
+
+
+          //Buscamos si existe el nombre que se tenía
+          bool nombreSigueExistiendo = false;
+
+          for (Material* material : materiales) {
+
+              if (material->nombre == _nombreMaterialSeleccionado) {
+                  nombreSigueExistiendo = true;
+              }
+
+              //De paso (en este bucle) relleno los nombres que tendrá el combo
+              nombreMateriales.push_back(material->nombre.c_str());
+          }
+
+          if (!nombreSigueExistiendo && _indiceMaterialSeleccionado != -1 && !materiales.empty()) {
+              //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
+              _indiceMaterialSeleccionado = 0;
+              _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
+          }
+
+          if (!materiales.empty()) {
+
+              if (ImGui::Combo("##Material seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
+                           (int) materiales.size())) {
+
+                  //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                  _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
+              }
+
+              if (_indiceMaterialSeleccionado != -1 ) {
+                  ImGui::Text("Ambiental (Ka)");
+                  ImGui::ColorEdit3("##Ambiental (Ka)", &materiales[_indiceMaterialSeleccionado]->ka[0]);  
+                  ImGui::Text("Difusa (Kd)");
+                  ImGui::ColorEdit3("##Difusa (Kd)", &materiales[_indiceMaterialSeleccionado]->kd[0]);
+                  ImGui::Text("Especular (Ks)");
+                  ImGui::ColorEdit3("##Especular (Ks)", &materiales[_indiceMaterialSeleccionado]->ks[0]);
+                  ImGui::Text("Brillo");
+                  ImGui::SliderFloat("##Brillo (shininess)", &materiales[_indiceMaterialSeleccionado]->brillo,1.0f,20.0f,"%.1f");
+
+                  if (ImGui::Button("Borrar material")) {
+                      TipoAccionMaterial accion_borrar = TipoAccionMaterial::Borrar_material;
+                      _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, false, &accion_borrar,
+                                                 materiales[_indiceMaterialSeleccionado]->nombre.c_str());
+                  }
+              }else{
+                  _indiceMaterialSeleccionado = 0;    //La primera iteración, que seleccione al menos el primero
+              }
+
+          }else {
+              ImGui::Text("     Añade algún material     ");
+          }
+
+
+          ImGui::EndTabItem();
+
+          ...
+```
+
+_NOTA: Se puede ver una gestión similar a la que se tenía con los modelos a la hora de modificar el vector de contenido._
+
+Puede observarse que aquí no se ha optado por el patrón observador (de vuelta al `Renderer`) para modificar el material.
+Se intentó implementar así, pero los cambios no se ven en tiempo real. Deberían estar tras un botón llamado "modificar
+material" o algo por el estilo. Para dar interactividad al selector de color y al efecto que genera sobre el modelo,
+se ha aprovechado que los materiales son un puntero. De esta manera, **se modifican en tiempo real** incluso sobre el (o
+los) modelos donde se ha aplicado.
+
+Para el borrado, sí se ha optado por el patrón observador (es una acción única). De esta forma, el `Renderer` gestiona
+la notificación de esta forma:
+
+
+```c++
+     void Renderer::wakeUp(TipoVentana t, bool ventana_pidiendo, ...) {
+
+         if (ventana_pidiendo) {
+                ...
+         } else {
+             switch (t) {
+                 case TipoVentana::V_Gestion_Materiales: {
+                     std::va_list args;
+                     va_start(args, ventana_pidiendo);
+
+                     PAG::TipoAccionMaterial* tipo_accion = va_arg(args, PAG::TipoAccionMaterial*);
+
+                     switch (*tipo_accion) {
+                        case TipoAccionMaterial::Borrar_material: {
+
+                            std::string nombreMaterial(va_arg(args, char*));
+
+                            desasignarMaterialModelos(nombreMaterial);
+                            borrar_material_por_nombre(nombreMaterial);
+
+                            break;
+                        }
+                     }
+                 }
+             }
+         }
+     }
+```
+
+Lo que hace desasignar, es asegurar de que el material del modelo vuelve a `nullptr`. De esa forma, cuando el Renderer
+refresque (esto se presentará después), al no tener un material el modelo, se le aplicará uno por defecto (que es negro).
+
+Posteriormente, ya se puede eliminar de manera efectiva en el vector del `Renderer` (con sus respectivos deletes y gestiones
+adjuntas).
+
+
+#### Asignar materiales a modelos
+
+Aquí hay que tener especial cuidado. Se ha realizado la asignación por nombres de material y de modelo respectivamente.
+Para ello, se otorgan 2 `Combos` que permiten elegirlos. El del material es similar a lo que ya teniamos para modificar.
+Sin embargo, el de modelos debe gestionarse.
+
+Resulta extremadamente importante pedir también el vector de modelos al `Renderer` (porque podría pasar que en otra
+ventana, se elimine el modelo y deje de estar disponible). Por tanto, se obtiene el vector de modelos, se examina
+si sigue existiendo los valores que tiene la ventana en el `Combo` y, de no ser así, se apunta a la primera posición
+del vector de modelos del `Renderer`. Si no quedara ninguno, se muestra un texto para cargar un modelo.
+
+Por tanto la ventana solo está formada por 2 combos (gestionados como ya se ha presentado en secciones anteriores) y un
+botón para asignar material y modelo:
+
+
+```c++
+
+          ...
+
+          _accion_actual = TipoAccionMaterial::Asignar_material;
+
+
+          //Duplico fragmento de código para el combo de materiales
+          //-------------------------------------------------------
+
+          //Recuperamos los materiales que tenga el Renderer (por puntero para que las actualizaciones
+          //se hagan en tiempo real en la ventana)
+          std::vector<Material*> materiales;
+          std::vector<const char *> nombreMateriales;
+          bool estoy_pidiendo_materiales = true;
+
+          _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, estoy_pidiendo_materiales, &materiales);
+
+          for (Material* material : materiales) {
+              nombreMateriales.push_back(material->nombre.c_str());
+          }
+
+          if (!materiales.empty()) {
+              ImGui::Text("Material seleccionado:               ");
+
+              if (ImGui::Combo("##Material seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
+                           (int) materiales.size())) {
+
+                  //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                  _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
+              }
+          }else {
+              ImGui::Text("   No existe ningún material   ");
+          }
+
+          //Duplico fragmento de código para la lista de modelos
+          //-------------------------------------------------------
+
+          std::vector<const char *> nombreModelos;
+          estoy_pidiendo_materiales = false;
+
+          _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, estoy_pidiendo_materiales, &nombreModelos);
+
+          //Se mira si sigue existiendo nombre del modelo (podría ser borrado desde otra ventana)
+          bool nombreSigueExistiendo = false;
+
+          for (int i = 0; i < nombreModelos.size(); i++) {
+              if (nombreModelos[i] == _nombreModeloSeleccionado) {
+                  nombreSigueExistiendo = true;
+              }
+          }
+
+          if (!nombreSigueExistiendo && _indiceModeloSeleccionado != -1 && !nombreModelos.empty()) {
+              //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
+              _indiceModeloSeleccionado = 0;
+              _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
+          }
+
+          if (!nombreModelos.empty()) {
+              ImGui::Text("Modelo seleccionado:               ");
+
+              //La ejecución entra aquí solo cuando se ha cambiado el tipo de movimiento
+              if (ImGui::Combo("##Modelo seleccionado", &_indiceModeloSeleccionado, nombreModelos.data(),
+                               (int) nombreModelos.size())) {
+                  //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                  _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
+              }
+          }else {
+              ImGui::Text("   No existe ningún modelo   ");
+          }
+
+          if (ImGui::Button("Asignar material") && !nombreMateriales.empty() && !nombreModelos.empty()) {
+              _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, false, &_accion_actual,
+                                         _nombreMaterialSeleccionado.c_str(), _nombreModeloSeleccionado.c_str());
+          }
+
+
+          ImGui::EndTabItem();
+
+          ...
+```
+
+Esto, como ya es común, hace que el `Renderer` asigne el material que corresponde al modelo (en forma de puntero). Lo 
+hace a partir del nombre del modelo y del material, buscándolos. 
+
+Si la búsqueda no tiene éxito, se lanza un mensaje para ver qué es lo que falla en la asignación:
+
+
+```c++
+     void Renderer::wakeUp(TipoVentana t, bool ventana_pidiendo, ...) {
+
+         if (ventana_pidiendo) {
+                ...
+         } else {
+             switch (t) {
+                 case TipoAccionMaterial::Asignar_material: {
+                     std::string nombreMaterial_asignar(va_arg(args, char*));
+                     std::string nombreModelo_asignar(va_arg(args, char*));
+
+                     Material* material_asignar = obtener_material_por_nombre(nombreMaterial_asignar);
+                     Modelo* modelo_asignar = obtener_modelo_por_nombre(nombreModelo_asignar);
+
+                     if (material_asignar != nullptr && modelo_asignar != nullptr) {
+                         modelo_asignar->asignarMaterial(material_asignar);
+                     }else {
+                         std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
+                                 "El nombre del material o del modelo no existen para su asignación. Estos son: "
+                                 << nombreMaterial_asignar << " <--> " << nombreModelo_asignar <<
+                                 "\n--------------------\n" << std::endl;
+                     }
+
+                     break;
+                 }
+             }
+         }
+     }
+```
+
+
+### Shaders y uso de subrutinas
+
+En primer lugar, antes de asignar el material, cabe recalcar que en esta práctica se tienen **2 modos de visualización** 
+de modelos. Con un material o con un color fijo en forma de malla. Para este propósito se ha establecido una ventana que 
+elige entre "Malla" o "Alambre" (esta no tiene mator complicación, sencillamente asigna en el `Renderer` con el patrón 
+observador `ModoVisualizacion _modoVisualizacion = MODELOS_RELLENOS` en caso de seleccionar "Malla" y `MODELOS_ALAMBRE` 
+si se selecciona "Alambre"). Esto influirá en la subrutina elegida (tal y como se explicará con posterioridad).
+
+Una vez explicado esto y teniendo materiales para los modelos asignados, es hora de usarlos. Para ello, se ha de pasar los elementos de
+este material a los `uniforms` que pudiera tener el shader. Es por ello que lo que ha evolucionado, ha sido el método
+`controlar_uniforms` de `Renderer`. Presentaré el método completo para explicarlo poco a poco:
+
+
+```c++
+    void Renderer::controlar_uniforms(Modelo* modelo_usado) const {
+
+        //---------------------------------------------
+        //                   PAG 03
+        //---------------------------------------------
+        if (modelo_usado->getShaderModelo()->nombre_shader() == "pag03") {
+            //No tiene uniforms
+
+
+        //---------------------------------------------
+        //               PAG 05 y PAG 07
+        //---------------------------------------------
+        } else if (modelo_usado->getShaderModelo()->nombre_shader() == "pag05"
+                   || modelo_usado->getShaderModelo()->nombre_shader() == "pag07") {
+
+            //Uniforms del vertex_shader
+
+            // En este caso, extraemos las matrices de modelado, visión y proyección
+            glm::mat4 matrizM_modelo = modelo_usado->getMatrizModelado();
+            glm::mat4 matrizV_camara = _camara->getMatV();
+            glm::mat4 matrizP_camara = _camara->getMatP();
+
+            std::string nombreUniformMVP = "matrizMVP";
+            GLint matriz_MVP_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), nombreUniformMVP.c_str());
+
+            if (matriz_MVP_asignar != -1) {
+                // El uniform existe y se ha podido localizar correctamente
+
+                glm::mat4 matrizMVP = matrizP_camara * matrizV_camara * matrizM_modelo;
+
+                glUniformMatrix4fv(matriz_MVP_asignar, 1, GL_FALSE, &matrizMVP[0][0]);
+            }
+
+
+            std::string nombreUniformModelView = "mModelView";
+            GLint matriz_ModelView_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), nombreUniformModelView.c_str());
+
+            if (matriz_ModelView_asignar != -1) {
+                // El uniform existe y se ha podido localizar correctamente
+
+                glm::mat4 matrizMV = matrizV_camara * matrizM_modelo;
+
+                glUniformMatrix4fv(matriz_ModelView_asignar, 1, GL_FALSE, &matrizMV[0][0]);
+            }
+
+
+            //---------------------------------------------
+            //               PAG 07 (materiales)
+            //---------------------------------------------
+            if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07") {
+
+                bool hayQueBorrarMaterial = false;
+                Material* materialModelo = nullptr;
+                std::string nombreSubrutina = "colorMalla";     //Por defecto se escogerá la subrutina de malla
+
+                if (_modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS) {
+
+                    materialModelo = modelo_usado->obtenerMaterial();
+                    nombreSubrutina = "colorMaterial";
+
+                    if (materialModelo == nullptr) {
+                        hayQueBorrarMaterial = true;
+                        materialModelo = new Material("default", {0,0,0}, {0,0,0}, {0,0,0}, 1);
+                    }
+
+                    GLint Ka_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ka");
+                    GLint Kd_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Kd");
+                    GLint Ks_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ks");
+                    GLint brillo_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "brillo");
+
+                    if (Ka_asignar != -1 ) {
+                        glUniform3fv(Ka_asignar, 1, &materialModelo->ka[0]);
+                    }
+
+                    if (Kd_asignar != -1 ) {
+                        glUniform3fv(Kd_asignar, 1, &materialModelo->kd[0]);
+                    }
+
+                    if (Ks_asignar != -1) {
+                        glUniform3fv(Ks_asignar, 1, &materialModelo->ks[0]);
+                    }
+
+                    if (brillo_asignar != -1) {
+                        glUniform1f(brillo_asignar, materialModelo->brillo);
+                    }
+                }
+
+
+                //Uniforms del vertex shader (subrutinas) --> Voy a hacer el proceso completo (aunque no haga falta) para
+                //tener el modelo mental
+
+                //Este es el hueco que ocupa la subrutina en el vector que usará glUniformSubroutinesuiv
+                GLint subrutinaMalla_O_Difuso  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaODifuso" );
+
+                //Este es el índice de la función elegida para la subrutina (que se pondrá en el hueco del vector de antes)
+                GLuint id_Malla_O_Difuso = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, nombreSubrutina.c_str());
+
+                //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
+                GLuint indices[1];
+                indices[subrutinaMalla_O_Difuso]  = id_Malla_O_Difuso;
+                glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
+
+                if (hayQueBorrarMaterial) {
+                    delete materialModelo;
+                    materialModelo = nullptr;
+                }
+            }
+
+        } else {
+            //Shader desconocido: no se envían uniforms
+        }
+    }
+```
+
+Se ha hecho que si se tiene el shader de la práctica 5 o 7, se tomen las matrices de modelado, visión y (adicionalmente
+en otro atributo) proyección. Luego, la gestión de materiales compete al shader de la práctica 7 (esta).
+
+Se puede observar después la asignación de `uniforms` al shader. Si no existe material en el modelo, se crea un material
+por defecto (que luego se borra al final del proceso, ya que es memoria dinámica).
+
+Con posterioridad, se puede observar el uso de subrutinas. Para poner esto en contexto, se presentará el _Fragment Shader_
+de esta práctica, que permitirá entender todo mucho mejor.
+
+```glsl
+  #version 410
+  
+  /* Entradas (aún no se usan para iluminación, pues no se tiene) */
+  in salidaVS
+  {
+   vec3 posicionV;
+   vec3 normalV;
+  } entrada;
+  
+  /* Uniforms de material */
+  uniform vec3 Ka;
+  uniform vec3 Kd;
+  uniform vec3 Ks;
+  uniform float brillo;
+  
+  /* Salidas */
+  out vec4 colorFragmento;
+  
+  /* SUBRUTINAS */
+  subroutine vec4 fCalcularColor();
+  
+  subroutine uniform fCalcularColor colorMallaODifuso;
+  
+  /* Subrutina para asignar color de malla */
+  /* Por defecto quiero que sea azul */
+  subroutine ( fCalcularColor )
+  vec4 colorMalla ()
+  {
+      return vec4 (0, 0, 1, 1);
+  }
+  
+  
+  /* Subrutina para asignar color de material (difuso) */
+  subroutine ( fCalcularColor )
+  vec4 colorMaterial ()
+  {
+      return vec4 (Kd, 1.0);
+  }
+  
+  
+  void main ()
+  {
+      colorFragmento = colorMallaODifuso();
+  }
+```
+
+Básicamente, para asignar la subrutina en C++, se ha de crear un vector que diga para el hueco que ocupa una subrutina,
+qué indice de función se va a usar. Esto es, si se tiene 2 subrutinas con varias funciones cada una, el primer hueco 
+podría estar ocupado por la 2ª y el primero por la 1ª subrutina. Luego, en ese hueco se indica el índice de 
+función a usar. Como esto varía, no puede ponerse a mano.
+
+Por ello, viendo la implementación presentada anteriormente, se entiende más este proceso cuando se tenga más de una
+subrutina (ahora solo se tiene una con 2 funciones). Dejo aquí el fragmento de código referido de la sección anterior:
+
+```c++
+      //Uniforms del vertex shader (subrutinas) --> Voy a hacer el proceso completo (aunque no haga falta) para
+      //tener el modelo mental
+
+      //Este es el hueco que ocupa la subrutina en el vector que usará glUniformSubroutinesuiv
+      GLint subrutinaMalla_O_Difuso  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaODifuso" );
+
+      //Este es el índice de la función elegida para la subrutina (que se pondrá en el hueco del vector de antes)
+      GLuint id_Malla_O_Difuso = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, nombreSubrutina.c_str());
+
+      //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
+      GLuint indices[1];
+      indices[subrutinaMalla_O_Difuso]  = id_Malla_O_Difuso;
+      glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
+```
+
+Con esto, ya podemos ver el modelo de un color fijo si está seleccionado el modo alambre o del color difuso de un material si
+está seleccionado el modo "malla".
+
+Por último, para que el modo "alambre" pinte líneas (y no el modelo como un sólido), se ha de usar el siguiente código
+en el método `refrescar()` de `Renderer` (que a fin de cuentas es el que engloba el método visto anteriormente para
+controlar los uniforms):
+
+```c++
+    void Renderer::refrescar() {
+        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Limpia el buffer actual
+
+        if (_modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }else if (_modoVisualizacion == ModoVisualizacion::MODELOS_ALAMBRE) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+
+
+        if (!_modelos.empty()) {
+            for (Modelo *modelo: _modelos) {
+                glUseProgram(modelo->getShaderModelo()->id_sp());
+                controlar_uniforms(modelo);
+
+                modelo->Dibujar();
+            }
+        }
+    }
+```
+
+Se puede observar `glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)` para el modo relleno y `glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)`
+para el modo alambre.
+
+### Diagrama de clases UML
+
+```mermaid
+classDiagram
+    namespace PAG {
+
+        class Renderer {
+            Implementa llamadas de OpenGL
+        }
+
+        class GUI { 
+            Usa la biblioteca ImGui
+        }
+
+        class Ventanas {
+            <<abstracta>>
+        }
+
+        class VentanasAnteriores {
+            Ventanas de anteriores diagramas
+        }
+
+        class VentanaVisualizModelos {
+  
+        }
+
+        class VentanaGestionMateriales {
+          
+        }
+
+        class Listener {
+            +virtual void wakeUp ( TipoVentana t, bool ventana_pidiendo ... ) = 0;
+        }
+        
+        class ShaderProgram{
+            Gestiona la carga de Shaders
+        }
+
+        class Camara{
+            Gestiona la matriz de visión y proyección
+        }
+        
+        class Modelo{
+          Material* _material = nullptr;
+
+          void asignarMaterial(Material* material);
+          void eliminarMaterial();
+          Material* obtenerMaterial() const;
+        }
+
+        class Material{
+
+          std::string nombre;
+          
+          glm::vec3 ka;
+          glm::vec3 kd;
+          glm::vec3 ks;
+          
+          GLfloat brillo;
+          
+          Material(string& nombre, glm::vec3 &ka, const glm::vec3 &kd, const glm::vec3 &ks, GLfloat brillo));
+
+          ~Material() = default;
+
+        }
+    }
+
+    class main {
+        Módulo main.cpp que lleva GLFW
+    }
+
+    Ventanas --> "0..1" Listener : almacena
+
+    Ventanas <|-- VentanasAnteriores
+    Ventanas <|-- VentanaVisualizModelos
+    Ventanas <|-- VentanaGestionMateriales
+
+    GUI "1" --> "0..*" Ventanas : dibuja
+
+    main --> Renderer : usa getInstancia()
+    main --> GUI : usa getInstancia()
+    Renderer --|> Listener : implementa wakeUp()
+    Renderer --> ShaderProgram
+    Renderer --> Camara
+    Renderer "1" --> "0..*" Modelo
+    Modelo --> Material
+    
+```
+
+_NOTA: Se ha simplificado mucho el diagrama para entender solo los cambios implementados. Las ventanas de anteriores diagramas
+se han introducido en una clase ficticia llamada `VentanasAnteriores`. Además, en la clase `Modelo` se han presentado solo
+los métodos y el atributo que se ha añadido respecto a lo que ya se tenía._

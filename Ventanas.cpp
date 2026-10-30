@@ -692,7 +692,7 @@ namespace PAG {
                     ImGui::Text("Nombre del material");
                     ImGui::InputText("##TextoShader", &_nombre_material_anadir, ImGuiInputTextFlags_AutoSelectAll);
                     ImGui::Text("Ambiental (Ka)");
-                    ImGui::ColorEdit3("##Ambiental (Ka)", &_colorAmbiental_anadir[0]);   //El x es el primero del vector
+                    ImGui::ColorEdit3("##Ambiental (Ka)", &_colorAmbiental_anadir[0]);
                     ImGui::Text("Difusa (Kd)");
                     ImGui::ColorEdit3("##Difusa (Kd)", &_colorDifuso_anadir[0]);
                     ImGui::Text("Especular (Ks)");
@@ -764,7 +764,7 @@ namespace PAG {
 
                         if (_indiceMaterialSeleccionado != -1 ) {
                             ImGui::Text("Ambiental (Ka)");
-                            ImGui::ColorEdit3("##Ambiental (Ka)", &materiales[_indiceMaterialSeleccionado]->ka[0]);   //El x es el primero del vector
+                            ImGui::ColorEdit3("##Ambiental (Ka)", &materiales[_indiceMaterialSeleccionado]->ka[0]);
                             ImGui::Text("Difusa (Kd)");
                             ImGui::ColorEdit3("##Difusa (Kd)", &materiales[_indiceMaterialSeleccionado]->kd[0]);
                             ImGui::Text("Especular (Ks)");
@@ -907,7 +907,7 @@ namespace PAG {
             ImGui::SetWindowFontScale(_escalaTexto); // Escalamos el texto si fuera necesario
 
             int modoVisualizacion = 0;   // RELLENOS = 1, ALAMBRE = 0
-            
+
             _renderer_listener->wakeUp(TipoVentana::V_Visualizacion_Modelos, true, &modoVisualizacion);
 
             ImGui::Text("Modo de visualización de los modelos");

@@ -202,7 +202,7 @@ namespace PAG {
                 //Uniforms del vertex shader (subrutinas) --> Voy a hacer el proceso completo (aunque no haga falta) para
                 //tener el modelo mental
 
-                //Este es el índice que ocupa la subrutina en el vector que usará glUniformSubroutinesuiv
+                //Este es el hueco que ocupa la subrutina en el vector que usará glUniformSubroutinesuiv
                 GLint subrutinaMalla_O_Difuso  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaODifuso" );
 
                 //Este es el índice de la función elegida para la subrutina (que se pondrá en el hueco del vector de antes)
