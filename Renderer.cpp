@@ -91,7 +91,12 @@ namespace PAG {
         glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Limpia el buffer actual
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        if (_modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }else if (_modoVisualizacion == ModoVisualizacion::MODELOS_ALAMBRE) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+
 
         if (!_modelos.empty()) {
             for (Modelo *modelo: _modelos) {
@@ -156,36 +161,41 @@ namespace PAG {
             //               PAG 07 (materiales)
             //---------------------------------------------
             if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07") {
-                //TODO condicional malla o difusa
 
-                //if material...
-                Material* materialModelo = modelo_usado->obtenerMaterial();
-                bool hayQueBorrar = false;
+                bool hayQueBorrarMaterial = false;
+                Material* materialModelo = nullptr;
+                std::string nombreSubrutina = "colorMalla";     //Por defecto se escogerá la subrutina de malla
 
-                if (materialModelo == nullptr) {
-                    hayQueBorrar = true;
-                    materialModelo = new Material("default", {0,0,0}, {0,0,0}, {0,0,0}, 1);
-                }
+                if (_modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS) {
 
-                GLint Ka_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ka");
-                GLint Kd_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Kd");
-                GLint Ks_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ks");
-                GLint brillo_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "brillo");
+                    materialModelo = modelo_usado->obtenerMaterial();
+                    nombreSubrutina = "colorMaterial";
 
-                if (Ka_asignar != -1 ) {
-                    glUniform3fv(Ka_asignar, 1, &materialModelo->ka[0]);
-                }
+                    if (materialModelo == nullptr) {
+                        hayQueBorrarMaterial = true;
+                        materialModelo = new Material("default", {0,0,0}, {0,0,0}, {0,0,0}, 1);
+                    }
 
-                if (Kd_asignar != -1 ) {
-                    glUniform3fv(Kd_asignar, 1, &materialModelo->kd[0]);
-                }
+                    GLint Ka_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ka");
+                    GLint Kd_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Kd");
+                    GLint Ks_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ks");
+                    GLint brillo_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "brillo");
 
-                if (Ks_asignar != -1) {
-                    glUniform3fv(Ks_asignar, 1, &materialModelo->ks[0]);
-                }
+                    if (Ka_asignar != -1 ) {
+                        glUniform3fv(Ka_asignar, 1, &materialModelo->ka[0]);
+                    }
 
-                if (brillo_asignar != -1) {
-                    glUniform1f(brillo_asignar, materialModelo->brillo);
+                    if (Kd_asignar != -1 ) {
+                        glUniform3fv(Kd_asignar, 1, &materialModelo->kd[0]);
+                    }
+
+                    if (Ks_asignar != -1) {
+                        glUniform3fv(Ks_asignar, 1, &materialModelo->ks[0]);
+                    }
+
+                    if (brillo_asignar != -1) {
+                        glUniform1f(brillo_asignar, materialModelo->brillo);
+                    }
                 }
 
 
@@ -196,14 +206,14 @@ namespace PAG {
                 GLint subrutinaMalla_O_Difuso  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaODifuso" );
 
                 //Este es el índice de la función elegida para la subrutina (que se pondrá en el hueco del vector de antes)
-                GLuint id_Malla_O_Difuso = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMaterial");
+                GLuint id_Malla_O_Difuso = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, nombreSubrutina.c_str());
 
                 //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
                 GLuint indices[1];
                 indices[subrutinaMalla_O_Difuso]  = id_Malla_O_Difuso;
                 glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
 
-                if (hayQueBorrar) {
+                if (hayQueBorrarMaterial) {
                     delete materialModelo;
                     materialModelo = nullptr;
                 }
@@ -448,6 +458,21 @@ namespace PAG {
                     va_end(args);
                     break;
                 }
+                case TipoVentana::V_Visualizacion_Modelos: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    int* modo_visualizacion = va_arg(args, int*);
+
+                    if (_modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS) {
+                        *modo_visualizacion = 1;
+                    }else {
+                        *modo_visualizacion = 0;
+                    }
+
+                    va_end(args);
+                    break;
+                }
                 default: ;
             }
 
@@ -613,6 +638,7 @@ namespace PAG {
 
                             std::string nombreMaterial(va_arg(args, char*));
 
+                            desasignarMaterialModelos(nombreMaterial);
                             borrar_material_por_nombre(nombreMaterial);
 
                             break;
@@ -637,9 +663,24 @@ namespace PAG {
 
                             break;
                         }
-
                     }
 
+
+                    va_end(args);
+                    break;
+                }
+
+                case TipoVentana::V_Visualizacion_Modelos: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    int *modoVisualizacion = va_arg(args, int*);
+
+                    if (*modoVisualizacion == 1) {
+                        _modoVisualizacion = ModoVisualizacion::MODELOS_RELLENOS;
+                    }else {
+                        _modoVisualizacion = ModoVisualizacion::MODELOS_ALAMBRE;
+                    }
 
                     va_end(args);
                     break;
@@ -695,16 +736,27 @@ namespace PAG {
     /**
      * Función para obtener un modelo por nombre
      */
-    Modelo *Renderer::obtener_modelo_por_nombre(const std::string &nombreModelo) {
-        for (int i=0; i<_modelos.size(); i++) {
-            if (_modelos[i]->_nombreModelo == nombreModelo) {
-                return _modelos[i];
+    Modelo *Renderer::obtener_modelo_por_nombre(const std::string &nombreModelo) const {
+        for (Modelo* _modelo : _modelos) {
+            if (_modelo->_nombreModelo == nombreModelo) {
+                return _modelo;
             }
         }
 
         return nullptr;
     }
 
+
+    /**
+     * Función para obtener un material por nombre
+     */
+    void Renderer::desasignarMaterialModelos(const std::string &nombreMaterial) const {
+        for (Modelo* _modelo : _modelos) {
+            if (_modelo->obtenerMaterial() != nullptr && _modelo->obtenerMaterial()->nombre == nombreMaterial) {
+                _modelo->eliminarMaterial();
+            }
+        }
+    }
 
     /**
      * Función para borrar un material por nombre
@@ -725,10 +777,10 @@ namespace PAG {
     /**
      * Función para obtener un material por nombre
      */
-    Material *Renderer::obtener_material_por_nombre(const std::string &nombreMaterial) {
-        for (int i=0; i<_materiales.size(); i++) {
-            if (_materiales[i]->nombre == nombreMaterial) {
-                return _materiales[i];
+    Material *Renderer::obtener_material_por_nombre(const std::string &nombreMaterial) const {
+        for (Material * _material : _materiales) {
+            if (_material->nombre == nombreMaterial) {
+                return _material;
             }
         }
 

@@ -19,7 +19,8 @@ namespace PAG {
         V_Carga_Modelo_Shaders,
         V_Manejo_Camara,
         V_Trasformaciones_Modelos,
-        V_Gestion_Materiales
+        V_Gestion_Materiales,
+        V_Visualizacion_Modelos
     };
 
 

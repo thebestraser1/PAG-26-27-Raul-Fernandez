@@ -174,6 +174,13 @@ namespace PAG {
         _material = material;
     }
 
+    /**
+     * Función para eliminar el material del modelo
+     */
+    void Modelo::eliminarMaterial() {
+        _material = nullptr;
+    }
+
 
     /**
      * Función para obtener el material del modelo

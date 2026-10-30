@@ -235,22 +235,24 @@ int main() {
     // Inicialización de escena
 
     //Establecemos las ventanas: una ventana de mensajes, una ventana de selección de color y una se selección de escala de fuente
-    auto *ventana_texto_shader = new PAG::VentanaCargaModeloYShader(10, 130, false);
-    auto *ventana_trasformaciones_modelos = new PAG::VentanaTrasformacionesModelos(10, 290, false);
-    auto *ventana_escala = new PAG::VentanaSelectorEscala(10, 40, true);
-    auto *ventana_camara = new PAG::VentanaCamara(10, 100, true);
     auto *ventana_mensajes = new PAG::VentanaMensajes(buffer, 10, 10, true);
+    auto *ventana_escala = new PAG::VentanaSelectorEscala(10, 40, true);
     auto *ventana_color = new PAG::VentanaSelectorColorFondo(10,70, true);
-    auto *ventana_materiales = new PAG::VentanaGestionMateriales(10,370, false);
+    auto *ventana_camara = new PAG::VentanaCamara(10, 100, true);
+    auto *ventana_texto_shader = new PAG::VentanaCargaModeloYShader(10, 130, true);
+    auto *ventana_trasformaciones_modelos = new PAG::VentanaTrasformacionesModelos(10, 160, true);
+    auto *ventana_materiales = new PAG::VentanaGestionMateriales(10,190, true);
+    auto *ventana_modo_modelos = new PAG::VentanaVisualizModelos(10,220, true);
 
     std::vector<PAG::Ventanas*> ventanas = {
         ventana_mensajes,
-        ventana_color,
         ventana_escala,
-        ventana_texto_shader,
+        ventana_color,
         ventana_camara,
+        ventana_texto_shader,
         ventana_trasformaciones_modelos,
-        ventana_materiales
+        ventana_materiales,
+        ventana_modo_modelos
     };
 
     //Añadimos que el Renderer esté pendiente de los cambios en estas ventanas

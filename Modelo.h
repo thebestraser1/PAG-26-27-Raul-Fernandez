@@ -29,6 +29,13 @@ namespace PAG {
     };
 
 
+    //RELLENOS = 1, ALAMBRE = 0
+    enum ModoVisualizacion {
+        MODELOS_ALAMBRE,
+        MODELOS_RELLENOS
+    };
+
+
     class Modelo {
 
     private:
@@ -60,6 +67,7 @@ namespace PAG {
         void Dibujar();
         void aplicarTransformacion(TipoAccionModelo tipo_transformacion, const glm::mat4 &transformacion);
         void asignarMaterial(Material* material);
+        void eliminarMaterial();
         Material* obtenerMaterial() const;
 
     private:

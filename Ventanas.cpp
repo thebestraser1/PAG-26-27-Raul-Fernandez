@@ -814,6 +814,8 @@ namespace PAG {
                     }
 
                     if (!materiales.empty()) {
+                        ImGui::Text("Material seleccionado:               ");
+
                         if (ImGui::Combo("##Material seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
                                      (int) materiales.size())) {
 
@@ -872,8 +874,55 @@ namespace PAG {
                 ImGui::EndTabBar();
             }
         }
+        ImGui::End();
+    }
 
 
+
+    /** -----------------------------
+     *   VENTANA DE GESTION DE MODELOS
+     *   -----------------------------
+     */
+
+    /**
+     * Constructor de ventana de selección de escala
+     */
+    VentanaVisualizModelos::VentanaVisualizModelos(float x, float y, bool minimizada) {
+        this->pos_x = x;
+        this->pos_y = y;
+        this->minimizada = minimizada;
+    }
+
+    /**
+     * Dibujar la ventana selección de Escala
+     */
+    void VentanaVisualizModelos::dibujar() {
+        //Posicion a dibujar y ventana minimizada
+        ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
+        ImGui::SetNextWindowCollapsed(minimizada, ImGuiCond_Once);
+
+        if (ImGui::Begin("Modo de visualización", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            // La ventana está desplegada
+
+            ImGui::SetWindowFontScale(_escalaTexto); // Escalamos el texto si fuera necesario
+
+            int modoVisualizacion = 0;   // RELLENOS = 1, ALAMBRE = 0
+            
+            _renderer_listener->wakeUp(TipoVentana::V_Visualizacion_Modelos, true, &modoVisualizacion);
+
+            ImGui::Text("Modo de visualización de los modelos");
+            ImGui::Spacing();
+
+            if (ImGui::RadioButton("Malla", &modoVisualizacion, 1)) {
+                _renderer_listener->wakeUp(TipoVentana::V_Visualizacion_Modelos, false, &modoVisualizacion);
+            }
+
+            if (ImGui::RadioButton("Alambre", &modoVisualizacion, 0)) {
+                _renderer_listener->wakeUp(TipoVentana::V_Visualizacion_Modelos, false, &modoVisualizacion);
+            }
+        }
+
+        // Si la ventana no está desplegada, Begin devuelve false
         ImGui::End();
     }
 }

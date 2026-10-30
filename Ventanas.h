@@ -153,6 +153,16 @@ namespace PAG {
             VentanaGestionMateriales(float x, float y, bool minimizada);
             void dibujar() override;
     };
+
+    /**
+     * Ventana para visualizar los modelos como sólidos o como malla de alambre con color fijo.
+     */
+    class VentanaVisualizModelos : public Ventanas{
+
+    public:
+        VentanaVisualizModelos(float x, float y, bool minimizada);
+        void dibujar() override;
+    };
 } // PAG
 
 #endif //PRACTICA1_VENTANA_H

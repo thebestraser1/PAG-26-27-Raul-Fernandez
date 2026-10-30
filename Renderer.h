@@ -39,7 +39,8 @@ namespace PAG {
         //Modelos
         std::vector<Modelo*> _modelos;
         std::vector<Material*> _materiales;
-        std::mt19937 _genRandomPos;              //Generador aleatorios de posiciones
+        ModoVisualizacion _modoVisualizacion = MODELOS_RELLENOS;    //RELLENOS = 1, ALAMBRE = 0
+        std::mt19937 _genRandomPos;                                 //Generador aleatorios de posiciones
 
         //Aspecto de ventana
         int anchoVentana = 1280;
@@ -87,9 +88,10 @@ namespace PAG {
         bool comprobar_modelos_mismo_nombre(const std::string& nombreModelo);
         bool comprobar_materiales_mismo_nombre(const std::string &nombreModelo);
         void borrar_modelo_por_nombre(const std::string& nombreModelo);
-        Modelo* obtener_modelo_por_nombre(const std::string &nombreModelo);
+        Modelo* obtener_modelo_por_nombre(const std::string &nombreModelo) const;
+        void desasignarMaterialModelos(const std::string &nombreMaterial) const;
         void borrar_material_por_nombre(const std::string &nombreMaterial);
-        Material* obtener_material_por_nombre(const std::string &nombreMaterial);
+        Material* obtener_material_por_nombre(const std::string &nombreMaterial) const;
 
     };
 } // PAG
