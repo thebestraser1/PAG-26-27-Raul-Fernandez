@@ -115,7 +115,9 @@ namespace PAG {
                         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
                     }
 
-                    if (_modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS) {
+                    if (_modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS &&
+                        modelo->getShaderModelo()->nombre_shader() == "pag08") {
+
                         luz->aplicarLuz(modelo->getShaderModelo());
                     }
                     modelo->Dibujar();
@@ -141,7 +143,8 @@ namespace PAG {
         //           PAG 05, PAG 07 y PAG 08
         //---------------------------------------------
         } else if (modelo_usado->getShaderModelo()->nombre_shader() == "pag05"
-                   || modelo_usado->getShaderModelo()->nombre_shader() == "pag07") {
+                   || modelo_usado->getShaderModelo()->nombre_shader() == "pag07"
+                   || modelo_usado->getShaderModelo()->nombre_shader() == "pag08") {
 
             //Uniforms del vertex_shader
 
@@ -177,7 +180,7 @@ namespace PAG {
             //---------------------------------------------
             //          PAG 07 y PAG 08 (materiales)
             //---------------------------------------------
-            if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07" && modelo_usado->getShaderModelo()->nombre_shader() == "pag08") {
+            if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07" || modelo_usado->getShaderModelo()->nombre_shader() == "pag08") {
 
                 bool hayQueBorrarMaterial = false;
                 Material* materialModelo = nullptr;
@@ -556,8 +559,8 @@ namespace PAG {
                         if (comprobar_modelos_mismo_nombre(nombreModelo)) {
                             try {
                                 //Cargamos el modelo en una posición aleatoria (si no hay uno que tenga ya el mismo nombre)
-                                // Distribución entre -2 y 2
-                                std::uniform_real_distribution<float> distribucion(-1.0f, 1.0f);
+                                // Distribución entre -0.5 y 0.5 para ver las luces
+                                std::uniform_real_distribution<float> distribucion(-0.5f, 0.5f);
 
                                 // Generar coordenadas aleatorias
                                 float x = distribucion(_genRandomPos);
@@ -565,6 +568,35 @@ namespace PAG {
                                 float z = distribucion(_genRandomPos);
 
                                 Modelo *modelo = new Modelo(nombreModelo, rutaModelo.c_str(), nombreShader, {x,y,z});
+
+
+
+                                PAG::PropiedadesLuz propiedades;
+                                propiedades.Ia = glm::vec3(0.2f, 0.2f, 0.2f);
+                                propiedades.Id = glm::vec3(0.8f, 0.8f, 0.8f);
+                                propiedades.Is = glm::vec3(1.0f, 1.0f, 1.0f);
+                                propiedades.p = glm::vec3(0.0f, 5.0f, 5.0f);
+                                propiedades.d = glm::vec3(0.0f, -1.0f, -1.0f);
+                                propiedades.gamma = glm::radians(30.0f);
+                                propiedades.s = 32.0f;
+
+                                PAG::Luz *luz_nueva = new Luz(propiedades, TipoLuz::Luz_Ambiental);
+
+                                _luces.push_back(luz_nueva);
+
+                                PAG::PropiedadesLuz propiedades2;
+                                propiedades2.Ia = glm::vec3(0.2f, 0.2f, 0.2f);
+                                propiedades2.Id = glm::vec3(0.8f, 0.8f, 0.8f);
+                                propiedades2.Is = glm::vec3(1.0f, 1.0f, 1.0f);
+                                propiedades2.p = glm::vec3(0.0f, 5.0f, 5.0f);
+                                propiedades2.d = glm::vec3(0.0f, -1.0f, -1.0f);
+                                propiedades2.gamma = glm::radians(30.0f);
+                                propiedades2.s = 32.0f;
+
+                                PAG::Luz *luz_nueva2 = new Luz(propiedades2, TipoLuz::Luz_Puntual);
+
+                                _luces.push_back(luz_nueva2);
+
 
                                 //Una vez se ha cargado bien, lo añadimos al vector de modelos
                                 _modelos.push_back(modelo);

@@ -83,10 +83,11 @@ namespace PAG {
         PropiedadesLuz _propiedades;
 
     public:
-        Luz(PropiedadesLuz p_iniciales);
+        Luz(PropiedadesLuz p_iniciales, TipoLuz t_luz);
 
         void aplicarLuz(ShaderProgram *sp) const;
         void setTipoLuz(TipoLuz _tipoLuz);
+        void encendida_apagada();
     };
 
 

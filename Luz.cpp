@@ -6,8 +6,8 @@
 
 namespace PAG {
 
-    PAG::Luz::Luz(PropiedadesLuz p_iniciales) :
-        _tipoLuz(TipoLuz::Luz_Ambiental),
+    PAG::Luz::Luz(PropiedadesLuz p_iniciales, TipoLuz t_luz) :
+        _tipoLuz(t_luz),
         _encendida(true),
         _propiedades(p_iniciales){
 
@@ -27,9 +27,34 @@ namespace PAG {
      */
     void PAG::Luz::aplicarLuz(ShaderProgram* sp) const {
 
+        PropiedadesLuz propiedades_a_aplicar = PropiedadesLuz();
+        if (!_encendida) {
+
+            //Apagamos las intensidades
+            propiedades_a_aplicar.Ia = glm::vec3(0.0f);
+            propiedades_a_aplicar.Id = glm::vec3(0.0f);
+            propiedades_a_aplicar.Is = glm::vec3(0.0f);
+
+            //El resto queda igual (no importa vaya)
+            propiedades_a_aplicar.p = _propiedades.p;
+            propiedades_a_aplicar.d = _propiedades.d;
+            propiedades_a_aplicar.gamma = _propiedades.gamma;
+            propiedades_a_aplicar.s = _propiedades.s;
+        }else {
+            propiedades_a_aplicar = _propiedades;
+        }
+
         int indice_tipo_luz = static_cast<int>(_tipoLuz);
 
-        _aplicadores[indice_tipo_luz]->aplicarLuz(_propiedades, *sp);
+        _aplicadores[indice_tipo_luz]->aplicarLuz(propiedades_a_aplicar, *sp);
+    }
+
+
+    /**
+     * Función para encender y apagar la luz
+     */
+    void PAG::Luz::encendida_apagada() {
+        _encendida = !_encendida;
     }
 
 
@@ -43,11 +68,13 @@ namespace PAG {
 
 
     /**
-     * Función auxiliar de este CPP para asignar los uniforms de la luz al shader
+     * Función auxiliar de este CPP para asignar los uniforms de la luz al shader. Tiene en cuenta si está
+     * encendida o apagada
      *
      * (no quiero asignar solo los que sean necesarios porque puede dar fallo, asigno todas)
      */
     void asignarPropiedadesAShader(const PropiedadesLuz &p, ShaderProgram &sp) {
+
         GLint Ia_asignar = glGetUniformLocation(sp.id_sp(), "Ia");
         GLint Id_asignar = glGetUniformLocation(sp.id_sp(), "Id");
         GLint Is_asignar = glGetUniformLocation(sp.id_sp(), "Is");

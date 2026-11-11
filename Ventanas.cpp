@@ -500,7 +500,7 @@ namespace PAG {
                 }
             }
 
-            if (!nombreSigueExistiendo && _indiceModeloSeleccionado != -1 && !nombreModelos.empty()) {
+            if (!nombreSigueExistiendo && !nombreModelos.empty()) {
                 //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
                 _indiceModeloSeleccionado = 0;
                 _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
@@ -645,6 +645,7 @@ namespace PAG {
                 } else {
                     ImGui::Text("          Carga algún modelo           ");
                     _indiceModeloSeleccionado = -1;
+                    _nombreModeloSeleccionado = "";
                 }
             }
 
@@ -747,7 +748,7 @@ namespace PAG {
                         nombreMateriales.push_back(material->nombre.c_str());
                     }
 
-                    if (!nombreSigueExistiendo && _indiceMaterialSeleccionado != -1 && !materiales.empty()) {
+                    if (!nombreSigueExistiendo && !materiales.empty()) {
                         //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
                         _indiceMaterialSeleccionado = 0;
                         _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
@@ -783,6 +784,8 @@ namespace PAG {
 
                     }else {
                         ImGui::Text("     Añade algún material     ");
+                        _indiceMaterialSeleccionado = -1;
+                        _nombreMaterialSeleccionado = "";
                     }
 
 
@@ -843,7 +846,7 @@ namespace PAG {
                         }
                     }
 
-                    if (!nombreSigueExistiendo && _indiceModeloSeleccionado != -1 && !nombreModelos.empty()) {
+                    if (!nombreSigueExistiendo && !nombreModelos.empty()) {
                         //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
                         _indiceModeloSeleccionado = 0;
                         _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
@@ -860,6 +863,8 @@ namespace PAG {
                         }
                     }else {
                         ImGui::Text("   No existe ningún modelo   ");
+                        _indiceModeloSeleccionado = -1;
+                        _nombreMaterialSeleccionado = "";
                     }
 
                     if (ImGui::Button("Asignar material") && !nombreMateriales.empty() && !nombreModelos.empty()) {

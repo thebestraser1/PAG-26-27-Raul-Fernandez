@@ -1,6 +1,7 @@
 #version 410
+const float M_PI = 3.14159265358979;
 
-/* Entradas (aún no se usan para iluminación, pues no se tiene) */
+/* Entradas */
 in salidaVS
 {
  vec3 posicionV;
@@ -27,15 +28,15 @@ uniform float spotAngle;
 out vec4 colorFragmento;
 
 /* SUBRUTINAS DE ILUMINACIÓN*/
-subroutine vec4 fCalcularColor();
+subroutine vec3 fCalcularColor();
 
 subroutine uniform fCalcularColor colorMallaOLuz;
 
 /* Subrutina para asignar color de malla (azul por defecto)*/
 subroutine ( fCalcularColor )
-vec4 colorMalla ()
+vec3 colorMalla ()
 {
-    return vec4 (0, 0, 1);
+    return vec3 (0, 0, 1);
 }
 
 
@@ -50,10 +51,10 @@ vec3 luzAmbiental() {
 /* Subrutina para una luz puntual*/
 subroutine ( fCalcularColor )
 vec3 luzPuntual() {
-    vec3 n = normalize( normal );
+    vec3 n = normalize( entrada.normalV );
 
-    vec3 l = normalize( lightPosition-position );
-    vec3 v = normalize( -position );
+    vec3 l = normalize( lightPosition-entrada.posicionV );
+    vec3 v = normalize( -entrada.posicionV );
     vec3 r = reflect( -l, n );
 
     vec3 diffuse =(Id * Kd * max( dot(l,n), 0.0));
@@ -63,13 +64,13 @@ vec3 luzPuntual() {
     return diffuse + specular;
 }
 
-
+/* Subrutina para una luz direccional*/
 subroutine ( fCalcularColor )
 vec3 luzDireccional() {
-    vec3 n = normalize( normal );
+    vec3 n = normalize( entrada.normalV );
 
     vec3 l = -lightDirection;
-    vec3 v = normalize( -position );
+    vec3 v = normalize( -entrada.posicionV );
     vec3 r = reflect( -l, n );
 
     vec3 diffuse =(Id * Kd * max( dot(l,n), 0.0));
@@ -79,17 +80,17 @@ vec3 luzDireccional() {
     return diffuse + specular;
 }
 
-
+/* Subrutina para un foco de luz*/
 subroutine ( fCalcularColor )
 vec3 focoLuz() {
-    vec3 l = normalize( lightPosition-position );
+    vec3 l = normalize( lightPosition-entrada.posicionV );
     vec3 d = lightDirection;
     float cosGamma = cos(spotAngle * M_PI / 180.0);
     float spotFactor = 1.0;
 
     if (dot(-l, d) < cosGamma) { spotFactor = 0.0; }
-    vec3 n = normalize( normal );
-    vec3 v = normalize( -position );
+    vec3 n = normalize( entrada.normalV );
+    vec3 v = normalize( -entrada.posicionV );
     vec3 r = reflect( -l, n );
 
     vec3 diffuse =(Id * Kd * max( dot(l,n), 0.0));
