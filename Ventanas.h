@@ -163,6 +163,29 @@ namespace PAG {
         VentanaVisualizModelos(float x, float y, bool minimizada);
         void dibujar() override;
     };
+
+
+
+    /**
+     * Ventana de manejo de luces
+     */
+    class VentanaLuces : public Ventanas{
+
+        TipoAccionLuz _accion_actual = TipoAccionLuz::Anadir_luz;
+
+        //Atributos de la luz nueva
+        std::string _nombre_luz_anadir;
+        TipoLuz _tipo_luz_nueva = TipoLuz::Luz_Ambiental;
+        int _indiceTipoLuzSeleccionada = -1;
+        PropiedadesLuz _propiedades_luz_nueva;
+
+        std::string _nombreLuzSeleccionada;
+        int _indiceLuzSeleccionada = -1;   //Indice equivalente al vector de modelos de Renderer.cpp
+
+    public:
+        VentanaLuces(float x, float y, bool minimizada);
+        void dibujar() override;
+    };
 } // PAG
 
 #endif //PRACTICA1_VENTANA_H

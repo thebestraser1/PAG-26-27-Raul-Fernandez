@@ -243,6 +243,7 @@ int main() {
     auto *ventana_trasformaciones_modelos = new PAG::VentanaTrasformacionesModelos(10, 160, true);
     auto *ventana_materiales = new PAG::VentanaGestionMateriales(10,190, true);
     auto *ventana_modo_modelos = new PAG::VentanaVisualizModelos(10,220, true);
+    auto *ventana_gestion_luces = new PAG::VentanaLuces(10,250, true);
 
     std::vector<PAG::Ventanas*> ventanas = {
         ventana_mensajes,
@@ -252,7 +253,8 @@ int main() {
         ventana_texto_shader,
         ventana_trasformaciones_modelos,
         ventana_materiales,
-        ventana_modo_modelos
+        ventana_modo_modelos,
+        ventana_gestion_luces
     };
 
     //Añadimos que el Renderer esté pendiente de los cambios en estas ventanas

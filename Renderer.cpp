@@ -34,6 +34,15 @@ namespace PAG {
             }
             _materiales.clear();
         }
+
+
+        if (!_luces.empty()) {
+            for (Luz *luz: _luces) {
+                delete luz;
+                luz = nullptr;
+            }
+            _luces.clear();
+        }
     }
 
 
@@ -118,8 +127,12 @@ namespace PAG {
                     if (_modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS &&
                         modelo->getShaderModelo()->nombre_shader() == "pag08") {
 
-                        luz->aplicarLuz(modelo->getShaderModelo());
+                        luz->aplicarLuz(modelo->getShaderModelo(), _camara->getMatV());
                     }
+                    modelo->Dibujar();
+                }
+
+                if (_luces.empty()) {
                     modelo->Dibujar();
                 }
 
@@ -145,7 +158,6 @@ namespace PAG {
         } else if (modelo_usado->getShaderModelo()->nombre_shader() == "pag05"
                    || modelo_usado->getShaderModelo()->nombre_shader() == "pag07"
                    || modelo_usado->getShaderModelo()->nombre_shader() == "pag08") {
-
             //Uniforms del vertex_shader
 
             // En este caso, extraemos las matrices de modelado, visión y proyección
@@ -178,10 +190,9 @@ namespace PAG {
 
 
             //---------------------------------------------
-            //          PAG 07 y PAG 08 (materiales)
+            //                  PAG 07
             //---------------------------------------------
-            if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07" || modelo_usado->getShaderModelo()->nombre_shader() == "pag08") {
-
+            if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07") {
                 bool hayQueBorrarMaterial = false;
                 Material* materialModelo = nullptr;
                 std::string nombreSubrutina = "colorMalla";     //Por defecto se escogerá la subrutina de malla
@@ -218,31 +229,40 @@ namespace PAG {
                     }
                 }
 
+                //   PAG 07 (subrutina entre malla o material)
+                //Uniforms del fragment shader (subrutinas) --> Voy a hacer el proceso completo (aunque no haga falta) para
+                //tener el modelo mental
 
-                //---------------------------------------------
-                //   PAG 07 (subrutinas materiales de modelo)
-                //---------------------------------------------
-                if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07") {
-                    //Uniforms del fragment shader (subrutinas) --> Voy a hacer el proceso completo (aunque no haga falta) para
-                    //tener el modelo mental
+                //Este es el hueco que ocupa la subrutina en el vector que usará glUniformSubroutinesuiv
+                GLint subrutinaMalla_O_Difuso  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaODifuso" );
 
-                    //Este es el hueco que ocupa la subrutina en el vector que usará glUniformSubroutinesuiv
-                    GLint subrutinaMalla_O_Difuso  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaODifuso" );
+                //Este es el índice de la función elegida para la subrutina (que se pondrá en el hueco del vector de antes)
+                GLuint id_Malla_O_Difuso = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, nombreSubrutina.c_str());
 
-                    //Este es el índice de la función elegida para la subrutina (que se pondrá en el hueco del vector de antes)
-                    GLuint id_Malla_O_Difuso = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, nombreSubrutina.c_str());
+                //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
+                GLuint indices[1];
+                indices[subrutinaMalla_O_Difuso]  = id_Malla_O_Difuso;
+                glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
 
-                    //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
-                    GLuint indices[1];
-                    indices[subrutinaMalla_O_Difuso]  = id_Malla_O_Difuso;
-                    glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
-
+                if (hayQueBorrarMaterial) {
+                    delete materialModelo;
+                    materialModelo = nullptr;
                 }
+            }
+
+
+            //---------------------------------------------
+            //                  PAG 08
+            //---------------------------------------------
+            if (modelo_usado->getShaderModelo()->nombre_shader() == "pag08") {
 
                 //---------------------------------------------
-                //    PAG 08 (gestión de subrutina de malla)    --> Las luces se encargarán del resto de subrutinas
+                //    PAG 08 (gestión de subrutina de color fijo) --> Si no hay luces o está la malla seleccionada
                 //---------------------------------------------
-                if (modelo_usado->getShaderModelo()->nombre_shader() == "pag08" && _modoVisualizacion == ModoVisualizacion::MODELOS_ALAMBRE) {
+                std::string nombreSubrutina = "colorFijo";
+
+                if (_modoVisualizacion == ModoVisualizacion::MODELOS_ALAMBRE
+                    || (_luces.empty() && _modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS)) {
 
                     GLint subrutinaMalla_O_Luz  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaOLuz" );
                     GLuint id_Malla_O_Luz = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, nombreSubrutina.c_str());
@@ -251,19 +271,49 @@ namespace PAG {
                     GLuint indices[1];
                     indices[subrutinaMalla_O_Luz]  = id_Malla_O_Luz;
                     glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
+
+                    }
+
+                //---------------------------------------------
+                //    PAG 08 (gestión de material)    --> Las luces se encargarán de las subrutinas en este caso
+                //---------------------------------------------
+                else {
+                    bool hayQueBorrarMaterial = false;
+                    Material* materialModelo = nullptr;
+
+                    materialModelo = modelo_usado->obtenerMaterial();
+
+                    if (materialModelo == nullptr) {
+                        hayQueBorrarMaterial = true;
+                        materialModelo = new Material("default", {0,0,0}, {0,0,0}, {0,0,0}, 1);
+                    }
+
+                    GLint Ka_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ka");
+                    GLint Kd_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Kd");
+                    GLint Ks_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ks");
+                    GLint brillo_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "brillo");
+
+                    if (Ka_asignar != -1 ) {
+                        glUniform3fv(Ka_asignar, 1, &materialModelo->ka[0]);
+                    }
+
+                    if (Kd_asignar != -1 ) {
+                        glUniform3fv(Kd_asignar, 1, &materialModelo->kd[0]);
+                    }
+
+                    if (Ks_asignar != -1) {
+                        glUniform3fv(Ks_asignar, 1, &materialModelo->ks[0]);
+                    }
+
+                    if (brillo_asignar != -1) {
+                        glUniform1f(brillo_asignar, materialModelo->brillo);
+                    }
+
+                    if (hayQueBorrarMaterial) {
+                        delete materialModelo;
+                        materialModelo = nullptr;
+                    }
                 }
-
-                if (hayQueBorrarMaterial) {
-                    delete materialModelo;
-                    materialModelo = nullptr;
-                }
-
-
-            //---------------------------------------------
-            //         PAG 08 (materiales y luces)
-            //---------------------------------------------
-
-
             }
 
         } else {
@@ -569,32 +619,7 @@ namespace PAG {
 
                                 Modelo *modelo = new Modelo(nombreModelo, rutaModelo.c_str(), nombreShader, {x,y,z});
 
-
-
-                                PAG::PropiedadesLuz propiedades;
-                                propiedades.Ia = glm::vec3(0.2f, 0.2f, 0.2f);
-                                propiedades.Id = glm::vec3(0.8f, 0.8f, 0.8f);
-                                propiedades.Is = glm::vec3(1.0f, 1.0f, 1.0f);
-                                propiedades.p = glm::vec3(_camara->getMatV() * glm::vec4(0.0f, 0.5f, 0.5f, 1.0f));
-                                propiedades.d = glm::vec3(_camara->getMatV() * glm::vec4(0.0f, -1.0f, -1.0f, 1.0f));
-                                propiedades.gamma = glm::radians(30.0f);
-
-                                PAG::Luz *luz_nueva = new Luz(propiedades, TipoLuz::Luz_Ambiental);
-
-                                _luces.push_back(luz_nueva);
-
-                                PAG::PropiedadesLuz propiedades2;
-                                propiedades2.Ia = glm::vec3(0.2f, 0.2f, 0.2f);
-                                propiedades2.Id = glm::vec3(0.8f, 0.8f, 0.8f);
-                                propiedades2.Is = glm::vec3(1.0f, 1.0f, 1.0f);
-                                propiedades2.p = glm::vec3(0.0f, 5.0f, 5.0f);
-                                propiedades2.d = glm::vec3(0.0f, -1.0f, -1.0f);
-                                propiedades2.gamma = glm::radians(30.0f);
-
-                                PAG::Luz *luz_nueva2 = new Luz(propiedades2, TipoLuz::Luz_Puntual);
-
-                                _luces.push_back(luz_nueva2);
-
+                                std::cout << "Se ha añadido un nuevo modelo: " << nombreModelo << std::endl;
 
                                 //Una vez se ha cargado bien, lo añadimos al vector de modelos
                                 _modelos.push_back(modelo);
@@ -759,6 +784,34 @@ namespace PAG {
                     va_end(args);
                     break;
                 }
+
+                case TipoVentana::V_Gestion_Luces: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    PAG::TipoAccionLuz* tipo_accion = va_arg(args, PAG::TipoAccionLuz*);
+
+                    switch (*tipo_accion) {
+                        case (TipoAccionLuz::Anadir_luz): {
+                            //Atributos de la luz
+                            TipoLuz* tipo_luz = va_arg(args, TipoLuz*);
+                            std::string nombreLuz(va_arg(args, char*));
+                            PropiedadesLuz* propiedades_luz = va_arg(args, PropiedadesLuz*);
+
+                            //Añadimos la luz (si el nombre no existe)
+                            if (comprobar_luces_mismo_nombre(nombreLuz)) {
+                                _luces.push_back(new Luz(nombreLuz, *propiedades_luz, *tipo_luz));
+                                std::cout << "Se ha añadido una nueva luz: " << nombreLuz << std::endl;
+                            }else {
+                                std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
+                                        "Ya hay una luz con el nombre: " << nombreLuz <<
+                                        "\n--------------------\n" << std::endl;
+                            }
+                            break;
+                        }
+                        default:;
+                    }
+                }
                 default: ;
             }
         }
@@ -859,5 +912,18 @@ namespace PAG {
         }
 
         return nullptr;
+    }
+
+
+    /**
+     * Función para comprobar si ya hay una luz con un nombre determinado
+     */
+    bool Renderer::comprobar_luces_mismo_nombre(const std::string& nombreLuz) const {
+        for (const Luz *luz: _luces) {
+            if (luz->_nombre == nombreLuz) {
+                return false;
+            }
+        }
+        return true;
     }
 } // PAG

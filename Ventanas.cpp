@@ -691,7 +691,7 @@ namespace PAG {
                     _accion_actual = TipoAccionMaterial::Anadir_material;
 
                     ImGui::Text("Nombre del material");
-                    ImGui::InputText("##TextoShader", &_nombre_material_anadir, ImGuiInputTextFlags_AutoSelectAll);
+                    ImGui::InputText("##TextoMaterial", &_nombre_material_anadir, ImGuiInputTextFlags_AutoSelectAll);
                     ImGui::Text("Ambiental (Ka)");
                     ImGui::ColorEdit3("##Ambiental (Ka)", &_colorAmbiental_anadir[0]);
                     ImGui::Text("Difusa (Kd)");
@@ -928,6 +928,256 @@ namespace PAG {
         }
 
         // Si la ventana no está desplegada, Begin devuelve false
+        ImGui::End();
+    }
+
+
+
+    /**  -----------------------------
+     *   VENTANA DE GESTION DE LUCES
+     *   -----------------------------
+     */
+
+    /**
+     * Constructor de ventana de selección de escala
+     */
+    VentanaLuces::VentanaLuces(float x, float y, bool minimizada) {
+        this->pos_x = x;
+        this->pos_y = y;
+        this->minimizada = minimizada;
+    }
+
+    /**
+     * Dibujar la ventana
+     */
+
+
+    void VentanaLuces::dibujar() {
+        //Posicion a dibujar y ventana minimizada
+        ImGui::SetNextWindowPos(ImVec2(pos_x, pos_y), ImGuiCond_Once);
+        ImGui::SetNextWindowCollapsed(minimizada, ImGuiCond_Once);
+
+        if (ImGui::Begin("Gestion de luces", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            if (ImGui::BeginTabBar("Mis_Pestanas_luces"))
+            {
+
+                //--------------------
+                // Pestaña para añadir
+                //--------------------
+                if (ImGui::BeginTabItem("Añadir"))
+                {
+                    _accion_actual = TipoAccionLuz::Anadir_luz;
+
+                    //Este vector funciona porque he puesto el mismo orden que en el enum de Luz.h
+                    //Es para que muestre el nombre de los enumerados
+                    const char *tipo_luz[] = {"Luz Ambiental", "Luz Puntual", "Luz Direccional", "Foco de luz"};
+
+                    //Sacamos el índice que ocupa el tipo de luz actual en el enumerado gracias a static_cast
+                    int tipoActual = static_cast<int>(_tipo_luz_nueva);
+
+                    //La ejecución entra aquí solo cuando se ha cambiado el tipo de luz
+                    if (ImGui::Combo("##TipoLuz", &tipoActual, tipo_luz, IM_ARRAYSIZE(tipo_luz))) {
+                        //Se puede hacer la operación inversa a lo anterior (sacar un tipo de luz desde un índice (int))
+                        _tipo_luz_nueva = static_cast<TipoLuz>(tipoActual);
+                    }
+
+                    ImGui::Text("Nombre de la luz");
+                    ImGui::InputText("##TextoLuz", &_nombre_luz_anadir, ImGuiInputTextFlags_AutoSelectAll);
+                    ImGui::Text("Ambiental (Ia)");
+                    ImGui::ColorEdit3("##Ambiental (Ia)", &_propiedades_luz_nueva.Ia[0]);
+                    ImGui::Text("Difusa (Id)");
+                    ImGui::ColorEdit3("##Difusa (Id)", &_propiedades_luz_nueva.Id[0]);
+                    ImGui::Text("Especular (Is)");
+                    ImGui::ColorEdit3("##Especular (Is)", &_propiedades_luz_nueva.Is[0]);
+                    ImGui::Text("Posicion (p)");
+                    ImGui::InputFloat3("##Posicion (p)", &_propiedades_luz_nueva.p[0], "%.2f");
+                    ImGui::Text("Direccion (d)");
+                    ImGui::InputFloat3("##Direccion (d)", &_propiedades_luz_nueva.d[0], "%.2f");
+                    ImGui::Text("Gamma (foco)");
+                    ImGui::InputFloat("##Gamma (foco)", &_propiedades_luz_nueva.gamma, 0.1f, 1.0f, "%.2f");
+
+                    if (ImGui::Button("Añadir") && !_nombre_luz_anadir.empty()) {
+
+                        _renderer_listener->wakeUp(TipoVentana::V_Gestion_Luces, false, &_accion_actual,
+                                                   &_tipo_luz_nueva, _nombre_luz_anadir.c_str(), &_propiedades_luz_nueva);
+
+                        //Devolvemos las variables a 0
+                        _nombre_luz_anadir = "";
+
+                        _propiedades_luz_nueva.Ia = {0,0,0};
+                        _propiedades_luz_nueva.Id = {0,0,0};
+                        _propiedades_luz_nueva.Is = {0,0,0};
+
+                        _propiedades_luz_nueva.p = {0,0,0};
+                        _propiedades_luz_nueva.d = {0,0,0};
+
+                        _propiedades_luz_nueva.gamma = 0.0f;
+                    }
+
+                    ImGui::EndTabItem();
+                }
+
+                /**
+                //-------------------------------
+                //Pestaña para modificar o borrar
+                //-------------------------------
+                if (ImGui::BeginTabItem("Modificar"))
+                {
+
+                    //Recuperamos los materiales que tenga el Renderer (por puntero para que las actualizaciones
+                    //se hagan en tiempo real en la ventana)
+                    std::vector<Material*> materiales;
+                    std::vector<const char *> nombreMateriales;
+                    bool estoy_pidiendo_materiales = true;
+
+                    _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, estoy_pidiendo_materiales, &materiales);
+
+
+                    //Buscamos si existe el nombre que se tenía
+                    bool nombreSigueExistiendo = false;
+
+                    for (Material* material : materiales) {
+
+                        if (material->nombre == _nombreMaterialSeleccionado) {
+                            nombreSigueExistiendo = true;
+                        }
+
+                        //De paso (en este bucle) relleno los nombres que tendrá el combo
+                        nombreMateriales.push_back(material->nombre.c_str());
+                    }
+
+                    if (!nombreSigueExistiendo && !materiales.empty()) {
+                        //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
+                        _indiceMaterialSeleccionado = 0;
+                        _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
+                    }
+
+                    if (!materiales.empty()) {
+
+                        if (ImGui::Combo("##Material seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
+                                     (int) materiales.size())) {
+
+                            //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                            _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
+                        }
+
+                        if (_indiceMaterialSeleccionado != -1 ) {
+                            ImGui::Text("Ambiental (Ka)");
+                            ImGui::ColorEdit3("##Ambiental (Ka)", &materiales[_indiceMaterialSeleccionado]->ka[0]);
+                            ImGui::Text("Difusa (Kd)");
+                            ImGui::ColorEdit3("##Difusa (Kd)", &materiales[_indiceMaterialSeleccionado]->kd[0]);
+                            ImGui::Text("Especular (Ks)");
+                            ImGui::ColorEdit3("##Especular (Ks)", &materiales[_indiceMaterialSeleccionado]->ks[0]);
+                            ImGui::Text("Brillo");
+                            ImGui::SliderFloat("##Brillo (shininess)", &materiales[_indiceMaterialSeleccionado]->brillo,1.0f,20.0f,"%.1f");
+
+                            if (ImGui::Button("Borrar material")) {
+                                TipoAccionMaterial accion_borrar = TipoAccionMaterial::Borrar_material;
+                                _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, false, &accion_borrar,
+                                                           materiales[_indiceMaterialSeleccionado]->nombre.c_str());
+                            }
+                        }else{
+                            _indiceMaterialSeleccionado = 0;    //La primera iteración, que seleccione al menos el primero
+                        }
+
+                    }else {
+                        ImGui::Text("     Añade algún material     ");
+                        _indiceMaterialSeleccionado = -1;
+                        _nombreMaterialSeleccionado = "";
+                    }
+
+
+                    ImGui::EndTabItem();
+                }
+
+
+                //---------------------------------------------
+                //Pestaña para asignar el material a un modelo
+                //---------------------------------------------
+                if (ImGui::BeginTabItem("Asignar"))
+                {
+                    _accion_actual = TipoAccionMaterial::Asignar_material;
+
+
+                    //Duplico fragmento de código para el combo de materiales
+                    //-------------------------------------------------------
+
+                    //Recuperamos los materiales que tenga el Renderer (por puntero para que las actualizaciones
+                    //se hagan en tiempo real en la ventana)
+                    std::vector<Material*> materiales;
+                    std::vector<const char *> nombreMateriales;
+                    bool estoy_pidiendo_materiales = true;
+
+                    _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, estoy_pidiendo_materiales, &materiales);
+
+                    for (Material* material : materiales) {
+                        nombreMateriales.push_back(material->nombre.c_str());
+                    }
+
+                    if (!materiales.empty()) {
+                        ImGui::Text("Material seleccionado:               ");
+
+                        if (ImGui::Combo("##Material seleccionado", &_indiceMaterialSeleccionado, nombreMateriales.data(),
+                                     (int) materiales.size())) {
+
+                            //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                            _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
+                        }
+                    }else {
+                        ImGui::Text("   No existe ningún material   ");
+                    }
+
+                    //Duplico fragmento de código para la lista de modelos
+                    //-------------------------------------------------------
+
+                    std::vector<const char *> nombreModelos;
+                    estoy_pidiendo_materiales = false;
+
+                    _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, true, estoy_pidiendo_materiales, &nombreModelos);
+
+                    //Se mira si sigue existiendo nombre del modelo (podría ser borrado desde otra ventana)
+                    bool nombreSigueExistiendo = false;
+
+                    for (int i = 0; i < nombreModelos.size(); i++) {
+                        if (nombreModelos[i] == _nombreModeloSeleccionado) {
+                            nombreSigueExistiendo = true;
+                        }
+                    }
+
+                    if (!nombreSigueExistiendo && !nombreModelos.empty()) {
+                        //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
+                        _indiceModeloSeleccionado = 0;
+                        _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
+                    }
+
+                    if (!nombreModelos.empty()) {
+                        ImGui::Text("Modelo seleccionado:               ");
+
+                        //La ejecución entra aquí solo cuando se ha cambiado el tipo de movimiento
+                        if (ImGui::Combo("##Modelo seleccionado", &_indiceModeloSeleccionado, nombreModelos.data(),
+                                         (int) nombreModelos.size())) {
+                            //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                            _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
+                        }
+                    }else {
+                        ImGui::Text("   No existe ningún modelo   ");
+                        _indiceModeloSeleccionado = -1;
+                        _nombreMaterialSeleccionado = "";
+                    }
+
+                    if (ImGui::Button("Asignar material") && !nombreMateriales.empty() && !nombreModelos.empty()) {
+                        _renderer_listener->wakeUp(TipoVentana::V_Gestion_Materiales, false, &_accion_actual,
+                                                   _nombreMaterialSeleccionado.c_str(), _nombreModeloSeleccionado.c_str());
+                    }
+
+
+                    ImGui::EndTabItem();
+                }
+                */
+
+                ImGui::EndTabBar();
+            }
+        }
         ImGui::End();
     }
 }

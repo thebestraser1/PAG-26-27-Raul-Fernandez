@@ -20,7 +20,8 @@ namespace PAG {
         V_Manejo_Camara,
         V_Trasformaciones_Modelos,
         V_Gestion_Materiales,
-        V_Visualizacion_Modelos
+        V_Visualizacion_Modelos,
+        V_Gestion_Luces
     };
 
 

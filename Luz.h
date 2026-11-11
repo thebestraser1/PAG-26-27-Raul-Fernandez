@@ -8,17 +8,25 @@
 #include <bits/unique_ptr.h>      //Esto de los punteros inteligentes me ha servido para hacer el vector de aplicadores
 #include <glm/vec3.hpp>
 #include "ShaderProgram.h"
+#include <glm/trigonometric.hpp>
+#include <glm/glm.hpp>
 
 namespace PAG {
 
+    //Acciones sobre las luces
+    enum TipoAccionLuz {
+        Anadir_luz,
+        Borrar_luz,
+    };
+
     //Propiedades de las luces
     struct PropiedadesLuz {
-        glm::vec3 Ia;
-        glm::vec3 Id;
-        glm::vec3 Is;
-        glm::vec3 p;
-        glm::vec3 d;
-        float gamma;
+        glm::vec3 Ia = glm::vec3(0.0f);
+        glm::vec3 Id = glm::vec3(0.0f);
+        glm::vec3 Is = glm::vec3(0.0f);
+        glm::vec3 p = glm::vec3(0.0f);
+        glm::vec3 d = glm::vec3(0.0f, 0.0f, 0.0f);
+        float gamma = 0.0f;     //ESTO VA EN GRADOS
     };
 
     //Tipos de luz
@@ -37,35 +45,35 @@ namespace PAG {
     public:
         AplicadorLuz () = default;
         virtual ~AplicadorLuz() = default;
-        virtual void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp) = 0;
+        virtual void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp, glm::mat4 matrizV) = 0;
     };
 
 
 
     class LuzAmbiental_Aplicador : public AplicadorLuz {
     public:
-        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp) override;
+        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp, glm::mat4 matrizV) override;
     };
 
 
 
     class LuzPuntual_Aplicador : public AplicadorLuz {
     public:
-        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp) override;
+        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp, glm::mat4 matrizV) override;
     };
 
 
 
     class LuzDireccional_Aplicador : public AplicadorLuz {
     public:
-        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp) override;
+        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp, glm::mat4 matrizV) override;
     };
 
 
 
     class Foco_de_Luz_Aplicador : public AplicadorLuz {
     public:
-        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp) override;
+        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp, glm::mat4 matrizV) override;
     };
 
 
@@ -74,18 +82,18 @@ namespace PAG {
 
     class Luz {
     private:
-        TipoLuz _tipoLuz;
         bool _encendida;
         std::vector<std::unique_ptr<AplicadorLuz>> _aplicadores;
 
     public:
+        std::string _nombre;
+        TipoLuz _tipoLuz;
         PropiedadesLuz _propiedades;
 
     public:
-        Luz(PropiedadesLuz p_iniciales, TipoLuz t_luz);
+        Luz(const std::string &nombre, PropiedadesLuz p_iniciales, TipoLuz t_luz);
 
-        void aplicarLuz(ShaderProgram *sp) const;
-        void setTipoLuz(TipoLuz _tipoLuz);
+        void aplicarLuz(ShaderProgram *sp, glm::mat4 matrizV) const;
         void encendida_apagada();
     };
 

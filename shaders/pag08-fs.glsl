@@ -31,11 +31,11 @@ subroutine vec3 fCalcularColor();
 
 subroutine uniform fCalcularColor colorMallaOLuz;
 
-/* Subrutina para asignar color de malla (azul por defecto)*/
+/* Subrutina para asignar color de malla (negro por defecto)*/
 subroutine ( fCalcularColor )
-vec3 colorMalla ()
+vec3 colorFijo ()
 {
-    return vec3 (0, 0, 1);
+    return vec3 (0, 0, 0);
 }
 
 
@@ -68,7 +68,7 @@ subroutine ( fCalcularColor )
 vec3 luzDireccional() {
     vec3 n = normalize( entrada.normalV );
 
-    vec3 l = -lightDirection;
+    vec3 l = normalize(-lightDirection);
     vec3 v = normalize( -entrada.posicionV );
     vec3 r = reflect( -l, n );
 
@@ -83,7 +83,7 @@ vec3 luzDireccional() {
 subroutine ( fCalcularColor )
 vec3 focoLuz() {
     vec3 l = normalize( lightPosition-entrada.posicionV );
-    vec3 d = lightDirection;
+    vec3 d = normalize(lightDirection);
     float cosGamma = cos(spotAngle * M_PI / 180.0);
     float spotFactor = 1.0;
 

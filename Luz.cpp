@@ -6,7 +6,8 @@
 
 namespace PAG {
 
-    PAG::Luz::Luz(PropiedadesLuz p_iniciales, TipoLuz t_luz) :
+    PAG::Luz::Luz(const std::string &nombre, PropiedadesLuz p_iniciales, TipoLuz t_luz) :
+        _nombre(nombre),
         _tipoLuz(t_luz),
         _encendida(true),
         _propiedades(p_iniciales){
@@ -25,7 +26,7 @@ namespace PAG {
      * Función para aplicar la luz independientemente de su tipo
      * @param sp
      */
-    void PAG::Luz::aplicarLuz(ShaderProgram* sp) const {
+    void PAG::Luz::aplicarLuz(ShaderProgram* sp, glm::mat4 matrizV) const {
 
         PropiedadesLuz propiedades_a_aplicar = PropiedadesLuz();
         if (!_encendida) {
@@ -45,7 +46,7 @@ namespace PAG {
 
         int indice_tipo_luz = static_cast<int>(_tipoLuz);
 
-        _aplicadores[indice_tipo_luz]->aplicarLuz(propiedades_a_aplicar, *sp);
+        _aplicadores[indice_tipo_luz]->aplicarLuz(propiedades_a_aplicar, *sp, matrizV);
     }
 
 
@@ -57,14 +58,6 @@ namespace PAG {
     }
 
 
-    /**
-     * Función para aplicar cambiar el tipo de luz
-     */
-    void PAG::Luz::setTipoLuz(TipoLuz tipo_luz) {
-        _tipoLuz = tipo_luz;
-    }
-
-
 
     /**
      * Función auxiliar de este CPP para asignar los uniforms de la luz al shader. Tiene en cuenta si está
@@ -72,7 +65,7 @@ namespace PAG {
      *
      * (no quiero asignar solo los que sean necesarios porque puede dar fallo, asigno todas)
      */
-    void asignarPropiedadesAShader(const PropiedadesLuz &p, ShaderProgram &sp) {
+    void asignarPropiedadesAShader(const PropiedadesLuz &p, ShaderProgram &sp, glm::mat4 matrizV) {
 
         GLint Ia_asignar = glGetUniformLocation(sp.id_sp(), "Ia");
         GLint Id_asignar = glGetUniformLocation(sp.id_sp(), "Id");
@@ -91,10 +84,12 @@ namespace PAG {
             glUniform3fv(Is_asignar, 1, &p.Is[0]);
 
         if (lightPosition_asignar != -1)
-            glUniform3fv(lightPosition_asignar, 1, &p.p[0]);
+            //Importante multiplicar por la matriz de visión (se hace aquí porque es un uniform --> una sola vez)
+            glUniform3fv(lightPosition_asignar, 1, &glm::vec3(matrizV * glm::vec4(p.p, 1.0f))[0]);
 
         if (lightDirection_asignar != -1)
-            glUniform3fv(lightDirection_asignar, 1, &p.d[0]);
+            //Importante multiplicar por la matriz de visión (se hace aquí porque es un uniform --> una sola vez)
+            glUniform3fv(lightDirection_asignar, 1, &glm::vec3(matrizV * glm::vec4(p.d, 0.0f))[0]);
 
         if (spotAngle_asignar != -1)
             glUniform1f(spotAngle_asignar, p.gamma);
@@ -108,9 +103,9 @@ namespace PAG {
     /**
      * Luz ambiental
      */
-    void LuzAmbiental_Aplicador::aplicarLuz(const PropiedadesLuz &p, ShaderProgram &sp) {
+    void LuzAmbiental_Aplicador::aplicarLuz(const PropiedadesLuz &p, ShaderProgram &sp, glm::mat4 matrizV) {
         std::string nombreSubrutina = "luzAmbiental";
-        asignarPropiedadesAShader(p, sp);
+        asignarPropiedadesAShader(p, sp, matrizV);
 
         //---------------------------------------------
         //   PAG 08 (subrutinas de luz)
@@ -131,9 +126,9 @@ namespace PAG {
     /**
      * Luz puntual
      */
-    void LuzPuntual_Aplicador::aplicarLuz(const PropiedadesLuz &p, ShaderProgram &sp) {
+    void LuzPuntual_Aplicador::aplicarLuz(const PropiedadesLuz &p, ShaderProgram &sp, glm::mat4 matrizV) {
         std::string nombreSubrutina = "luzPuntual";
-        asignarPropiedadesAShader(p, sp);
+        asignarPropiedadesAShader(p, sp, matrizV);
 
         //---------------------------------------------
         //   PAG 08 (subrutinas de luz)
@@ -153,9 +148,9 @@ namespace PAG {
     /**
      * Luz direccional
      */
-    void LuzDireccional_Aplicador::aplicarLuz(const PropiedadesLuz &p, ShaderProgram &sp) {
+    void LuzDireccional_Aplicador::aplicarLuz(const PropiedadesLuz &p, ShaderProgram &sp, glm::mat4 matrizV) {
         std::string nombreSubrutina = "luzDireccional";
-        asignarPropiedadesAShader(p, sp);
+        asignarPropiedadesAShader(p, sp, matrizV);
 
         //---------------------------------------------
         //   PAG 08 (subrutinas de luz)
@@ -175,9 +170,9 @@ namespace PAG {
     /**
      * Foco de luz
      */
-    void Foco_de_Luz_Aplicador::aplicarLuz(const PropiedadesLuz &p, ShaderProgram &sp) {
+    void Foco_de_Luz_Aplicador::aplicarLuz(const PropiedadesLuz &p, ShaderProgram &sp, glm::mat4 matrizV) {
         std::string nombreSubrutina = "focoLuz";
-        asignarPropiedadesAShader(p, sp);
+        asignarPropiedadesAShader(p, sp, matrizV);
 
         //---------------------------------------------
         //   PAG 08 (subrutinas de luz)

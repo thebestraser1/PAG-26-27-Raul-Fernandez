@@ -90,7 +90,8 @@ namespace PAG {
     private:
         void controlar_uniforms_modelo(Modelo *modelo_usado) const;
         bool comprobar_modelos_mismo_nombre(const std::string& nombreModelo);
-        bool comprobar_materiales_mismo_nombre(const std::string &nombreModelo);
+        bool comprobar_materiales_mismo_nombre(const std::string &nombreMaterial);
+        bool comprobar_luces_mismo_nombre(const std::string &nombreLuz) const;
         void borrar_modelo_por_nombre(const std::string& nombreModelo);
         Modelo* obtener_modelo_por_nombre(const std::string &nombreModelo) const;
         void desasignarMaterialModelos(const std::string &nombreMaterial) const;
