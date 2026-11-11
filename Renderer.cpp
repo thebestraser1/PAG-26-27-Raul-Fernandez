@@ -101,7 +101,7 @@ namespace PAG {
         if (!_modelos.empty()) {
             for (Modelo *modelo: _modelos) {
                 glUseProgram(modelo->getShaderModelo()->id_sp());
-                controlar_uniforms(modelo);
+                controlar_uniforms_modelo(modelo);
 
                 modelo->Dibujar();
             }
@@ -111,7 +111,7 @@ namespace PAG {
     /**
      * Función encargada de otorgar los uniforms que necesite el shader program de cada práctica en concreto
      */
-    void Renderer::controlar_uniforms(Modelo* modelo_usado) const {
+    void Renderer::controlar_uniforms_modelo(Modelo* modelo_usado) const {
 
         //---------------------------------------------
         //                   PAG 03

@@ -27,6 +27,8 @@ add_executable(${PROJECT_NAME} ${MY_FILES} ${GLAD_FILES} ${IMGUI_FILES}
         Modelo.h
         imfilebrowser.h
         Material.h
+        Luz.cpp
+        Luz.h
 )
 
 #Definimos este directorio para buscar includes
