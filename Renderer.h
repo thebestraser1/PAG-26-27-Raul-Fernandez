@@ -10,6 +10,7 @@
 #include "Camara.h"
 #include "Modelo.h"
 #include "Listener.h"
+#include "Luz.h"
 #include "Material.h"
 #include "Ventanas.h"
 
@@ -41,6 +42,9 @@ namespace PAG {
         std::vector<Material*> _materiales;
         ModoVisualizacion _modoVisualizacion = MODELOS_RELLENOS;    //RELLENOS = 1, ALAMBRE = 0
         std::mt19937 _genRandomPos;                                 //Generador aleatorios de posiciones
+
+        //Luces
+        std::vector<Luz*> _luces;
 
         //Aspecto de ventana
         int anchoVentana = 1280;

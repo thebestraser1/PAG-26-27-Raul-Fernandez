@@ -79,7 +79,9 @@ namespace PAG {
      */
     void Renderer::inicializarOpenGL() {
         glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
+        glEnable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
         glEnable(GL_MULTISAMPLE);
     }
 
@@ -103,13 +105,28 @@ namespace PAG {
                 glUseProgram(modelo->getShaderModelo()->id_sp());
                 controlar_uniforms_modelo(modelo);
 
-                modelo->Dibujar();
+                bool primera = true;
+                for (Luz *luz : _luces) {
+
+                    if (primera) {
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                        primera = false;
+                    }else {
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                    }
+
+                    if (_modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS) {
+                        luz->aplicarLuz(modelo->getShaderModelo());
+                    }
+                    modelo->Dibujar();
+                }
+
             }
         }
     }
 
     /**
-     * Función encargada de otorgar los uniforms que necesite el shader program de cada práctica en concreto
+     * Función encargada de otorgar los uniforms que necesite el shader program de cada práctica en concreto para el modelo
      */
     void Renderer::controlar_uniforms_modelo(Modelo* modelo_usado) const {
 
@@ -121,7 +138,7 @@ namespace PAG {
 
 
         //---------------------------------------------
-        //               PAG 05 y PAG 07
+        //           PAG 05, PAG 07 y PAG 08
         //---------------------------------------------
         } else if (modelo_usado->getShaderModelo()->nombre_shader() == "pag05"
                    || modelo_usado->getShaderModelo()->nombre_shader() == "pag07") {
@@ -158,9 +175,9 @@ namespace PAG {
 
 
             //---------------------------------------------
-            //               PAG 07 (materiales)
+            //          PAG 07 y PAG 08 (materiales)
             //---------------------------------------------
-            if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07") {
+            if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07" && modelo_usado->getShaderModelo()->nombre_shader() == "pag08") {
 
                 bool hayQueBorrarMaterial = false;
                 Material* materialModelo = nullptr;
@@ -199,24 +216,51 @@ namespace PAG {
                 }
 
 
-                //Uniforms del vertex shader (subrutinas) --> Voy a hacer el proceso completo (aunque no haga falta) para
-                //tener el modelo mental
+                //---------------------------------------------
+                //   PAG 07 (subrutinas materiales de modelo)
+                //---------------------------------------------
+                if (modelo_usado->getShaderModelo()->nombre_shader() == "pag07") {
+                    //Uniforms del fragment shader (subrutinas) --> Voy a hacer el proceso completo (aunque no haga falta) para
+                    //tener el modelo mental
 
-                //Este es el hueco que ocupa la subrutina en el vector que usará glUniformSubroutinesuiv
-                GLint subrutinaMalla_O_Difuso  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaODifuso" );
+                    //Este es el hueco que ocupa la subrutina en el vector que usará glUniformSubroutinesuiv
+                    GLint subrutinaMalla_O_Difuso  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaODifuso" );
 
-                //Este es el índice de la función elegida para la subrutina (que se pondrá en el hueco del vector de antes)
-                GLuint id_Malla_O_Difuso = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, nombreSubrutina.c_str());
+                    //Este es el índice de la función elegida para la subrutina (que se pondrá en el hueco del vector de antes)
+                    GLuint id_Malla_O_Difuso = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, nombreSubrutina.c_str());
 
-                //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
-                GLuint indices[1];
-                indices[subrutinaMalla_O_Difuso]  = id_Malla_O_Difuso;
-                glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
+                    //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
+                    GLuint indices[1];
+                    indices[subrutinaMalla_O_Difuso]  = id_Malla_O_Difuso;
+                    glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
+
+                }
+
+                //---------------------------------------------
+                //    PAG 08 (gestión de subrutina de malla)    --> Las luces se encargarán del resto de subrutinas
+                //---------------------------------------------
+                if (modelo_usado->getShaderModelo()->nombre_shader() == "pag08" && _modoVisualizacion == ModoVisualizacion::MODELOS_ALAMBRE) {
+
+                    GLint subrutinaMalla_O_Luz  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaOLuz" );
+                    GLuint id_Malla_O_Luz = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, nombreSubrutina.c_str());
+
+                    //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
+                    GLuint indices[1];
+                    indices[subrutinaMalla_O_Luz]  = id_Malla_O_Luz;
+                    glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
+                }
 
                 if (hayQueBorrarMaterial) {
                     delete materialModelo;
                     materialModelo = nullptr;
                 }
+
+
+            //---------------------------------------------
+            //         PAG 08 (materiales y luces)
+            //---------------------------------------------
+
+
             }
 
         } else {
