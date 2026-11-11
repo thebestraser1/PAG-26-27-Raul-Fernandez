@@ -19,7 +19,6 @@ namespace PAG {
         glm::vec3 p;
         glm::vec3 d;
         float gamma;
-        float s;
     };
 
     //Tipos de luz

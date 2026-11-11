@@ -18,7 +18,6 @@ uniform float brillo;
 uniform vec3 Ia;
 uniform vec3 Id;
 uniform vec3 Is;
-uniform float shininess;
 uniform vec3 lightPosition;
 uniform vec3 lightDirection;
 uniform float spotAngle;
@@ -60,7 +59,7 @@ vec3 luzPuntual() {
     vec3 diffuse =(Id * Kd * max( dot(l,n), 0.0));
     vec3 specular;
 
-    specular = (Is * Ks * pow( max( dot(r,v), 0.0), shininess));
+    specular = (Is * Ks * pow( max( dot(r,v), 0.0), brillo));
     return diffuse + specular;
 }
 
@@ -76,7 +75,7 @@ vec3 luzDireccional() {
     vec3 diffuse =(Id * Kd * max( dot(l,n), 0.0));
     vec3 specular;
 
-    specular = (Is * Ks * pow( max( dot(r,v), 0.0), shininess));
+    specular = (Is * Ks * pow( max( dot(r,v), 0.0), brillo));
     return diffuse + specular;
 }
 
@@ -94,7 +93,7 @@ vec3 focoLuz() {
     vec3 r = reflect( -l, n );
 
     vec3 diffuse =(Id * Kd * max( dot(l,n), 0.0));
-    vec3 specular = (Is * Ks * pow( max( dot(r,v), 0.0), shininess));
+    vec3 specular = (Is * Ks * pow( max( dot(r,v), 0.0), brillo));
     return spotFactor * (diffuse + specular);
 }
 

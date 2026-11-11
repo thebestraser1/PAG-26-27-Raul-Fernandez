@@ -575,10 +575,9 @@ namespace PAG {
                                 propiedades.Ia = glm::vec3(0.2f, 0.2f, 0.2f);
                                 propiedades.Id = glm::vec3(0.8f, 0.8f, 0.8f);
                                 propiedades.Is = glm::vec3(1.0f, 1.0f, 1.0f);
-                                propiedades.p = glm::vec3(0.0f, 5.0f, 5.0f);
-                                propiedades.d = glm::vec3(0.0f, -1.0f, -1.0f);
+                                propiedades.p = glm::vec3(_camara->getMatV() * glm::vec4(0.0f, 0.5f, 0.5f, 1.0f));
+                                propiedades.d = glm::vec3(_camara->getMatV() * glm::vec4(0.0f, -1.0f, -1.0f, 1.0f));
                                 propiedades.gamma = glm::radians(30.0f);
-                                propiedades.s = 32.0f;
 
                                 PAG::Luz *luz_nueva = new Luz(propiedades, TipoLuz::Luz_Ambiental);
 
@@ -591,7 +590,6 @@ namespace PAG {
                                 propiedades2.p = glm::vec3(0.0f, 5.0f, 5.0f);
                                 propiedades2.d = glm::vec3(0.0f, -1.0f, -1.0f);
                                 propiedades2.gamma = glm::radians(30.0f);
-                                propiedades2.s = 32.0f;
 
                                 PAG::Luz *luz_nueva2 = new Luz(propiedades2, TipoLuz::Luz_Puntual);
 

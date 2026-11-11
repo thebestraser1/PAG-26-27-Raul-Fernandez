@@ -39,7 +39,6 @@ namespace PAG {
             propiedades_a_aplicar.p = _propiedades.p;
             propiedades_a_aplicar.d = _propiedades.d;
             propiedades_a_aplicar.gamma = _propiedades.gamma;
-            propiedades_a_aplicar.s = _propiedades.s;
         }else {
             propiedades_a_aplicar = _propiedades;
         }
@@ -78,7 +77,6 @@ namespace PAG {
         GLint Ia_asignar = glGetUniformLocation(sp.id_sp(), "Ia");
         GLint Id_asignar = glGetUniformLocation(sp.id_sp(), "Id");
         GLint Is_asignar = glGetUniformLocation(sp.id_sp(), "Is");
-        GLint shininess_asignar = glGetUniformLocation(sp.id_sp(), "shininess");
         GLint lightPosition_asignar = glGetUniformLocation(sp.id_sp(), "lightPosition");
         GLint lightDirection_asignar = glGetUniformLocation(sp.id_sp(), "lightDirection");
         GLint spotAngle_asignar = glGetUniformLocation(sp.id_sp(), "spotAngle");
@@ -91,9 +89,6 @@ namespace PAG {
 
         if (Is_asignar != -1)
             glUniform3fv(Is_asignar, 1, &p.Is[0]);
-
-        if (shininess_asignar != -1)
-            glUniform1f(shininess_asignar, p.s);
 
         if (lightPosition_asignar != -1)
             glUniform3fv(lightPosition_asignar, 1, &p.p[0]);
