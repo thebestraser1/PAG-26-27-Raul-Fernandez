@@ -998,20 +998,28 @@ namespace PAG {
 
                     if (ImGui::Button("Añadir") && !_nombre_luz_anadir.empty()) {
 
-                        _renderer_listener->wakeUp(TipoVentana::V_Gestion_Luces, false, &_accion_actual,
-                                                   &_tipo_luz_nueva, _nombre_luz_anadir.c_str(), &_propiedades_luz_nueva);
+                        //La dirección (d) no puede ser 0 en caso de una luz direccional o un foco
+                        if ((abs(_propiedades_luz_nueva.d[0]) <= 0.00001 && abs(_propiedades_luz_nueva.d[1]) <= 0.00001 &&
+                            abs(_propiedades_luz_nueva.d[2]) <= 0.00001) && (_tipo_luz_nueva == TipoLuz::Foco_de_Luz
+                                || _tipo_luz_nueva == TipoLuz::Luz_Direccional)) {
+                            std::cout << "La dirección no puede ser 0 en una luz direccional o en un foco de luz.\n"
+                                         "La luz no se añadirá" << std::endl;
+                        }else {
+                            _renderer_listener->wakeUp(TipoVentana::V_Gestion_Luces, false, &_accion_actual,
+                                                       &_tipo_luz_nueva, _nombre_luz_anadir.c_str(), &_propiedades_luz_nueva);
 
-                        //Devolvemos las variables a 0
-                        _nombre_luz_anadir = "";
+                            //Devolvemos las variables a 0
+                            _nombre_luz_anadir = "";
 
-                        _propiedades_luz_nueva.Ia = {0,0,0};
-                        _propiedades_luz_nueva.Id = {0,0,0};
-                        _propiedades_luz_nueva.Is = {0,0,0};
+                            _propiedades_luz_nueva.Ia = {0,0,0};
+                            _propiedades_luz_nueva.Id = {0,0,0};
+                            _propiedades_luz_nueva.Is = {0,0,0};
 
-                        _propiedades_luz_nueva.p = {0,0,0};
-                        _propiedades_luz_nueva.d = {0,0,0};
+                            _propiedades_luz_nueva.p = {0,0,0};
+                            _propiedades_luz_nueva.d = {0,0,0};
 
-                        _propiedades_luz_nueva.gamma = 0.0f;
+                            _propiedades_luz_nueva.gamma = 0.0f;
+                        }
                     }
 
                     ImGui::EndTabItem();

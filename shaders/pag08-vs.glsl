@@ -1,7 +1,5 @@
 #version 410
 
-/* NOTA: no he tocado aún este shader al no tener cálculos de iluminación (para pasar matrizMV) */
-
 /* Entradas */
 layout (location = 0) in vec3 vPosicion;
 layout (location = 1) in vec3 vNormal;
