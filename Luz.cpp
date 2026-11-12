@@ -87,9 +87,13 @@ namespace PAG {
             //Importante multiplicar por la matriz de visión (se hace aquí porque es un uniform --> una sola vez)
             glUniform3fv(lightPosition_asignar, 1, &glm::vec3(matrizV * glm::vec4(p.p, 1.0f))[0]);
 
-        if (lightDirection_asignar != -1)
+        if (lightDirection_asignar != -1) {
+            //Se normaliza la dirección de luz (para no hacerlo repetidamente en el shader --> más eficiente)
+            glm::vec3 direccionLuz = glm::normalize(p.d);
+
             //Importante multiplicar por la matriz de visión (se hace aquí porque es un uniform --> una sola vez)
-            glUniform3fv(lightDirection_asignar, 1, &glm::vec3(matrizV * glm::vec4(p.d, 0.0f))[0]);
+            glUniform3fv(lightDirection_asignar, 1, &glm::vec3(matrizV * glm::vec4(direccionLuz, 0.0f))[0]);
+        }
 
         if (spotAngle_asignar != -1)
             glUniform1f(spotAngle_asignar, p.gamma);
