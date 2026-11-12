@@ -570,6 +570,18 @@ namespace PAG {
                     va_end(args);
                     break;
                 }
+                case TipoVentana::V_Gestion_Luces: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    std::vector<Luz*>* luces = va_arg(args, std::vector<Luz*>*);
+                    for (Luz* luz : _luces) {
+                        luces->push_back(luz);
+                    }
+
+                    va_end(args);
+                    break;
+                }
                 default: ;
             }
 
@@ -792,7 +804,7 @@ namespace PAG {
                     PAG::TipoAccionLuz* tipo_accion = va_arg(args, PAG::TipoAccionLuz*);
 
                     switch (*tipo_accion) {
-                        case (TipoAccionLuz::Anadir_luz): {
+                        case TipoAccionLuz::Anadir_luz: {
                             //Atributos de la luz
                             TipoLuz* tipo_luz = va_arg(args, TipoLuz*);
                             std::string nombreLuz(va_arg(args, char*));
@@ -807,6 +819,25 @@ namespace PAG {
                                         "Ya hay una luz con el nombre: " << nombreLuz <<
                                         "\n--------------------\n" << std::endl;
                             }
+                            break;
+                        }
+                        case TipoAccionLuz::Borrar_luz: {
+
+                            std::string nombreLuz(va_arg(args, char*));
+
+                            std::cout << "Borrando luz: " << nombreLuz<< std::endl;
+                            borrar_luz_por_nombre(nombreLuz);
+
+                            break;
+                        }
+
+                        case TipoAccionLuz::Encender_apagar: {
+
+                            std::string nombreLuz(va_arg(args, char*));
+
+                            Luz* luz_encender_apagar = obtener_luz_por_nombre(nombreLuz);
+                            luz_encender_apagar->encendida_apagada();
+
                             break;
                         }
                         default:;
@@ -925,5 +956,36 @@ namespace PAG {
             }
         }
         return true;
+    }
+
+
+    /**
+     * Función para borrar una luz por nombre
+     */
+    void Renderer::borrar_luz_por_nombre(const std::string &nombre_luz) {
+        for (int i=0; i<_luces.size(); i++) {
+            if (_luces[i]->_nombre == nombre_luz) {
+                delete _luces[i];
+                _luces[i] = nullptr;
+                _luces.erase(_luces.begin() + i);
+
+                std::cout << "Se ha borrado la luz " << nombre_luz << std::endl;
+                return;
+            }
+        }
+    }
+
+
+    /**
+     * Función para obtener una luz por nombre
+     */
+    Luz *Renderer::obtener_luz_por_nombre(const std::string &nombreLuz) const {
+        for (Luz * _luz : _luces) {
+            if (_luz->_nombre == nombreLuz) {
+                return _luz;
+            }
+        }
+
+        return nullptr;
     }
 } // PAG

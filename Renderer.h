@@ -91,12 +91,14 @@ namespace PAG {
         void controlar_uniforms_modelo(Modelo *modelo_usado) const;
         bool comprobar_modelos_mismo_nombre(const std::string& nombreModelo);
         bool comprobar_materiales_mismo_nombre(const std::string &nombreMaterial);
-        bool comprobar_luces_mismo_nombre(const std::string &nombreLuz) const;
         void borrar_modelo_por_nombre(const std::string& nombreModelo);
         Modelo* obtener_modelo_por_nombre(const std::string &nombreModelo) const;
         void desasignarMaterialModelos(const std::string &nombreMaterial) const;
         void borrar_material_por_nombre(const std::string &nombreMaterial);
         Material* obtener_material_por_nombre(const std::string &nombreMaterial) const;
+        bool comprobar_luces_mismo_nombre(const std::string &nombreLuz) const;
+        void borrar_luz_por_nombre(const std::string &nombre_luz);
+        Luz* obtener_luz_por_nombre(const std::string &nombreLuz) const;
 
     };
 } // PAG

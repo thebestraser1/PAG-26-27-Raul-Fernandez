@@ -16,6 +16,7 @@ namespace PAG {
     //Acciones sobre las luces
     enum TipoAccionLuz {
         Anadir_luz,
+        Encender_apagar,
         Borrar_luz,
     };
 
@@ -82,13 +83,13 @@ namespace PAG {
 
     class Luz {
     private:
-        bool _encendida;
         std::vector<std::unique_ptr<AplicadorLuz>> _aplicadores;
 
     public:
         std::string _nombre;
         TipoLuz _tipoLuz;
         PropiedadesLuz _propiedades;
+        bool _encendida;
 
     public:
         Luz(const std::string &nombre, PropiedadesLuz p_iniciales, TipoLuz t_luz);

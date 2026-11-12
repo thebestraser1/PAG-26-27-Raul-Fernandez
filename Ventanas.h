@@ -181,6 +181,7 @@ namespace PAG {
 
         std::string _nombreLuzSeleccionada;
         int _indiceLuzSeleccionada = -1;   //Indice equivalente al vector de modelos de Renderer.cpp
+        TipoLuz _tipo_luz_modificada;
 
     public:
         VentanaLuces(float x, float y, bool minimizada);
