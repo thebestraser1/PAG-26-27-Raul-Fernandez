@@ -83,7 +83,7 @@ namespace PAG {
 
     class Luz {
     private:
-        std::vector<std::unique_ptr<AplicadorLuz>> _aplicadores;
+        std::vector<AplicadorLuz*> _aplicadores;
 
     public:
         std::string _nombre;
@@ -93,6 +93,7 @@ namespace PAG {
 
     public:
         Luz(const std::string &nombre, PropiedadesLuz p_iniciales, TipoLuz t_luz);
+        ~Luz();
 
         void aplicarLuz(ShaderProgram *sp, glm::mat4 matrizV) const;
         void encendida_apagada();

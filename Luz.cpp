@@ -15,12 +15,27 @@ namespace PAG {
         //Creamos el vector con los distintos "tipos de luces que se pueden invocar"
         //El tipo de luz determinará el índice que quiero invocar en este vector
 
-        _aplicadores.push_back(std::make_unique<LuzAmbiental_Aplicador>());
-        _aplicadores.push_back(std::make_unique<LuzPuntual_Aplicador>());
-        _aplicadores.push_back(std::make_unique<LuzDireccional_Aplicador>());
-        _aplicadores.push_back(std::make_unique<Foco_de_Luz_Aplicador>());
+        _aplicadores.push_back(new LuzAmbiental_Aplicador());
+        _aplicadores.push_back(new LuzPuntual_Aplicador());
+        _aplicadores.push_back(new LuzDireccional_Aplicador());
+        _aplicadores.push_back(new Foco_de_Luz_Aplicador());
 
     }
+
+
+    /**
+     * Destructor de luz
+     */
+    PAG::Luz::~Luz() {
+        if (!_aplicadores.empty()) {
+            for (const AplicadorLuz *aplicador: _aplicadores) {
+                delete aplicador;
+                aplicador = nullptr;
+            }
+            _aplicadores.clear();
+        }
+    }
+
 
     /**
      * Función para aplicar la luz independientemente de su tipo
