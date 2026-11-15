@@ -16,6 +16,8 @@
 
 - [Práctica 7: Subrutinas GLSL y materiales](#práctica-7)
 
+- [Práctica 8: Luces](#práctica-8)
+
 ## Práctica 1
 
 ### Callback de cambio de color mediante "scroll" del ratón
@@ -3859,3 +3861,627 @@ classDiagram
 _NOTA: Se ha simplificado mucho el diagrama para entender solo los cambios implementados. Las ventanas de anteriores diagramas
 se han introducido en una clase ficticia llamada `VentanasAnteriores`. Además, en la clase `Modelo` se han presentado solo
 los métodos y el atributo que se ha añadido respecto a lo que ya se tenía._
+
+
+## Práctica 8
+
+### Patrón estrategia para las luces
+
+Para la implementación de los diferentes tipos de luces se ha optado por un **patrón estrategia**, donde una clase base con
+todos los atributos puede usar dichos atirbutos de la manera en la que defina la estrategia. Es decir, dependiendo
+si es una luz ambiental, puntual, direccional o si es un foco de luz.
+
+De esta forma, veamos cómo se ha implementado la clase base para ir desgranando todos los elementos que posee:
+
+```c++
+    class Luz {
+    private:
+        std::vector<AplicadorLuz*> _aplicadores;
+
+    public:
+        std::string _nombre;
+        TipoLuz _tipoLuz;
+        PropiedadesLuz _propiedades;
+        bool _encendida;
+
+    public:
+        Luz(const std::string &nombre, PropiedadesLuz p_iniciales, TipoLuz t_luz);
+        ~Luz();
+
+        void aplicarLuz(ShaderProgram *sp, glm::mat4 matrizV) const;
+        void encendida_apagada();
+    };
+```
+
+En primer lugar, analicemos los atributos públicos básicos. El **nombre** no es más que el identificador único de la luz
+(que permitirá su posterior gestión en la interfaz) al igual que ocurre con el modelo y los materiales.
+
+El **tipo de luz** no es más que un enumerado (cuyo orden importa) para los diferentes tipos de luz (o estrategias). Su
+implementación es esta:
+
+```c++
+    enum TipoLuz {
+        Luz_Ambiental,
+        Luz_Puntual,
+        Luz_Direccional,
+        Foco_de_Luz,
+    };
+    constexpr int NUM_TIPOS_LUZ = 4;    //Para gestión de vector de estrategias
+```
+
+Las **propiedades de luz** no es más que un `struct` con todos los atributos relativos a las luces (independientemente
+de su tipo). Si hay una estrategia que no utiliza ciertos parámetros, simplemente no se tienen en cuenta. Su implementación
+es la siguiente:
+
+```c++
+    struct PropiedadesLuz {
+        glm::vec3 Ia = glm::vec3(0.0f);
+        glm::vec3 Id = glm::vec3(0.0f);
+        glm::vec3 Is = glm::vec3(0.0f);
+        glm::vec3 p = glm::vec3(0.0f);
+        glm::vec3 d = glm::vec3(0.0f, 0.0f, 0.0f);
+        float gamma = 0.0f;     //ESTO VA EN GRADOS
+    };
+```
+
+Por último, se tiene un parámetro para establecer si la luz está **encendida** o no. En caso de no estarlo, se establecen
+sus intensidades a 0 (sin borrar los datos para no perderlos si se vuele a encender).
+
+Siguiendo, se tiene un vector llamado `_aplicadores` que será el que tenga las diferentes estrategias de aplicación de
+luz. Estas estrategias se analizarán con detalle en la siguiente sección. Ahora mismo solo hay que tener en mente que
+todas ellas tienen un método `->aplicar()` que les permite aplicar los parámetros de la luz según la estrategia que 
+definen.
+
+De esta forma, sigo con los métodos de esta clase base. Comenzando por el **constructor**, es importante añadir todas las
+estrategias (EN EL ORDEN QUE SE PUSO EN EL ENUMERADO ANTERIOR).
+
+```c++
+    PAG::Luz::Luz(const std::string &nombre, PropiedadesLuz p_iniciales, TipoLuz t_luz) :
+        _nombre(nombre),
+        _tipoLuz(t_luz),
+        _encendida(true),
+        _propiedades(p_iniciales){
+
+        //Creamos el vector con los distintos "tipos de luces que se pueden invocar"
+        //El tipo de luz determinará el índice que quiero invocar en este vector
+
+        _aplicadores.push_back(new LuzAmbiental_Aplicador());
+        _aplicadores.push_back(new LuzPuntual_Aplicador());
+        _aplicadores.push_back(new LuzDireccional_Aplicador());
+        _aplicadores.push_back(new Foco_de_Luz_Aplicador());
+
+    }
+```
+
+_NOTA: es importante que en el destructor se elimine efectivamente esta estructura._
+
+El método de **aplicación de la luz** es idéntico idependientemente de la luz que sea (es la ventaja del patrón estrategia).
+Así, se distingue si la luz está encendida o apagada (para considerar la intensidad de la luz o no).
+
+A este método se le pasa por entrada el ShaderProgram (para elegir subrutina dependiendo de la estrategia usada --> esto se
+verá en la siguiente sección) y la matriz de visión de la cámara. Esto último es esencial ya que todas los cálculos lumínicos
+(relativos a posición de la luz o dirección de la misma) han de ser realizados teniendo en cuenta la cámara.
+
+_Observación: el efecto de no multiplicar por la matriz de visión provocaba (p.e en la luz direccional) que si se ponía
+dirección (1, 0, 0), la cámara "llevase consigo" la luz direccional e iluminase a los modelos por la izquierda conforme
+la cámara se movía._
+
+La implementación genérica y única del método `aplciarLuz()` es la siguiente:
+
+```c++
+    void PAG::Luz::aplicarLuz(ShaderProgram* sp, glm::mat4 matrizV) const {
+
+        PropiedadesLuz propiedades_a_aplicar = PropiedadesLuz();
+        if (!_encendida) {
+
+            //Apagamos las intensidades
+            propiedades_a_aplicar.Ia = glm::vec3(0.0f);
+            propiedades_a_aplicar.Id = glm::vec3(0.0f);
+            propiedades_a_aplicar.Is = glm::vec3(0.0f);
+
+            //El resto queda igual (no importa vaya)
+            propiedades_a_aplicar.p = _propiedades.p;
+            propiedades_a_aplicar.d = _propiedades.d;
+            propiedades_a_aplicar.gamma = _propiedades.gamma;
+        }else {
+            propiedades_a_aplicar = _propiedades;
+        }
+
+        int indice_tipo_luz = static_cast<int>(_tipoLuz);
+
+        _aplicadores[indice_tipo_luz]->aplicarLuz(propiedades_a_aplicar, *sp, matrizV);
+    }
+```
+
+_NOTA: es importante reseñar que el `static_cast` extrae el índice del enumerado al que pertenece el tipo. Como se ha
+puesto el mismo orden en el vector, se puede "elegir" la estrategia que se usa._
+
+Por último, el método `encendida_apagada()` es un mero "interruptor" que alterna la variable booleana `_encendida`:
+
+```c++
+    void PAG::Luz::encendida_apagada() {
+        _encendida = !_encendida;
+    }
+```
+
+
+
+### Gestión de subrutinas en shader por cada estrategia
+
+Para aplicar cada uno de los tipos de luces en la escena se ha optado (como se ha mencionado anteriormente) por el
+patrón estrategia. Aquí se verá la manera en la que cada una de las estrategias escoge la subrutina que le corresponde
+y asigna los "uniforms" del shader. Para ello, primero se hace necesario tomar en cuenta el shader usado (`pag08`):
+
+**Vertex shader**
+
+En este shader se transfieren las normales y las posiciones de cada uno de los vértices en el espacio de visión (sin
+proyectar aún estos elementos) ya que es ahí donde se hacen los cálculos lumínicos (pues aún "no he alterado los
+ángulos" que conforman las posiciones o las normales).
+
+De esta forma, las posiciones reales (de OpenGL) sí se pasan proyectadas pero añadimos 2 salidas adicionales con los datos
+sin proyectar:
+
+```glsl
+#version 410
+
+/* Entradas */
+layout (location = 0) in vec3 vPosicion;
+layout (location = 1) in vec3 vNormal;
+
+/* Uniforms */
+/* Matriz de modelado trasformación y visión */
+uniform mat4 matrizMVP;
+uniform mat4 mModelView;
+
+/* Salidas */
+/* Normal y posición de cada vértice */
+
+out salidaVS
+{
+ vec3 posicionV;
+ vec3 normalV;
+} salida;
+
+void main ()
+{
+    salida.normalV = vec3(mModelView * vec4(vNormal, 0.0));
+    salida.posicionV = vec3(mModelView * vec4(vPosicion, 1.0));
+    gl_Position = matrizMVP * vec4 ( vPosicion, 1 );
+}
+```
+
+**Fragment shader**
+
+Aquí es donde está el grueso de la iluminación. Es bastante parecido al que se vió en la anterior práctica (salvo
+por las subrutinas y "uniforms" de iluminación). Se ha seguido una implementación realmente similar a la dada en clase:
+
+```glsl
+#version 410
+const float M_PI = 3.14159265358979;
+
+/* Entradas */
+in salidaVS
+{
+ vec3 posicionV;
+ vec3 normalV;
+} entrada;
+
+/* Uniforms de material */
+uniform vec3 Ka;
+uniform vec3 Kd;
+uniform vec3 Ks;
+uniform float brillo;
+
+/* Uniforms de luces */
+uniform vec3 Ia;
+uniform vec3 Id;
+uniform vec3 Is;
+uniform vec3 lightPosition;
+uniform vec3 lightDirection;
+uniform float spotAngle;
+
+
+/* Salidas */
+out vec4 colorFragmento;
+
+/* SUBRUTINAS DE ILUMINACIÓN*/
+subroutine vec3 fCalcularColor();
+
+subroutine uniform fCalcularColor colorMallaOLuz;
+
+/* Subrutina para asignar color de malla (negro por defecto)*/
+subroutine ( fCalcularColor )
+vec3 colorFijo ()
+{
+    return vec3 (0, 0, 0);
+}
+
+
+/* Subrutina para asignar color ambiental al modelo*/
+subroutine ( fCalcularColor )
+vec3 luzAmbiental() {
+    vec3 ambient = (Ia * Ka);
+    return ambient;
+}
+
+
+/* Subrutina para una luz puntual*/
+subroutine ( fCalcularColor )
+vec3 luzPuntual() {
+    vec3 n = normalize( entrada.normalV );
+
+    vec3 l = normalize( lightPosition-entrada.posicionV );
+    vec3 v = normalize( -entrada.posicionV );
+    vec3 r = reflect( -l, n );
+
+    vec3 diffuse =(Id * Kd * max( dot(l,n), 0.0));
+    vec3 specular;
+
+    specular = (Is * Ks * pow( max( dot(r,v), 0.0), brillo));
+    return diffuse + specular;
+}
+
+/* Subrutina para una luz direccional*/
+subroutine ( fCalcularColor )
+vec3 luzDireccional() {
+    vec3 n = normalize( entrada.normalV );
+
+    vec3 l = -lightDirection;
+    vec3 v = normalize( -entrada.posicionV );
+    vec3 r = reflect( -l, n );
+
+    vec3 diffuse =(Id * Kd * max( dot(l,n), 0.0));
+    vec3 specular;
+
+    specular = (Is * Ks * pow( max( dot(r,v), 0.0), brillo));
+    return diffuse + specular;
+}
+
+/* Subrutina para un foco de luz*/
+subroutine ( fCalcularColor )
+vec3 focoLuz() {
+    vec3 l = normalize( lightPosition-entrada.posicionV );
+    vec3 d = lightDirection;
+    float cosGamma = cos(spotAngle * M_PI / 180.0);
+    float spotFactor = 1.0;
+
+    if (dot(-l, d) < cosGamma) { spotFactor = 0.0; }
+    vec3 n = normalize( entrada.normalV );
+    vec3 v = normalize( -entrada.posicionV );
+    vec3 r = reflect( -l, n );
+
+    vec3 diffuse =(Id * Kd * max( dot(l,n), 0.0));
+    vec3 specular = (Is * Ks * pow( max( dot(r,v), 0.0), brillo));
+    return spotFactor * (diffuse + specular);
+}
+
+
+void main ()
+{
+    colorFragmento = vec4(colorMallaOLuz(), 1.0);
+}
+```
+
+Como se puede observar, se tienen 5 subrutinas. Una para el caso de la malla (o de no tener luces) y el resto para aplicar
+la estrategia de luz que se considere. La explicación de estos métodos se ha visto en teoría.
+
+Hay un pequeño detalle y es la normalización de la dirección --> ¿Por qué no se hace? Se normaliza desde fuera. El dato
+(cuando se pasa por "uniform") ya viene normalizado. De esta forma, en lugar de estar por cada fragmento normalizando,
+se hace una sola vez al aplicar la estrategia del tipo de luz correspondiente (en este caso sería la direccional y 
+el foco de luz).
+
+Teniendo estos shaders en mente, veamos cómo se han implementado las distintas estrategias. Se ha optado (como se aprecia
+en la clase base de `Luz` vista en la sección anterior) se tiene una clase genérica y abstracta llamada `AplicadorLuz`.
+Su implementación no es difícil de imaginar. Luce así:
+
+```c++
+    class AplicadorLuz {
+    public:
+        AplicadorLuz () = default;
+        virtual ~AplicadorLuz() = default;
+        virtual void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp, glm::mat4 matrizV) = 0;
+    };
+```
+
+De esta manera, cada estrategia sobre-escribe el método `aplicarLuz()`:
+
+```c++
+    class LuzAmbiental_Aplicador : public AplicadorLuz {
+    public:
+        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp, glm::mat4 matrizV) override;
+    };
+
+    class LuzPuntual_Aplicador : public AplicadorLuz {
+    public:
+        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp, glm::mat4 matrizV) override;
+    };
+
+    class LuzDireccional_Aplicador : public AplicadorLuz {
+    public:
+        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp, glm::mat4 matrizV) override;
+    };
+
+    class Foco_de_Luz_Aplicador : public AplicadorLuz {
+    public:
+        void aplicarLuz(const PropiedadesLuz& p,ShaderProgram& sp, glm::mat4 matrizV) override;
+    };
+```
+
+De esta forma veamos cómo se han conformado estas sobre-escrituras. Antes de nada, como `PropiedadesLuz` es un `struct`
+genérico (que usa la clase base `Luz`), parece razonable que todas las estrategias tengan un método común para asignar
+los uniforms al shader (ya que todas llevan consigo todos los datos). Así, cada estrategia llamará primero a este método:
+
+```c++
+    void asignarPropiedadesAShader(const PropiedadesLuz &p, ShaderProgram &sp, glm::mat4 matrizV) {
+
+        GLint Ia_asignar = glGetUniformLocation(sp.id_sp(), "Ia");
+        GLint Id_asignar = glGetUniformLocation(sp.id_sp(), "Id");
+        GLint Is_asignar = glGetUniformLocation(sp.id_sp(), "Is");
+        GLint lightPosition_asignar = glGetUniformLocation(sp.id_sp(), "lightPosition");
+        GLint lightDirection_asignar = glGetUniformLocation(sp.id_sp(), "lightDirection");
+        GLint spotAngle_asignar = glGetUniformLocation(sp.id_sp(), "spotAngle");
+
+        if (Ia_asignar != -1)
+            glUniform3fv(Ia_asignar, 1, &p.Ia[0]);
+
+        if (Id_asignar != -1)
+            glUniform3fv(Id_asignar, 1, &p.Id[0]);
+
+        if (Is_asignar != -1)
+            glUniform3fv(Is_asignar, 1, &p.Is[0]);
+
+        if (lightPosition_asignar != -1)
+            //Importante multiplicar por la matriz de visión (se hace aquí porque es un uniform --> una sola vez)
+            glUniform3fv(lightPosition_asignar, 1, &glm::vec3(matrizV * glm::vec4(p.p, 1.0f))[0]);
+
+        if (lightDirection_asignar != -1) {
+            //Se normaliza la dirección de luz (para no hacerlo repetidamente en el shader --> más eficiente)
+            glm::vec3 direccionLuz = glm::normalize(p.d);
+
+            //Importante multiplicar por la matriz de visión (se hace aquí porque es un uniform --> una sola vez)
+            glUniform3fv(lightDirection_asignar, 1, &glm::vec3(matrizV * glm::vec4(direccionLuz, 0.0f))[0]);
+        }
+
+        if (spotAngle_asignar != -1)
+            glUniform1f(spotAngle_asignar, p.gamma);
+    }
+```
+
+_NOTA: Aquí se pueden observar las normalizaciones y la multiplicación por la matriz de visión que se mencionaba
+anteriormente._
+
+De esta forma, además de llamar a este método, cada estrategia ha de elegir (por nombre) la subrutina del tipo de luz
+que le corresponde. La elección de subrutinas ya se presentó en la práctica anterior (y aquí se ha reusado). Pondré
+como ejemplo la estrategia que posee la luz ambiental para entender las del resto:
+
+
+```c++
+    void LuzAmbiental_Aplicador::aplicarLuz(const PropiedadesLuz &p, ShaderProgram &sp, glm::mat4 matrizV) {
+        std::string nombreSubrutina = "luzAmbiental";
+        asignarPropiedadesAShader(p, sp, matrizV);
+
+        //---------------------------------------------
+        //   PAG 08 (subrutinas de luz)
+        //---------------------------------------------
+        if (sp.nombre_shader() == "pag08") {
+            GLint subrutinaLuz  = glGetSubroutineUniformLocation ( sp.id_sp(), GL_FRAGMENT_SHADER, "colorMallaOLuz" );
+            GLuint id_subrutinaAmbiental = glGetSubroutineIndex ( sp.id_sp(), GL_FRAGMENT_SHADER, nombreSubrutina.c_str());
+
+            //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
+            GLuint indices[1];
+            indices[subrutinaLuz]  = id_subrutinaAmbiental;
+            glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
+        }
+    }
+```
+
+De esta forma, lo único que hay que hacer en el resto de estrategias es cambiar el nombre de la subrutina:
+
+```c++
+std::string nombreSubrutina = "luzPuntual";                 //Luz puntual
+std::string nombreSubrutina = "luzDireccional";             //Luz direccional
+std::string nombreSubrutina = "focoLuz";                    //Foco de luz
+```
+
+Ya se han visto así cómo se utilizan 4 de las 5 subrutinas del fragment shader. La última es la del color constante:
+`colorFijo()` que se asigna en caso de visualizar el modelo como una malla o CUANDO NO SE TIENEN LUCES.
+Esto último será especialmente importante (porque siempre sucede al momento inicial). 
+
+Esto lo gestiona `Renderer` con el método `controlar_uniforms_modelo()`. La parte del vertex shader (para asignar uniforms
+de matrices de modelado, visión y proyección) la comparte con las prácticas 5 y 7. De esta manera, dejaré solo la parte
+de dicho método correspondiente a esta práctica:
+
+
+```c++
+   void Renderer::controlar_uniforms_modelo(Modelo* modelo_usado) const {
+
+        ...
+       
+        //---------------------------------------------
+        //           PAG 05, PAG 07 y PAG 08
+        //---------------------------------------------
+        } else if (modelo_usado->getShaderModelo()->nombre_shader() == "pag05"
+                   || modelo_usado->getShaderModelo()->nombre_shader() == "pag07"
+                   || modelo_usado->getShaderModelo()->nombre_shader() == "pag08") {
+            //Uniforms del vertex_shader
+
+            ... //Gestión de las matrices de modelado, visión y proyección
+
+            ... //Gestión de práctica 7 por separado
+
+            //---------------------------------------------
+            //                  PAG 08
+            //---------------------------------------------
+            if (modelo_usado->getShaderModelo()->nombre_shader() == "pag08") {
+
+                //---------------------------------------------
+                //    PAG 08 (gestión de subrutina de color fijo) --> Si no hay luces o está la malla seleccionada
+                //---------------------------------------------
+                std::string nombreSubrutina = "colorFijo";
+
+                if (_modoVisualizacion == ModoVisualizacion::MODELOS_ALAMBRE
+                    || (_luces.empty() && _modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS)) {
+
+                    GLint subrutinaMalla_O_Luz  = glGetSubroutineUniformLocation ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, "colorMallaOLuz" );
+                    GLuint id_Malla_O_Luz = glGetSubroutineIndex ( modelo_usado->getShaderModelo()->id_sp(), GL_FRAGMENT_SHADER, nombreSubrutina.c_str());
+
+                    //Ponemos en el hueco de la subrutina el índice de la función que se va a usar
+                    GLuint indices[1];
+                    indices[subrutinaMalla_O_Luz]  = id_Malla_O_Luz;
+                    glUniformSubroutinesuiv ( GL_FRAGMENT_SHADER, 1, indices );
+
+                    }
+
+                //---------------------------------------------
+                //    PAG 08 (gestión de material)    --> Las luces se encargarán de las subrutinas en este caso
+                //---------------------------------------------
+                else {
+                    bool hayQueBorrarMaterial = false;
+                    Material* materialModelo = nullptr;
+
+                    materialModelo = modelo_usado->obtenerMaterial();
+
+                    if (materialModelo == nullptr) {
+                        hayQueBorrarMaterial = true;
+                        materialModelo = new Material("default", {0,0,0}, {0,0,0}, {0,0,0}, 1);
+                    }
+
+                    GLint Ka_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ka");
+                    GLint Kd_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Kd");
+                    GLint Ks_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "Ks");
+                    GLint brillo_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), "brillo");
+
+                    if (Ka_asignar != -1 ) glUniform3fv(Ka_asignar, 1, &materialModelo->ka[0]);
+                    if (Kd_asignar != -1 ) glUniform3fv(Kd_asignar, 1, &materialModelo->kd[0]);
+                    if (Ks_asignar != -1 ) glUniform3fv(Ks_asignar, 1, &materialModelo->ks[0]);
+
+                    if (brillo_asignar != -1) glUniform1f(brillo_asignar, materialModelo->brillo);
+
+                    if (hayQueBorrarMaterial) {
+                        delete materialModelo;
+                        materialModelo = nullptr;
+                    }
+                }
+            }
+
+            ...
+        }
+    }
+```
+
+### Funciones de mezcla (blending)
+
+Para mostrar (de forma agregativa) todas las luces en la escena, debemos controlar cómo se dibuja esta. Esta gestión
+se hace en la clase `Renderer`. En primer lugar, el método `inicializarOpenGL()` hace que OpenGL active el modo
+mezcla, se active el Z-buffer y use la función menor-igual para la profundidad:
+
+```c++
+    void Renderer::inicializarOpenGL() {
+        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
+        glEnable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_MULTISAMPLE);
+    }
+```
+
+_NOTA: Esto el main lo invoca una sola vez._
+
+Después, la función `refrescar()` cambia bastante para lograr que se mezclen las distintas luces. En primer lugar,
+si no hay luces (es decir, `Renderer` tiene el vector de luces vacío), se dibuja una vez el modelo por cada modelo
+que se tenga (como hasta ahora).
+
+Sin embargo, en caso de tener algún modelo, se debe aplicar el efecto de todas las luces sobre este. Por tanto, se trata
+de una anidación de bucles. Otro detalle a tener en cuenta es que el blending no será igual para la "primera pintada" que 
+para las siguientes del modelo.
+
+Para explicar esto último, hay que entender el efecto que provoca (en términos de profundidad) las 2 sentencias que 
+tendremos para hacer _blending_.
+
+```c++
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+```
+
+Esta sentencia es lo mismo que la siguiente fórmula:
+
+$$$
+resultado = fragmento_actual × α + fragmento_en_framebuffer × (1 − α)
+$$$
+
+Aquí lo que se hace es que si el fragmento pasó el test de profundidad (definido en el anterior método `inicializarOpenGL`),
+debe dibujarse con un _alpha_ determinado sobre lo que ya hay. Si $α=1$ (como normalmente ocurrirá con el color del objeto
+RGBA), se pone este elemento por delante del fragmento del framebuffer.
+
+Sin embargo, esto con las luces no funciona. Si quiero sumar varias luces, necesito repintar. Si repinto, la anterior
+fórmula borra la anterior "pintada". Esto lo muestro aquí:
+
+```plaintext
+resultado1 = fragmento_actual × α + fragmento_en_framebuffer × (1 − α)   
+resultado2 = fragmento_actual × α + fragmento_en_framebuffer × (1 − α)   --> Si alpha = 1 (que lo será) resultado1 se borra
+```
+
+Por tanto, para añadir al _framebuffer_ (y no reemplazar), el _blending_ exige que a partir de la segunda luz se use 
+la siguiente sentencia:
+
+```c++
+glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+```
+
+Esta tiene como fórmula: 
+
+$$$
+resultado = fragmento_actual × α + fragmento_en_framebuffer × α
+$$$
+
+De esa manera se tiene adición de cada una de las luces. Ojo, esto solo debe hacerse a partir de la 2ª luz de un modelo
+concreto. Al comenzar con otro modelo, se repite el proceso. Todo esto queda reflejado en la siguiente re-implementación
+del método refrescar:
+
+```c++
+    void Renderer::refrescar() {
+        glClearColor(_colorFondo[0], _colorFondo[1], _colorFondo[2], _colorFondo[3]);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Limpia el buffer actual
+
+        if (_modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }else if (_modoVisualizacion == ModoVisualizacion::MODELOS_ALAMBRE) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+
+
+        if (!_modelos.empty()) {
+            for (Modelo *modelo: _modelos) {
+                glUseProgram(modelo->getShaderModelo()->id_sp());
+                controlar_uniforms_modelo(modelo);
+
+                bool primera = true;
+                for (Luz *luz : _luces) {
+
+                    if (primera) {
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                        primera = false;
+                    }else {
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                    }
+
+                    if (_modoVisualizacion == ModoVisualizacion::MODELOS_RELLENOS &&
+                        modelo->getShaderModelo()->nombre_shader() == "pag08") {
+
+                        luz->aplicarLuz(modelo->getShaderModelo(), _camara->getMatV());
+                    }
+                    modelo->Dibujar();
+                }
+
+                if (_luces.empty()) {
+                    modelo->Dibujar();
+                }
+
+            }
+        }
+    }
+```
+
+
+### Interfaz de usuario
+
+### Diagrama de clases UML
