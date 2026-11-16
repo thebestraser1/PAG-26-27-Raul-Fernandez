@@ -179,6 +179,7 @@ namespace PAG {
         int _indiceTipoLuzSeleccionada = -1;
         PropiedadesLuz _propiedades_luz_nueva;
 
+        //Atributos de luz modificada
         std::string _nombreLuzSeleccionada;
         int _indiceLuzSeleccionada = -1;   //Indice equivalente al vector de modelos de Renderer.cpp
         TipoLuz _tipo_luz_modificada;

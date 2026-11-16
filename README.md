@@ -2822,7 +2822,7 @@ que poner solución a esto con la siguiente implementación (antes de que la ven
                 }
             }
 
-            if (!nombreSigueExistiendo && _indiceModeloSeleccionado != -1 && !nombreModelos.empty()) {
+            if (!nombreSigueExistiendo && !nombreModelos.empty()) {
                 //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
                 _indiceModeloSeleccionado = 0;
                 _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
@@ -3301,7 +3301,7 @@ desea.
               nombreMateriales.push_back(material->nombre.c_str());
           }
 
-          if (!nombreSigueExistiendo && _indiceMaterialSeleccionado != -1 && !materiales.empty()) {
+          if (!nombreSigueExistiendo && !materiales.empty()) {
               //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
               _indiceMaterialSeleccionado = 0;
               _nombreMaterialSeleccionado = materiales[_indiceMaterialSeleccionado]->nombre;
@@ -3461,7 +3461,7 @@ botón para asignar material y modelo:
               }
           }
 
-          if (!nombreSigueExistiendo && _indiceModeloSeleccionado != -1 && !nombreModelos.empty()) {
+          if (!nombreSigueExistiendo && !nombreModelos.empty()) {
               //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
               _indiceModeloSeleccionado = 0;
               _nombreModeloSeleccionado = nombreModelos[_indiceModeloSeleccionado];
@@ -4484,4 +4484,448 @@ del método refrescar:
 
 ### Interfaz de usuario
 
+A la hora de implementar la interfaz, se tiene un mecanismo realmente similar a la lo que se tenía con la gestión de 
+materiales. Es decir, la interfaz permite:
+
+- Crear luces (de distinto tipo).
+- Modificar las luces creadas.
+  - Modificar sus propiedades.
+  - Borrar las luces.
+  - Encender o apagar las luces.
+
+
+Estas funciones (al igual que con los materiales), se gestionan mediante **pestañas**. Antes de ver las distintas
+pestañas, se presentará la clase que implementa la ventana:
+
+```c++
+    class VentanaLuces : public Ventanas{
+
+        TipoAccionLuz _accion_actual = TipoAccionLuz::Anadir_luz;
+
+        //Atributos de la luz nueva
+        std::string _nombre_luz_anadir;
+        TipoLuz _tipo_luz_nueva = TipoLuz::Luz_Ambiental;
+        int _indiceTipoLuzSeleccionada = -1;
+        PropiedadesLuz _propiedades_luz_nueva;
+
+        //Atributos de luz modificada
+        std::string _nombreLuzSeleccionada;
+        int _indiceLuzSeleccionada = -1;   //Indice equivalente al vector de modelos de Renderer.cpp
+        TipoLuz _tipo_luz_modificada;
+
+    public:
+        VentanaLuces(float x, float y, bool minimizada);
+        void dibujar() override;
+    };
+```
+
+Se puede observar que se tienen una serie de acciones relativas a la ventana de luces. Estas acciones (u operaciones) son:
+
+```c++
+    enum TipoAccionLuz {
+        Anadir_luz,
+        Encender_apagar,
+        Borrar_luz,
+    };
+```
+
+Comenzando por la de creación de luces, se optó por presentar todas las propiedades en una única ventana (de forma
+unificada). Aunque una luz puntual no use propiedades como la dirección de luz o el _gamma_ (más propias de un foco),
+se presentan por la interfaz para facilitar (posteriormente) un posible cambio en el tipo de luz.
+
+De esta forma, la pestaña de creación luce así en el código:
+
+
+```c++
+    void VentanaLuces::dibujar() {
+        
+        ...
+
+        if (ImGui::Begin("Gestion de luces", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            if (ImGui::BeginTabBar("Mis_Pestanas_luces"))
+            {
+
+                //--------------------
+                // Pestaña para añadir
+                //--------------------
+                if (ImGui::BeginTabItem("Añadir"))
+                {
+                    _accion_actual = TipoAccionLuz::Anadir_luz;
+
+                    //Este vector funciona porque he puesto el mismo orden que en el enum de Luz.h
+                    //Es para que muestre el nombre de los enumerados
+                    const char *tipo_luz[] = {"Luz Ambiental", "Luz Puntual", "Luz Direccional", "Foco de luz"};
+
+                    //Sacamos el índice que ocupa el tipo de luz actual en el enumerado gracias a static_cast
+                    int tipoActual = static_cast<int>(_tipo_luz_nueva);
+
+                    //La ejecución entra aquí solo cuando se ha cambiado el tipo de luz
+                    if (ImGui::Combo("##TipoLuz", &tipoActual, tipo_luz, IM_ARRAYSIZE(tipo_luz))) {
+                        //Se puede hacer la operación inversa a lo anterior (sacar un tipo de luz desde un índice (int))
+                        _tipo_luz_nueva = static_cast<TipoLuz>(tipoActual);
+                    }
+
+                    ImGui::Text("Nombre de la luz");
+                    ImGui::InputText("##TextoLuz", &_nombre_luz_anadir, ImGuiInputTextFlags_AutoSelectAll);
+                    ImGui::Text("Ambiental (Ia)");
+                    ImGui::ColorEdit3("##Ambiental (Ia)", &_propiedades_luz_nueva.Ia[0]);
+                    ImGui::Text("Difusa (Id)");
+                    ImGui::ColorEdit3("##Difusa (Id)", &_propiedades_luz_nueva.Id[0]);
+                    ImGui::Text("Especular (Is)");
+                    ImGui::ColorEdit3("##Especular (Is)", &_propiedades_luz_nueva.Is[0]);
+                    ImGui::Text("Posicion (p)");
+                    ImGui::InputFloat3("##Posicion (p)", &_propiedades_luz_nueva.p[0], "%.2f");
+                    ImGui::Text("Direccion (d)");
+                    ImGui::InputFloat3("##Direccion (d)", &_propiedades_luz_nueva.d[0], "%.2f");
+                    ImGui::Text("Gamma (foco)");
+                    ImGui::InputFloat("##Gamma (foco)", &_propiedades_luz_nueva.gamma, 0.1f, 1.0f, "%.2f");
+
+                    if (ImGui::Button("Añadir") && !_nombre_luz_anadir.empty()) {
+
+                        //La dirección (d) se avisa si es 0 en caso de ser una luz direccional o un foco (igualmente se acaba asignando)
+                        if ((abs(_propiedades_luz_nueva.d[0]) <= 0.00001 && abs(_propiedades_luz_nueva.d[1]) <= 0.00001 &&
+                            abs(_propiedades_luz_nueva.d[2]) <= 0.00001) && (_tipo_luz_nueva == TipoLuz::Foco_de_Luz
+                                || _tipo_luz_nueva == TipoLuz::Luz_Direccional)) {
+                            std::cout << "PRECAUCIÓN, la luz " << _nombre_luz_anadir << " es direccional o es un foco"
+                                                                                        "de luz y no tiene dirección"
+                            << std::endl;
+                        }
+
+                        _renderer_listener->wakeUp(TipoVentana::V_Gestion_Luces, false, &_accion_actual,
+                                                   &_tipo_luz_nueva, _nombre_luz_anadir.c_str(), &_propiedades_luz_nueva);
+
+                        //Devolvemos las variables a 0
+                        _nombre_luz_anadir = "";
+
+                        _propiedades_luz_nueva.Ia = {0,0,0};
+                        _propiedades_luz_nueva.Id = {0,0,0};
+                        _propiedades_luz_nueva.Is = {0,0,0};
+
+                        _propiedades_luz_nueva.p = {0,0,0};
+                        _propiedades_luz_nueva.d = {0,0,0};
+
+                        _propiedades_luz_nueva.gamma = 0.0f;
+
+                    }
+
+                    ImGui::EndTabItem();
+                }
+                
+                ...
+                
+                ImGui::EndTabBar();
+            }
+        }
+        ImGui::End();
+    }
+}
+```
+
+De esta forma, se avisa a `Renderer` de que hay una nueva luz que añadir (patrón observador), aprovechando la estructura
+que tenemos de `PropiedadesLuz`. El `Renderer` añade la luz a su vector de luces siempre y cuando el nombre de la luz
+no coincida con los ya existentes. Esto se hace así para luego identificar la luz a modificar. Así, el `Renderer`, como
+ya es costumbre, implementa de la siguiente manera la agregación de la luz en su método `wakeUp()`:
+
+
+```c++
+    void Renderer::wakeUp(TipoVentana t, bool ventana_pidiendo, ...) {
+
+         if (ventana_pidiendo) {
+                ...
+         } else {
+             switch (t) {
+                case TipoVentana::V_Gestion_Luces: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    PAG::TipoAccionLuz* tipo_accion = va_arg(args, PAG::TipoAccionLuz*);
+
+                    switch (*tipo_accion) {
+                        case TipoAccionLuz::Anadir_luz: {
+                            //Atributos de la luz
+                            TipoLuz* tipo_luz = va_arg(args, TipoLuz*);
+                            std::string nombreLuz(va_arg(args, char*));
+                            PropiedadesLuz* propiedades_luz = va_arg(args, PropiedadesLuz*);
+
+                            //Añadimos la luz (si el nombre no existe)
+                            if (comprobar_luces_mismo_nombre(nombreLuz)) {
+                                _luces.push_back(new Luz(nombreLuz, *propiedades_luz, *tipo_luz));
+                                std::cout << "Se ha añadido una nueva luz: " << nombreLuz << std::endl;
+                            }else {
+                                std::cout << "--------------------\n" << "EXCEPCIÓN: " <<
+                                        "Ya hay una luz con el nombre: " << nombreLuz <<
+                                        "\n--------------------\n" << std::endl;
+                            }
+                            break;
+                        }
+                        ...
+                    }
+                }
+                default: ;
+            }
+        }
+    }
+
+```
+
+
+Continuando, para modificar las luces se tiene un mecanismo idéntico al que se tenia con los materiales. Primero se
+pide al `Renderer` todas las propiedades de las luces que contiene para presentarlas y poder modificarlas. Como lo
+que nos da el `Renderer` es un puntero por cada luz, se pueden modificar las propiedades en tiempo real (útil para
+observar los efectos que tienen las luces en la escena en tiempo real).
+
+De nuevo, esta será la implementación desde el punto de vista de la ventana:
+
+```c++
+    void VentanaLuces::dibujar() {
+        
+        ...
+
+        if (ImGui::Begin("Gestion de luces", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            if (ImGui::BeginTabBar("Mis_Pestanas_luces"))
+            {
+                ...
+                
+                //-------------------------------
+                //Pestaña para modificar o borrar
+                //-------------------------------
+                if (ImGui::BeginTabItem("Modificar"))
+                {
+
+                    //Recuperamos las luces que tenga el Renderer (por puntero para que las actualizaciones
+                    //se hagan en tiempo real en la ventana)
+                    std::vector<Luz*> luces;
+                    std::vector<const char *> nombreLuces;
+
+                    _renderer_listener->wakeUp(TipoVentana::V_Gestion_Luces, true, &luces);
+
+                    //Implementación similar a la pestaña de modificación de los materiales
+                    //Buscamos si existe el nombre que se tenía
+                    bool nombreSigueExistiendo = false;
+
+                    for (Luz* luz : luces) {
+
+                        if (luz->_nombre == _nombreLuzSeleccionada) {
+                            nombreSigueExistiendo = true;
+                        }
+
+                        //De paso (en este bucle) relleno los nombres que tendrá el combo
+                        nombreLuces.push_back(luz->_nombre.c_str());
+                    }
+
+                    if (!nombreSigueExistiendo && !luces.empty()) {
+                        //Si se tiene referencia a un objeto anterior que ya no existe, apuntamos al primero que haya (si queda alguno)
+                        _indiceLuzSeleccionada = 0;
+                        _nombreLuzSeleccionada = luces[_indiceLuzSeleccionada]->_nombre;
+                    }
+
+                    if (!luces.empty()) {
+
+                        ImGui::Text("Tus luces: ");
+                        if (ImGui::Combo("##Luz seleccionada", &_indiceLuzSeleccionada, nombreLuces.data(),
+                                     (int) luces.size())) {
+
+                            //Al hacer click en una de las opciones, su índice hace referencia al nombre de modelo seleccionado
+                            _nombreLuzSeleccionada = luces[_indiceLuzSeleccionada]->_nombre;
+                        }
+
+                        if (_indiceLuzSeleccionada != -1 ) {
+
+                            ImGui::Text("Ambiental (Ia)");
+                            ImGui::ColorEdit3("##Ambiental (Ia)", &luces[_indiceLuzSeleccionada]->_propiedades.Ia[0]);
+                            ImGui::Text("Difusa (Id)");
+                            ImGui::ColorEdit3("##Difusa (Id)", &luces[_indiceLuzSeleccionada]->_propiedades.Id[0]);
+                            ImGui::Text("Especular (Is)");
+                            ImGui::ColorEdit3("##Especular (Is)", &luces[_indiceLuzSeleccionada]->_propiedades.Is[0]);
+                            ImGui::Text("Posicion (p)");
+                            ImGui::DragFloat3("##Posicion (p)",&luces[_indiceLuzSeleccionada]->_propiedades.p[0],0.05f, 0.0f, 0.0f, "%.2f");
+                            ImGui::Text("Direccion (d)");
+                            ImGui::DragFloat3("##Direccion (d)", &luces[_indiceLuzSeleccionada]->_propiedades.d[0], 0.05f, 0.0f, 0.0f, "%.2f");
+                            ImGui::Text("Gamma (foco)");
+                            ImGui::DragFloat("##Gamma (foco)", &luces[_indiceLuzSeleccionada]->_propiedades.gamma, 0.05f, 0.0f, 0.0f, "%.2f");
+
+                            //COMBO (lo he puesto abajo porque la interfaz creo que confunde ponerlo arriba
+                            ImGui::Text("Tipos de luz: ");
+                            const char *tipo_luz[] = {"Luz Ambiental", "Luz Puntual", "Luz Direccional", "Foco de luz"};
+                            _tipo_luz_modificada = luces[_indiceLuzSeleccionada]->_tipoLuz;
+
+                            //Sacamos el índice que ocupa el tipo de luz actual en el enumerado gracias a static_cast
+                            int tipoActual = static_cast<int>(_tipo_luz_modificada);
+
+                            //La ejecución entra aquí solo cuando se ha cambiado el tipo de luz
+                            if (ImGui::Combo("##TipoLuz", &tipoActual, tipo_luz, IM_ARRAYSIZE(tipo_luz))) {
+                                //Se puede hacer la operación inversa a lo anterior (sacar un tipo de luz desde un índice (int))
+                                _tipo_luz_modificada = static_cast<TipoLuz>(tipoActual);
+                                luces[_indiceLuzSeleccionada]->_tipoLuz = _tipo_luz_modificada;
+                            }
+
+                            if (ImGui::Button("Borrar luz")) {
+                                TipoAccionLuz accion_borrar = TipoAccionLuz::Borrar_luz;
+                                _renderer_listener->wakeUp(TipoVentana::V_Gestion_Luces, false, &accion_borrar,
+                                                           luces[_indiceLuzSeleccionada]->_nombre.c_str());
+                            }
+
+                            ImGui::SameLine();
+
+                            //La etiqueta muestra si la luz está encendida o apagada
+                            std::string etiqueta_boton_encender_apagar = "Luz encendida";
+                            if (!luces[_indiceLuzSeleccionada]->_encendida) etiqueta_boton_encender_apagar = "Luz apagada";
+
+                            if (ImGui::Button(etiqueta_boton_encender_apagar.c_str())) {
+                                TipoAccionLuz accion_encender_apagar = TipoAccionLuz::Encender_apagar;
+                                _renderer_listener->wakeUp(TipoVentana::V_Gestion_Luces, false, &accion_encender_apagar,
+                                                           luces[_indiceLuzSeleccionada]->_nombre.c_str());
+                            }
+                        }else{
+                            _indiceLuzSeleccionada = 0;    //La primera iteración, que seleccione al menos el primero
+                        }
+
+                    }else {
+                        ImGui::Text("     Añade alguna luz     ");
+                        _indiceLuzSeleccionada = -1;
+                        _nombreLuzSeleccionada = "";
+                    }
+
+
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
+            }
+        }
+        ImGui::End();
+    }
+}
+```
+
+Para la petición de datos al `Renderer`, se le trasfieren mediante el siguiente fragmento de código básico:
+
+```c++
+    void Renderer::wakeUp(TipoVentana t, bool ventana_pidiendo, ...) {
+        if (ventana_pidiendo) {
+            ...                
+
+            case TipoVentana::V_Gestion_Luces: {
+                std::va_list args;
+                va_start(args, ventana_pidiendo);
+
+                std::vector<Luz*>* luces = va_arg(args, std::vector<Luz*>*);
+                for (Luz* luz : _luces) {
+                    luces->push_back(luz);
+                }
+
+                va_end(args);
+                break;
+            }
+            default: ;
+        }
+    }
+}
+```
+
+Para borrar y encender o apagar las luces, se tienen acciones (al igual que se ha visto para añadir) en el `Renderer`.
+Para ello, se usa el siguiente código:
+
+
+```c++
+    void Renderer::wakeUp(TipoVentana t, bool ventana_pidiendo, ...) {
+
+         if (ventana_pidiendo) {
+                ...
+         } else {
+             switch (t) {
+                case TipoVentana::V_Gestion_Luces: {
+                    std::va_list args;
+                    va_start(args, ventana_pidiendo);
+
+                    PAG::TipoAccionLuz* tipo_accion = va_arg(args, PAG::TipoAccionLuz*);
+
+                    switch (*tipo_accion) {
+
+                        case TipoAccionLuz::Borrar_luz: {
+
+                            std::string nombreLuz(va_arg(args, char*));
+
+                            std::cout << "Borrando luz: " << nombreLuz<< std::endl;
+                            borrar_luz_por_nombre(nombreLuz);
+
+                            break;
+                        }
+
+                        case TipoAccionLuz::Encender_apagar: {
+
+                            std::string nombreLuz(va_arg(args, char*));
+
+                            Luz* luz_encender_apagar = obtener_luz_por_nombre(nombreLuz);
+                            luz_encender_apagar->encendida_apagada();
+
+                            break;
+                        }
+                        default:;
+                    }
+                }
+                default: ;
+            }
+        }
+    }
+
+```
+
+De esta manera, se produce una gestión de las luces completa.
+
 ### Diagrama de clases UML
+
+```mermaid
+classDiagram
+    direction TB
+
+    class Renderer {
+        Implementa llamadas de OpenGL
+    }
+
+    class Luz {
+        -std::vector~AplicadorLuz*~ _aplicadores
+        -std::string _nombre
+        -TipoLuz _tipoLuz
+        -PropiedadesLuz _propiedades
+        -bool _encendida
+        +Luz(const std::string &nombre, PropiedadesLuz p_iniciales, TipoLuz t_luz)
+        +~Luz()
+        +aplicarLuz(ShaderProgram *sp, glm::mat4 matrizV) void
+        +encendida_apagada() void
+    }
+
+    class AplicadorLuz {
+        <<abstract>>
+        +AplicadorLuz() default
+        +~AplicadorLuz() default
+        +aplicarLuz(const PropiedadesLuz& p, ShaderProgram& sp, glm::mat4 matrizV)* void
+    }
+
+    class LuzAmbiental_Aplicador {
+        +aplicarLuz(const PropiedadesLuz& p, ShaderProgram& sp, glm::mat4 matrizV) void
+    }
+
+    class LuzPuntual_Aplicador {
+        +aplicarLuz(const PropiedadesLuz& p, ShaderProgram& sp, glm::mat4 matrizV) void
+    }
+
+    class LuzDireccional_Aplicador {
+        +aplicarLuz(const PropiedadesLuz& p, ShaderProgram& sp, glm::mat4 matrizV) void
+    }
+
+    class Foco_de_Luz_Aplicador {
+        +aplicarLuz(const PropiedadesLuz& p, ShaderProgram& sp, glm::mat4 matrizV) void
+    }
+
+    Renderer "1" --> "0..*" Luz
+    Luz "1" --> "0..4" AplicadorLuz
+    AplicadorLuz <|-- LuzAmbiental_Aplicador : implementa aplicarLuz()
+    AplicadorLuz <|-- LuzPuntual_Aplicador : implementa aplicarLuz()
+    AplicadorLuz <|-- LuzDireccional_Aplicador : implementa aplicarLuz()
+    AplicadorLuz <|-- Foco_de_Luz_Aplicador : implementa aplicarLuz()
+```
+
+_NOTA: Se ha prescindido de los diagramas de prácticas anteriores para mejorar la legibilidad de este diagrama (que ya
+comenzaba a ser grande). Por ello, se presenta aquí, cómo se ha integrado el sistema de luces que es lo realmente
+importante en esta práctica. La ventana de la interfaz de luces no tiene elementos reseñables (como se ha visto en su
+explicación)._
