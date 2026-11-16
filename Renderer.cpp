@@ -168,12 +168,20 @@ namespace PAG {
             std::string nombreUniformMVP = "matrizMVP";
             GLint matriz_MVP_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), nombreUniformMVP.c_str());
 
+            std::string nombreUniformMVit = "matrizMVit";
+            GLint matriz_MVit_asignar = glGetUniformLocation(modelo_usado->getShaderModelo()->id_sp(), nombreUniformMVit.c_str());
+
+            glm::mat4 matrizMVP = matrizP_camara * matrizV_camara * matrizM_modelo;
+
             if (matriz_MVP_asignar != -1) {
                 // El uniform existe y se ha podido localizar correctamente
-
-                glm::mat4 matrizMVP = matrizP_camara * matrizV_camara * matrizM_modelo;
-
                 glUniformMatrix4fv(matriz_MVP_asignar, 1, GL_FALSE, &matrizMVP[0][0]);
+            }
+
+            if (matriz_MVit_asignar != -1) {
+                // El uniform existe y se ha podido localizar correctamente
+                glm::mat4 matrizMVit = glm::transpose(glm::inverse(matrizV_camara * matrizM_modelo));
+                glUniformMatrix4fv(matriz_MVit_asignar, 1, GL_FALSE, &matrizMVit[0][0]);
             }
 
 

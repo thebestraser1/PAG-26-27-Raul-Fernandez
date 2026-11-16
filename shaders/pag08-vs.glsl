@@ -8,6 +8,7 @@ layout (location = 1) in vec3 vNormal;
 /* Matriz de modelado trasformación y visión */
 uniform mat4 matrizMVP;
 uniform mat4 mModelView;
+uniform mat4 matrizMVit;
 
 /* Salidas */
 /* Normal y posición de cada vértice */
@@ -20,7 +21,7 @@ out salidaVS
 
 void main ()
 {
-    salida.normalV = vec3(mModelView * vec4(vNormal, 0.0));
+    salida.normalV = vec3 ( matrizMVit * vec4 ( vNormal, 0 ) );
     salida.posicionV = vec3(mModelView * vec4(vPosicion, 1.0));
     gl_Position = matrizMVP * vec4 ( vPosicion, 1 );
 }
